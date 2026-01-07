@@ -1,0 +1,41 @@
+configurations:
+  - name: lse_only
+    lambda_lse: 1.0
+    lambda_var: 0.0
+    lambda_tc: 0.0
+
+  - name: lse_var
+    lambda_lse: 1.0
+    lambda_var: 1.0
+    lambda_tc: 0.0
+
+  - name: lse_var_tc
+    lambda_lse: 1.0
+    lambda_var: 1.0
+    lambda_tc: 1.0
+
+  - name: var_tc_only
+    lambda_lse: 0.0
+    lambda_var: 1.0
+    lambda_tc: 1.0
+
+model:
+  input_dim: 784
+  hidden_dim: 64
+  activation: relu
+
+loss:
+  lambda_wr: 0.0
+  variance_eps: 1e-6
+
+training:
+  epochs: 100
+  batch_size: 128
+  lr: 0.001
+  optimizer: adam
+
+data:
+  dataset: mnist
+  data_dir: "E:/ml_datasets"
+
+seeds: [1, 2, 3]
