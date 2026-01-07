@@ -4,110 +4,98 @@
 
 This document derives a neural architecture from first principles using the theory of implicit expectation-maximization (EM) in gradient descent. The result is a model equivalent to decoder-free sparse autoencoders and closely related to energy-based models, but arrived at through a different path: the algebraic structure of log-sum-exp objectives.
 
-## Starting Point: Gradient Descent as Implicit EM
+The derivation follows from two prior results:
 
-Oursland (2025) establishes a key identity. For any objective with log-sum-exp structure:
+1. **Mahalanobis interpretation (Oursland 2024):** Linear layers compute distances to prototypes. Neurons learn principal components of Gaussian clusters. Orthogonality regularization encourages statistically independent features.
 
-```
-L = log Σⱼ exp(-dⱼ)
-```
+2. **Implicit EM (Oursland 2025):** For log-sum-exp objectives, the gradient with respect to each component equals its responsibility. Gradient descent performs EM implicitly.
 
-The gradient with respect to each distance is exactly the negative responsibility:
+Combining these insights leads to a principled unsupervised objective: log-sum-exp for EM structure, plus regularization for volume control.
 
-```
-∂L/∂dⱼ = -rⱼ where rⱼ = exp(-dⱼ) / Σₖ exp(-dₖ)
-```
+## Sign Convention
 
-This is algebraic, not approximate. The immediate consequence: gradient descent on such objectives performs EM implicitly. Responsibilities are not computed as auxiliary variables—they are the gradients.
+Throughout this document, we adopt the convention that **lower energy means better explanation**. A component with low energy for an input claims high responsibility for that input. This convention, stated once here, resolves all sign ambiguities that follow.
 
-## The Question: What Objective for Unsupervised Learning?
+## Implicit EM Requires Log-Sum-Exp
 
-The identity holds at the interface between model outputs and loss. If we want EM structure throughout training, we need a log-sum-exp loss.
+Consider a set of component energies $E_j(x)$, where lower energy means better explanation of the input. Define the marginal objective:
 
-For supervised learning, cross-entropy provides this:
-```
-L = -log P(y|x) = -zᵧ + log Σₖ exp(zₖ)
-```
+$$L_{\text{LSE}}(x) = -\log \sum_j \exp(-E_j(x))$$
 
-For unsupervised learning, what is the objective?
+This objective has an exact algebraic property:
 
-The natural choice is the marginal likelihood:
-```
-L = -log Σⱼ exp(-dⱼ)
-```
+$$\frac{\partial L_{\text{LSE}}}{\partial E_j(x)} = r_j(x), \qquad r_j(x) = \frac{\exp(-E_j(x))}{\sum_k \exp(-E_k(x))}$$
 
-This says: at least one component should explain each input. Maximizing this encourages prototypes to cover the data.
+The gradient with respect to each component energy is its responsibility. No auxiliary variables are introduced; the E-step appears implicitly in backpropagation. Gradient descent on this objective therefore performs responsibility-weighted updates exactly analogous to EM.
 
-## The Collapse Problem
+This identity holds regardless of how the energies $E_j(x)$ are parameterized.
 
-Pure log-sum-exp has a failure mode. One component can claim all inputs. Its distance shrinks, its responsibility approaches 1, other components receive no gradient, they die.
+For supervised learning, cross-entropy provides this structure:
 
-In Gaussian mixture models, the log-determinant prevents this:
-```
-log P(x|k) ∝ -½(x-μₖ)ᵀΣₖ⁻¹(x-μₖ) - ½ log det(Σₖ)
-```
+$$L = -\log P(y|x) = -z_y + \log \sum_k \exp(z_k)$$
+
+For unsupervised learning, what is the objective? The log-sum-exp marginal is a natural choice: it says that at least one component should explain each input.
+
+## The Collapse Problem (Missing Volume Control)
+
+The log-sum-exp marginal alone is insufficient for unsupervised learning. A single component can lower its energy for all inputs, causing its responsibility to approach one while all other components receive vanishing gradient and die.
+
+This is the neural analogue of a known issue in mixture models: without explicit control over component "volume" or effective support, maximum-likelihood objectives admit degenerate solutions.
+
+In classical Gaussian mixture models, the log-determinant prevents collapse:
+
+$$\log P(x|k) \propto -\frac{1}{2}(x-\mu_k)^\top\Sigma_k^{-1}(x-\mu_k) - \frac{1}{2} \log \det(\Sigma_k)$$
 
 The log-determinant penalizes small covariance. A component cannot shrink to a point.
 
-Neural networks lack this term. The paper notes this explicitly: collapse is a risk because volume control is missing.
+In neural energy models, no such term exists by default. Therefore, any practical implicit-EM objective must include an explicit volume control regularizer.
 
-## InfoMax as Volume Control
+## Volume Control via Regularization (InfoMax-Inspired)
 
-What prevents collapse in unsupervised neural learning?
+We introduce a regularizer whose sole purpose is to prevent collapse and redundancy. We refer to this bundle as **InfoMax regularization**, defined operationally as:
 
-We propose InfoMax regularization. InfoMax (Linsker 1988, Bell & Sejnowski 1995) maximizes information by:
-1. Maximizing entropy of each output (variance proxy)
-2. Minimizing redundancy between outputs (decorrelation)
+1. **Anti-collapse:** Every component must be active across the dataset.
+2. **Redundancy reduction:** Distinct components must encode distinct structure.
 
-**Entropy term:** -Σⱼ log(Var(aⱼ))
+No claim is made that this computes mutual information exactly. The name reflects the inspiration from information-maximization principles (Linsker 1988, Bell & Sejnowski 1995), not an assertion of mathematical equivalence.
 
-This prevents collapse. A dead component has zero variance. The penalty is infinite.
+### Anti-collapse (Activity Volume)
 
-**Decorrelation term:** ||Corr(A) - I||²
+A component that never responds has zero effective support. We penalize this by encouraging nonzero dispersion across the dataset:
 
-This prevents redundancy. If two components encode the same thing, they're correlated. The penalty grows.
+$$L_{\text{var}} = -\sum_j \log \text{Var}(A_j)$$
 
-Together, these serve the role of the log-determinant: they enforce that components maintain volume and diversity.
+If a component collapses, its variance goes to zero and the penalty diverges.
 
-## The Complete Objective
+### Redundancy Reduction
 
-Combining log-sum-exp (EM structure) with InfoMax (volume control):
+To prevent multiple components from encoding the same structure, we penalize second-order dependence:
 
-```
-L = -log Σⱼ exp(-aⱼ) - λ_var Σⱼ log(Var(aⱼ) + ε) + λ_tc ||Corr(A) - I||²
-```
+$$L_{\text{tc}} = \|\text{Corr}(A) - I\|^2$$
 
-**Term 1:** Marginal likelihood. At least one prototype should be close to each input. Provides EM gradient structure.
+This encourages decorrelated outputs and approximates independence at the level of linear statistics.
 
-**Term 2:** Entropy. All prototypes must be active. Prevents collapse.
-
-**Term 3:** Decorrelation. Prototypes must be different. Prevents redundancy.
+Together, these terms enforce effective volume and diversity in representation space, serving the role that the log-determinant plays in Gaussian mixture models.
 
 ## The Sign-Flip: A Min-Max Game
 
-There is a crucial sign difference between standard clustering and our model.
+There is a crucial sign difference between standard clustering and our model that reveals the dynamics at play.
 
 **Standard clustering EM:**
-```
-max log Σⱼ exp(zⱼ)  → pull prototypes toward data
-```
+$$\max \log \sum_j \exp(z_j) \rightarrow \text{pull prototypes toward data}$$
 
 **Our model:**
-```
-min log Σⱼ exp(zⱼ)  → push prototypes apart
-```
+$$\min \log \sum_j \exp(z_j) \rightarrow \text{push prototypes apart}$$
 
-This inverts the role of the LSE term. Minimizing LSE penalizes prototypes that are too close to inputs relative to others. It's a repulsive force.
+This inverts the role of the LSE term. Minimizing LSE penalizes prototypes that are too close to inputs relative to others. It acts as a repulsive force that distributes responsibility.
 
-**InfoMax is the attractive force.**
-
-The entropy term -Σⱼ log(Var(aⱼ)) rewards prototypes that respond strongly to inputs. To have high variance, a prototype must be close to some data. InfoMax pulls prototypes toward the data.
+**InfoMax is the attractive force.** The variance term $-\sum_j \log \text{Var}(A_j)$ rewards prototypes that respond strongly to inputs. To have high variance, a prototype must be close to some data. InfoMax pulls prototypes toward the data.
 
 **The model is a min-max game:**
 
 | Term | Force | Effect |
 |------|-------|--------|
-| InfoMax (entropy) | Attractive | Pull prototypes toward data |
+| InfoMax (variance) | Attractive | Pull prototypes toward data |
 | LSE | Repulsive | Push prototypes apart (distribute responsibility) |
 
 This implements competitive learning:
@@ -115,154 +103,153 @@ This implements competitive learning:
 - LSE taxes prototypes proportional to their responsibility
 - The equilibrium: prototypes spread out to cover the data
 
-**Connection to prior work:**
+This is differentiable vector quantization. Similar dynamics appear in Self-Organizing Maps (Kohonen) and competitive learning networks. The difference: our formulation is fully differentiable and probabilistic, with soft responsibilities emerging via the implicit softmax in the LSE gradient.
 
-This is differentiable vector quantization. Similar dynamics appear in:
-- Self-Organizing Maps (Kohonen)
-- Competitive learning networks
-- Vector quantization
+## Complete Objective
 
-The difference: our formulation is fully differentiable and probabilistic. No hard winner selection. Soft responsibilities via the implicit softmax in the LSE gradient.
+The full loss is:
 
-## The Architecture
+$$L = -\log \sum_j \exp(-E_j(x)) + \lambda_{\text{var}} \left(-\sum_j \log \text{Var}(A_j)\right) + \lambda_{\text{tc}} \|\text{Corr}(A) - I\|^2 + \lambda_{\text{wr}} \|W^\top W - I\|^2$$
 
-The minimal architecture is:
+**Term 1 — Log-sum-exp:** Provides implicit EM structure via responsibility-weighted gradients. The repulsive force that distributes components.
 
-```
-z = Wx + b
-a = relu(z)
-L = logsumexp(-a) + infomax(a)
-```
+**Term 2 — Variance:** Prevents dead components. The attractive force that keeps prototypes engaged with data.
 
-**Linear layer:** Computes distances to prototypes. Each row of W is a prototype direction.
+**Term 3 — Correlation penalty:** Prevents redundant output representations.
 
-**ReLU:** Ensures non-negative activations. Introduces sparsity. Low activation = far from prototype.
+**Term 4 — Weight regularization:** Prevents degenerate or duplicate parameterizations. (This term was predicted in the Mahalanobis paper as "orthogonality constraint or regularization on the weight matrices.")
 
-**LogSumExp loss:** Provides EM gradient structure. ∂L/∂aⱼ = -rⱼ.
+This objective is decoder-free: no reconstruction term appears.
 
-**InfoMax terms:** Volume control. Prevent collapse and redundancy.
+## Architecture
 
-No decoder. No reconstruction. The objective is implicit likelihood with information-theoretic regularization.
+A minimal instantiation is:
 
-## Connection to Prior Work
+$$z = Wx + b, \qquad E = \phi(z)$$
 
-### Energy-Based Models (LeCun et al. 2006)
+where $\phi$ is any activation producing component energies.
 
-EBMs define probability via energy:
-```
-P(x) ∝ exp(-E(x))
-```
+Lower energy corresponds to better explanation. Responsibilities are computed implicitly via:
 
-Our logsumexp term is:
-```
-L = -log Σⱼ exp(-aⱼ) = -log Σⱼ exp(-Eⱼ(x))
-```
+$$r = \text{softmax}(-E)$$
 
-This is the negative log marginal likelihood under a mixture of energy functions. Each prototype j defines an energy Eⱼ(x) = aⱼ = relu(wⱼᵀx + bⱼ).
+The choice of $\phi$ affects geometry but not the implicit-EM property. ReLU, softplus, or identity may be used, provided scale is controlled.
 
-The InfoMax terms are regularization on the energy landscape—ensuring diverse, well-spread energies.
+**Concrete example:**
 
-### Sparse Coding (Olshausen & Field 1996)
-
-Sparse coding learns:
-```
-min ||x - Da||² + λ||a||₁
-```
-
-Decoder D, sparse code a. Reconstruction + sparsity.
-
-Our approach removes the decoder. Sparsity emerges from ReLU. The objective is likelihood + information preservation, not reconstruction.
-
-This is "decoder-free" sparse coding: learn sparse representations without explicit reconstruction.
-
-### InfoMax / ICA (Bell & Sejnowski 1995)
-
-Bell & Sejnowski showed that maximizing information transmission leads to independent components:
-```
-max I(X; A) = max H(A) - H(A|X)
-```
-
-Our entropy and decorrelation terms approximate this:
-- Maximize variance (entropy proxy under Gaussian assumption)
-- Minimize correlation (independence proxy for linear dependence)
-
-The connection: InfoMax is the right regularizer for EM-based learning because it enforces the distributional properties that prevent collapse.
-
-### Implicit EM (Oursland 2025)
-
-The gradient identity ∂L/∂dⱼ = -rⱼ means:
-- Forward pass computes unnormalized likelihoods
-- Normalization yields responsibilities
-- Backpropagation delivers responsibility-weighted updates
-
-This paper provides the EM structure. Our contribution is identifying InfoMax as the appropriate volume control.
-
-## Do We Need Explicit Decorrelation and Weight Regularization?
-
-Empirically, we found:
-
-**Without InfoMax (pure logsumexp):** Collapse occurs. One prototype dominates.
-
-**With entropy term only:** Collapse prevented. All units active. But redundancy possible.
-
-**With entropy + decorrelation:** Non-redundant outputs. But weights can still be redundant (bias loophole with ReLU).
-
-**With weight redundancy penalty:** Forces diverse weight directions. Closes all loopholes.
-
-However, the necessity depends on architecture:
-
-| Configuration | Needs λ_tc | Needs λ_wr |
-|---------------|-----------|-----------|
-| Linear → ReLU → LogSumExp | Maybe | Yes |
-| Linear → Softmax → LogSumExp | Less | Less |
-
-When softmax appears in the forward pass, competition provides implicit regularization. Weight vectors naturally differentiate to win different responsibilities.
-
-When using only logsumexp loss (softmax implicit in gradient), explicit regularization is needed to prevent degenerate solutions.
-
-**Recommendation:** Start with full InfoMax regularization (λ_tc > 0, λ_wr > 0). Ablate to find minimal necessary terms for your architecture.
-
-## Theoretical Summary
-
-**Claim:** Decoder-free sparse autoencoders can be derived from implicit EM theory.
-
-**Derivation:**
-1. Implicit EM requires logsumexp loss structure
-2. Logsumexp alone collapses (missing volume control)
-3. InfoMax provides volume control (entropy prevents death, decorrelation prevents redundancy)
-4. Combined objective: logsumexp + InfoMax
-
-**Result:**
 ```
 z = Wx + b
 a = relu(z)
 L = -log Σⱼ exp(-aⱼ) + λ_var(-Σⱼ log Var(aⱼ)) + λ_tc ||Corr(A) - I||² + λ_wr ||WᵀW - I||²
 ```
 
-**Interpretation:**
-- LogSumExp: MLE under mixture model, provides EM gradient structure
-- Entropy: Prevents collapse (analogous to log-determinant)
-- Decorrelation: Prevents redundant representations
-- Weight redundancy: Prevents redundant prototypes
+**Linear layer:** Computes distances to prototypes. Each row of W is a prototype direction.
 
-## Relation to the Original Paper
+**ReLU:** Ensures non-negative energies. Introduces sparsity. Low activation = high energy = far from prototype.
 
-The paper "Gradient Descent as Implicit EM" establishes that EM structure exists at the output layer for logsumexp objectives. It notes that internal layers do not have this structure and that collapse is a risk without volume control.
+**Combined loss:** EM structure plus volume control.
 
-Our contribution:
-1. **Locate the missing piece:** InfoMax serves as volume control
-2. **Derive the architecture:** Linear → Activation → LogSumExp + InfoMax
-3. **Connect to prior work:** This is decoder-free sparse coding / EBM arrived at from EM principles
-4. **Empirically validate:** Document failure modes and solutions
+No decoder. No reconstruction. The objective is implicit likelihood with information-theoretic regularization.
 
-The paper asks: what are neural networks doing? Answer: implicit EM at the output.
+## Interpretation
 
-We ask: how do we build a layer that does full implicit EM? Answer: logsumexp loss with InfoMax regularization.
+- The log-sum-exp term implements maximum likelihood under a mixture of energy-based components and induces EM-style competition.
+- The regularization terms supply the missing volume control required for stable unsupervised learning.
+- Sparsity emerges from competitive responsibility allocation rather than explicit $L_1$ penalties.
+- No decoder is required: information is preserved by construction through responsibility competition and volume constraints.
+
+## Empirical Observations
+
+Experiments on MNIST with a single-layer model revealed several findings:
+
+**Without InfoMax (pure logsumexp):** Collapse occurs. One prototype dominates all inputs.
+
+**With variance term only:** Collapse prevented. All units remain active. But output redundancy is possible.
+
+**With variance + decorrelation:** Non-redundant outputs achieved. However, weights can still be redundant via a "bias loophole"—with ReLU, identical weight vectors with different biases can produce independent outputs by firing on different input subsets.
+
+**With weight redundancy penalty:** Forces diverse weight directions. Closes the bias loophole.
+
+**Softmax in forward pass:** When softmax appears as an explicit activation (not just implicit in the loss gradient), competition provides implicit regularization. Weight vectors naturally differentiate. The need for explicit $\lambda_{\text{tc}}$ and $\lambda_{\text{wr}}$ is reduced.
+
+**Optimizer behavior:** With explicit softmax activation, SGD and Adam perform similarly. Without it, Adam significantly outperforms SGD. This suggests EM structure normalizes the optimization landscape.
+
+| Configuration | Needs $\lambda_{\text{tc}}$ | Needs $\lambda_{\text{wr}}$ |
+|---------------|-----------|-----------|
+| Linear → ReLU → LogSumExp loss | Yes | Yes |
+| Linear → ReLU → Softmax → loss | Less | Less |
+
+**Recommendation:** Start with full regularization ($\lambda_{\text{tc}} > 0$, $\lambda_{\text{wr}} > 0$). Ablate to find minimal necessary terms for your architecture.
+
+## Connection to Prior Work
+
+### Energy-Based Models (LeCun et al. 2006)
+
+EBMs define probability via energy:
+
+$$P(x) \propto \exp(-E(x))$$
+
+Our logsumexp term is the negative log marginal likelihood under a mixture of energy functions:
+
+$$L = -\log \sum_j \exp(-E_j(x))$$
+
+Each prototype $j$ defines an energy $E_j(x) = \phi(w_j^\top x + b_j)$.
+
+The InfoMax terms are regularization on the energy landscape—ensuring diverse, well-spread energy wells.
+
+### Sparse Coding (Olshausen & Field 1996)
+
+Sparse coding learns:
+
+$$\min \|x - Da\|^2 + \lambda\|a\|_1$$
+
+This requires a decoder $D$ and explicit sparsity penalty.
+
+Our approach removes the decoder. Sparsity emerges from competitive responsibility allocation. The objective is likelihood + volume control, not reconstruction + sparsity.
+
+This is "decoder-free" sparse coding: learning sparse representations without explicit reconstruction.
+
+### InfoMax / ICA (Bell & Sejnowski 1995)
+
+Bell & Sejnowski showed that maximizing information transmission leads to independent components. Our variance and decorrelation terms approximate this operationally:
+
+- Maximize variance → entropy proxy under Gaussian assumption
+- Minimize correlation → independence proxy for linear dependence
+
+We do not claim to compute mutual information. The connection is that InfoMax-inspired regularization provides the distributional constraints that prevent collapse in EM-based learning.
+
+### Implicit EM (Oursland 2025)
+
+The gradient identity $\partial L/\partial d_j = -r_j$ means:
+
+- Forward pass computes unnormalized likelihoods (energies)
+- Normalization yields responsibilities (implicit in gradient)
+- Backpropagation delivers responsibility-weighted updates
+
+This paper provides the EM structure. Our contribution is identifying InfoMax regularization as the appropriate volume control—the missing piece that makes unsupervised implicit EM practical.
+
+### Mahalanobis Distance (Oursland 2024)
+
+The interpretation of linear layers as computing Mahalanobis distances to prototypes motivates:
+
+- Weight vectors as prototype directions
+- The bias loophole (same direction, different offset)
+- Orthogonality regularization to encourage independent features
+
+The weight redundancy term $\|W^\top W - I\|^2$ was predicted in this earlier work as necessary for learning true principal components rather than arbitrary whitening bases.
+
+## Summary Claim
+
+**Decoder-free sparse autoencoders arise naturally from implicit EM when log-sum-exp objectives are combined with explicit volume and redundancy control.**
+
+Reconstruction is one way to impose such control, but not a necessary one. The log-sum-exp structure provides EM dynamics; InfoMax-inspired regularization provides the volume control that prevents collapse. Together, they yield a principled unsupervised objective derived from first principles.
 
 ## References
 
 - Bell, A. J., & Sejnowski, T. J. (1995). An information-maximization approach to blind separation and blind deconvolution. Neural Computation.
+- Kohonen, T. (1982). Self-organized formation of topologically correct feature maps. Biological Cybernetics.
 - LeCun, Y., Chopra, S., Hadsell, R., Ranzato, M., & Huang, F. J. (2006). A tutorial on energy-based learning. In Predicting Structured Data.
 - Linsker, R. (1988). Self-organization in a perceptual network. Computer.
 - Olshausen, B. A., & Field, D. J. (1996). Emergence of simple-cell receptive field properties by learning a sparse code for natural images. Nature.
+- Oursland, A. (2024). Interpreting Neural Networks through Mahalanobis Distance. arXiv:2410.19352.
 - Oursland, A. (2025). Gradient Descent as Implicit EM in Distance-Based Neural Models. arXiv:2512.24780.
