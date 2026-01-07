@@ -16,11 +16,11 @@ def lse_loss(a: torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor]:
         loss: Scalar loss (mean over batch)
         responsibilities: Tensor of shape (batch, hidden_dim) with r_j = softmax(-a_j)
     """
-    # LSE loss: -log sum_j exp(-a_j) = -logsumexp(-a, dim=1)
-    # This is equivalent to log(1 / sum_j exp(-a_j))
+    # LSE loss: -logsumexp(-a) so that gradient = softmax(-a) = responsibility
+    # This ensures the key theorem: ∂loss/∂a = r
     neg_a = -a
     lse = torch.logsumexp(neg_a, dim=1)  # (batch,)
-    loss = lse.mean()
+    loss = -lse.sum()  # Negative sign ensures gradient = responsibility
 
     # Responsibilities: r_j = exp(-a_j) / sum_k exp(-a_k) = softmax(-a)
     responsibilities = torch.softmax(neg_a, dim=1)  # (batch, hidden_dim)

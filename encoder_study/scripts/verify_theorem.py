@@ -48,8 +48,8 @@ def verify_theorem(
     # Forward pass
     a, z = model(x)
 
-    # Enable gradient tracking on activations
-    a.requires_grad_(True)
+    # Enable gradient tracking on activations (use retain_grad for non-leaf tensors)
+    a.retain_grad()
 
     # Compute LSE loss and responsibilities
     loss, responsibilities = lse_loss(a)
