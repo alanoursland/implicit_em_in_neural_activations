@@ -77,33 +77,46 @@ This encourages decorrelated outputs and approximates independence at the level 
 
 Together, these terms enforce effective volume and diversity in representation space, serving the role that the log-determinant plays in Gaussian mixture models.
 
-## The Sign-Flip: A Min-Max Game
+## The Dynamics: Attraction vs. Structure
 
-There is a crucial sign difference between standard clustering and our model that reveals the dynamics at play.
+To understand why this objective works, we analyze the forces created by the gradients of the two primary terms.
 
-**Standard clustering EM:**
-$$\max \log \sum_j \exp(z_j) \rightarrow \text{pull prototypes toward data}$$
+### The Attractive Force (LSE)
 
-**Our model:**
-$$\min \log \sum_j \exp(z_j) \rightarrow \text{push prototypes apart}$$
+The term $-\log \sum_j \exp(-E_j)$ is the negative log-likelihood. Minimizing this objective maximizes the likelihood, which drives the energies $E_j$ toward zero.
 
-This inverts the role of the LSE term. Minimizing LSE penalizes prototypes that are too close to inputs relative to others. It acts as a repulsive force that distributes responsibility.
+**Effect:** It pulls prototypes toward the data.
 
-**InfoMax is the attractive force.** The variance term $-\sum_j \log \text{Var}(A_j)$ rewards prototypes that respond strongly to inputs. To have high variance, a prototype must be close to some data. InfoMax pulls prototypes toward the data.
+**Mechanism:** The gradient $\partial L / \partial E_j = r_j$ weighs updates by responsibility. The closest component (highest responsibility) is pulled hardest toward each input.
 
-**The model is a min-max game:**
+**Risk:** Without opposition, this force leads to **collapse**—one component tries to cover every data point, or all components converge to identical positions.
 
-| Term | Force | Effect |
-|------|-------|--------|
-| InfoMax (variance) | Attractive | Pull prototypes toward data |
-| LSE | Repulsive | Push prototypes apart (distribute responsibility) |
+### The Structural Force (InfoMax)
 
-This implements competitive learning:
-- Every prototype tries to get close to data (InfoMax)
-- LSE taxes prototypes proportional to their responsibility
-- The equilibrium: prototypes spread out to cover the data
+The InfoMax terms act as structural constraints that oppose collapse:
 
-This is differentiable vector quantization. Similar dynamics appear in Self-Organizing Maps (Kohonen) and competitive learning networks. The difference: our formulation is fully differentiable and probabilistic, with soft responsibilities emerging via the implicit softmax in the LSE gradient.
+**Variance ($L_{\text{var}}$):** This penalizes components that are constant. To maximize variance, a component cannot sit at the mean of all data. It must be very close to some inputs (low energy) and very far from others (high energy). This forces selectivity.
+
+**Decorrelation ($L_{\text{tc}}$):** This acts as a repulsive force between prototypes in output space. It ensures that no two components capture the exact same structure.
+
+### The Equilibrium
+
+The system settles into a state of **competitive coverage**:
+
+1. **LSE** ensures every data point is "claimed" by at least one prototype (coverage)
+2. **InfoMax** ensures that claims are distinct (diversity) and decisive (selectivity)
+
+This replaces the "reconstruction" objective of standard autoencoders—which anchors features to data fidelity—with an "existence" objective that anchors features to statistical distinctness.
+
+## Why It Works (Intuition)
+
+Standard sparse autoencoders use a decoder to ensure features retain information about the input. We replace the decoder with a tension between two objectives:
+
+**"Cover the Data" (LSE):** The implicit EM term demands that for every input $x$, some component must explain it (low energy). This pulls prototypes into high-density regions of the data manifold.
+
+**"Be Unique" (InfoMax):** The regularization demands that features must be active, distinct, and high-contrast. It prevents the LSE term from collapsing to the data mean.
+
+The result is a set of features that tile the data manifold, effectively performing differentiable vector quantization with soft assignments.
 
 ## Complete Objective
 
@@ -111,11 +124,11 @@ The full loss is:
 
 $$L = -\log \sum_j \exp(-E_j(x)) + \lambda_{\text{var}} \left(-\sum_j \log \text{Var}(A_j)\right) + \lambda_{\text{tc}} \|\text{Corr}(A) - I\|^2 + \lambda_{\text{wr}} \|W^\top W - I\|^2$$
 
-**Term 1 — Log-sum-exp:** Provides implicit EM structure via responsibility-weighted gradients. The repulsive force that distributes components.
+**Term 1 — Log-sum-exp:** Provides implicit EM structure via responsibility-weighted gradients. The attractive force that pulls prototypes toward data.
 
-**Term 2 — Variance:** Prevents dead components. The attractive force that keeps prototypes engaged with data.
+**Term 2 — Variance:** Prevents dead components. Forces selectivity by requiring high-contrast responses.
 
-**Term 3 — Correlation penalty:** Prevents redundant output representations.
+**Term 3 — Correlation penalty:** Prevents redundant output representations. The repulsive force between features.
 
 **Term 4 — Weight regularization:** Prevents degenerate or duplicate parameterizations. (This term was predicted in the Mahalanobis paper as "orthogonality constraint or regularization on the weight matrices.")
 
