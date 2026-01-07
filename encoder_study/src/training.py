@@ -51,9 +51,12 @@ def train_epoch(
     for batch in loader:
         # Handle different data formats
         if isinstance(batch, (list, tuple)):
-            x = batch[0].to(device)
+            x = batch[0]
         else:
-            x = batch.to(device)
+            x = batch
+        # Only move to device if not already there (GPU-cached loaders are already on device)
+        if x.device != device:
+            x = x.to(device)
 
         optimizer.zero_grad()
 
@@ -123,9 +126,12 @@ def evaluate(
     with torch.no_grad():
         for batch in loader:
             if isinstance(batch, (list, tuple)):
-                x = batch[0].to(device)
+                x = batch[0]
             else:
-                x = batch.to(device)
+                x = batch
+            # Only move to device if not already there
+            if x.device != device:
+                x = x.to(device)
 
             if isinstance(model, Encoder):
                 a, z = model(x)

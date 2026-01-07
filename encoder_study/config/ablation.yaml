@@ -26,7 +26,7 @@ model:
 
 loss:
   lambda_wr: 0.0
-  variance_eps: 1e-6
+  variance_eps: 1.0e-6
 
 training:
   epochs: 100

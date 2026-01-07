@@ -66,8 +66,8 @@ class TestLSELoss:
         loss, r = lse_loss(a)
         loss.backward()
 
-        # Gradient should equal responsibility (scaled by 1/batch_size due to mean reduction)
-        assert torch.allclose(a.grad * a.shape[0], r, atol=1e-5), \
+        # Gradient should equal responsibility exactly (with sum reduction)
+        assert torch.allclose(a.grad, r, atol=1e-5), \
             "Gradient should equal responsibility (key theorem)"
 
     def test_lse_loss_gradient_theorem_identity_activation(self):

@@ -51,7 +51,7 @@ class TestTrainEpoch:
         metrics = train_epoch(model, loader, optimizer, loss_config, device)
 
         assert "loss" in metrics
-        assert metrics["loss"] > 0
+        assert isinstance(metrics["loss"], float)  # LSE loss can be negative
 
     def test_train_epoch_sae(self):
         """Test training epoch with StandardSAE."""
