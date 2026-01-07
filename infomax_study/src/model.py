@@ -4,12 +4,19 @@ from .activations import get_activation
 
 class SingleLayer(nn.Module):
     """
-    Single layer model: z = Wx + b, a = activation(z)
+    Single layer model: z = Wx + b, h = activation(z), a = softmax(h)
+
+    Architecture:
+      Input → Linear → Activation → Softmax → Output
+
+    The softmax output 'a' represents responsibilities/posterior probabilities,
+    creating EM-like behavior where each sample has a soft assignment across K units.
     """
     def __init__(self, input_dim: int, hidden_dim: int, activation: str):
         super().__init__()
         self.linear = nn.Linear(input_dim, hidden_dim)
         self.activation = get_activation(activation)
+        self.softmax = nn.Softmax(dim=1)
         self._init_weights()
 
     def _init_weights(self):
@@ -18,7 +25,8 @@ class SingleLayer(nn.Module):
 
     def forward(self, x):
         z = self.linear(x)
-        a = self.activation(z)
+        h = self.activation(z)
+        a = self.softmax(h)
         return a, z
 
     @property

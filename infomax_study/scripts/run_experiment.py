@@ -198,6 +198,9 @@ def run(config_path: str, output_dir: str = None, profile: bool = False, profile
         print(f"  - Dead Units: {history['final_metrics']['dead_units']}")
         print(f"  - Output Correlation: {history['final_metrics']['output_correlation']:.4f}")
         print(f"  - Final Loss: {history['train_loss'][-1]:.4f}")
+        print(f"  - Final Entropy: {history['train_entropy'][-1]:.4f}")
+        print(f"  - Final TC: {history['train_tc'][-1]:.4f}")
+        print(f"  - Final WR: {history['train_wr'][-1]:.4f}")
 
     print("\n" + "=" * 70)
     print("Experiment completed successfully!")

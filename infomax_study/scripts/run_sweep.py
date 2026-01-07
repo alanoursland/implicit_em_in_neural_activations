@@ -45,6 +45,8 @@ def generate_configs(base_config_path: str, sweep_config_path: str, output_dir: 
                 config["loss"]["lambda_tc"] = val
             elif key == "lambda_wr":
                 config["loss"]["lambda_wr"] = val
+            elif key == "optimizer":
+                config["training"]["optimizer"] = val
             elif key == "seed":
                 config["training"]["seed"] = val
 

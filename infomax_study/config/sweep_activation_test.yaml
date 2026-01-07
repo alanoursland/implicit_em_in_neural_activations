@@ -1,23 +1,32 @@
 # config/sweep_activation_test.yaml
-# Test whether activation function matters with properly configured objective
-# Hypothesis: With lambda_tc=100 and lambda_wr=10, activation choice may not matter
+# Test whether pre-softmax activation affects weight redundancy under EM structure
+# Architecture: Linear → Activation → Softmax → InfoMax
+# Hypothesis: Softmax provides implicit regularization regardless of activation choice
+# Using SGD to test if EM structure normalizes optimization across activations
 
 activation:
   - identity
   - relu
-  - softmax
   - tanh
 
 hidden_dim:
+  - 8
   - 16
+  - 32
+  - 64
 
 lambda_tc:
-  - 100.0
+  - 0.0
 
 lambda_wr:
-  - 10.0
+  - 0.0
+
+optimizer:
+  - sgd
 
 seed:
   - 1
   - 2
   - 3
+  - 4
+  - 5

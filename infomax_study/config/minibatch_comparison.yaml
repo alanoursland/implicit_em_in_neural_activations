@@ -12,14 +12,14 @@ model:
   activation: "relu"
 
 loss:
-  lambda_tc: 100.0
-  lambda_wr: 10.0  # weight redundancy penalty
+  lambda_tc: 0.0
+  lambda_wr: 0.0  # weight redundancy penalty
   variance_eps: 0.000001
 
 training:
-  epochs: 100
+  epochs: 200
   lr: 0.001
-  optimizer: "adam"
+  optimizer: "sgd"
   seed: 42
 
 logging:
