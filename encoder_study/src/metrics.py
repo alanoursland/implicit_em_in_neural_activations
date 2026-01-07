@@ -2,7 +2,7 @@
 
 import torch
 import numpy as np
-from typing import Union
+from typing import Tuple, Union
 
 
 def dead_units(a: torch.Tensor, threshold: float = 0.01) -> int:
@@ -153,7 +153,9 @@ def reconstruction_mse(
     return float(mse.item())
 
 
-def sparsity_l0(a: torch.Tensor, threshold: float = 0.01) -> float:
+def sparsity_l0(
+    a: torch.Tensor, threshold: float = 0.01
+) -> Tuple[float, float]:
     """Compute average L0 sparsity (number of active units per sample).
 
     Args:
@@ -161,10 +163,15 @@ def sparsity_l0(a: torch.Tensor, threshold: float = 0.01) -> float:
         threshold: Activation threshold below which a unit is considered inactive
 
     Returns:
-        Average number of active units per sample (float)
+        Tuple of (l0, density):
+            - l0: Average number of active units per sample
+            - density: Fraction of features active (l0 / hidden_dim)
     """
+    hidden_dim = a.shape[1]
     active = (a.abs() > threshold).float()
-    return float(active.sum(dim=1).mean().item())
+    l0 = float(active.sum(dim=1).mean().item())
+    density = l0 / hidden_dim
+    return l0, density
 
 
 def feature_similarity_matrix(W: torch.Tensor) -> np.ndarray:
@@ -233,3 +240,66 @@ def compute_all_metrics(
         "reconstruction_mse": reconstruction_mse(x, a, W),
         "sparsity_l0": sparsity_l0(a),
     }
+
+
+def linear_probe_accuracy(
+    train_features: np.ndarray,
+    train_labels: np.ndarray,
+    test_features: np.ndarray,
+    test_labels: np.ndarray,
+) -> float:
+    """Train linear classifier on features and return test accuracy.
+
+    Args:
+        train_features: Training features (n_train, hidden_dim)
+        train_labels: Training labels (n_train,)
+        test_features: Test features (n_test, hidden_dim)
+        test_labels: Test labels (n_test,)
+
+    Returns:
+        Test accuracy (float between 0 and 1)
+    """
+    from sklearn.linear_model import LogisticRegression
+    from sklearn.preprocessing import StandardScaler
+
+    # Scale features (activations can have large magnitude)
+    scaler = StandardScaler()
+    train_features = scaler.fit_transform(train_features)
+    test_features = scaler.transform(test_features)
+
+    clf = LogisticRegression(max_iter=5000, solver="lbfgs", multi_class="multinomial")
+    clf.fit(train_features, train_labels)
+    accuracy = clf.score(test_features, test_labels)
+    return float(accuracy)
+
+
+def normalized_reconstruction_mse(
+    x: torch.Tensor,
+    a: torch.Tensor,
+    W: torch.Tensor,
+) -> float:
+    """Reconstruction MSE with normalized activations.
+
+    Normalizes activations to unit norm before reconstruction, then scales
+    to match input norm. This handles scale differences between models.
+
+    Args:
+        x: Original input (batch, input_dim)
+        a: Activations (batch, hidden_dim)
+        W: Weight matrix (hidden_dim, input_dim)
+
+    Returns:
+        Normalized mean squared error (float)
+    """
+    # Normalize activations to unit norm per sample
+    a_norm = a / (a.norm(dim=1, keepdim=True) + 1e-8)
+
+    # Reconstruct
+    x_hat = a_norm @ W  # (batch, input_dim)
+
+    # Scale to match input norm
+    x_hat = x_hat * (x.norm(dim=1, keepdim=True) / (x_hat.norm(dim=1, keepdim=True) + 1e-8))
+
+    # MSE
+    mse = ((x - x_hat) ** 2).mean()
+    return float(mse.item())

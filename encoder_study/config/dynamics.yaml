@@ -1,0 +1,18 @@
+model:
+  input_dim: 784
+  hidden_dim: 64
+  activation: relu
+
+loss:
+  lambda_lse: 1.0
+  lambda_var: 1.0
+  lambda_tc: 1.0
+
+training:
+  epochs: 100
+  batch_size: 128
+
+sweep:
+  optimizers: [adam, sgd]
+  learning_rates: [0.0001, 0.001, 0.01, 0.1]
+  seeds: [1, 2, 3]
