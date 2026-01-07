@@ -1,0 +1,1 @@
+"""InfoMax activation study package."""
