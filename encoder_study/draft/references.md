@@ -1,230 +1,163 @@
-Here is the curated list of applicable citations, combining your seed list with critical references identified in the provided documents (`infomax_as_em_objective.md`, `infomax_vs_pretraining_prior_art.md`).
+# Related Work and Theoretical Context
 
-### **Core Theory (The "First Principles")**
+This document consolidates and organizes the full set of applicable citations underlying the proposed decoder-free, implicit-EM, InfoMax-regularized framework. It unifies the original seed list with additional references identified in *infomax_as_em_objective.md* and *infomax_vs_pretraining_prior_art.md*, removes redundancy, and presents a coherent narrative suitable for a **Related Work**, **Theory**, or **Discussion** section of an arXiv paper.
 
-* **Oursland, A. (2025). Gradient Descent as Implicit EM in Distance-Based Neural Models. arXiv:2512.24780.**
-* **Applicability:** This is the primary theoretical foundation. It establishes the mathematical identity  that allows standard backpropagation to be interpreted as the E-step and M-step of an EM algorithm.
-
-
-* **Oursland, A. (2024). Interpreting Neural Networks through Mahalanobis Distance. arXiv:2410.19352.**
-* **Applicability:** Provides the geometric interpretation of linear layers as computing distances to prototypes. It justifies the "distance-based" view of activations () and predicts the necessity of the weight orthogonality term used in the final objective.
-
-
-* **LeCun, Y., Chopra, S., Hadsell, R., Ranzato, M., & Huang, F. J. (2006). A tutorial on energy-based learning. In Predicting Structured Data.**
-* **Applicability:** Establishes the framework of Energy-Based Models (EBMs). Your LSE objective is identified as the negative log marginal likelihood under a mixture of energy functions defined by this framework.
-
-
-
-### **The Objective (InfoMax & Regularization)**
-
-* **Bell, A. J., & Sejnowski, T. J. (1995). An information-maximization approach to blind separation and blind deconvolution. Neural Computation.**
-* **Applicability:** The primary inspiration for the "InfoMax" regularization terms. It provides the theoretical basis for maximizing variance and minimizing correlation to achieve independent features.
-
-
-* **Linsker, R. (1988). Self-organization in a perceptual network. Computer.**
-* **Applicability:** seminal work on the principle of maximum information preservation in neural layers. Cited to credit the broader "InfoMax" philosophy used to justify the volume control terms.
-
-
-* **Zbontar, J., et al. (2021). Barlow Twins: Self-Supervised Learning via Redundancy Reduction. ICML.**
-* **Applicability:** Specifically referenced as the source for the "Decorrelation Proxy" loss term (). It provides the tractable implementation for the redundancy reduction part of your InfoMax objective.
-
-
-
-### **Architecture & Dynamics**
-
-* **Olshausen, B. A., & Field, D. J. (1996). Emergence of simple-cell receptive field properties by learning a sparse code for natural images. Nature.**
-* **Applicability:** Defines the standard "Sparse Coding" objective (Reconstruction + Sparsity) that this paper aims to supersede. It serves as the baseline model from which you remove the decoder.
-
-
-* **Kohonen, T. (1982). Self-organized formation of topologically correct feature maps. Biological Cybernetics.**
-* **Applicability:** Connects your implicit EM dynamics to Competitive Learning. It frames the "push-pull" equilibrium of your model (LSE vs. InfoMax) as a differentiable, probabilistic version of Self-Organizing Maps.
-
-
-
-### **Historical Context (Why "Decoder-Free" Matters)**
-
-* **Hinton, G. E., & Salakhutdinov, R. R. (2006). Reducing the dimensionality of data with neural networks. Science.**
-* **Applicability:** Contextualizes the work within the history of layer-wise pretraining (RBMs). It highlights the original motivation for unsupervised feature learning that was later abandoned, which this paper seeks to revive with a better objective.
-
-
-* **Vincent, P., et al. (2008). Extracting and composing robust features with denoising autoencoders. ICML.**
-* **Applicability:** Represents the "Autoencoder Era" that established the Encoder-Decoder architecture as the default. Cited to define the "Decoder Tax" problem (reconstruction focus) that your method eliminates.
+The emphasis throughout is on *why* each citation is necessary, not merely that it is thematically related.
 
 ---
 
-That instinct is probably right, and that’s okay — arXiv is actually the *correct* home for a paper whose main contribution is conceptual unification rather than a leaderboard result.
+## 1. Core Theory: First Principles
 
-Below is a clean, expandable citation list. Each entry has a short paragraph explaining *exactly* why it belongs, not just that it’s related. I’ve kept these tight and defensible, the way you’d want them in a Related Work or Discussion section.
+### Implicit EM and Distance-Based Learning
 
----
+**Oursland, A. (2025). *Gradient Descent as Implicit EM in Distance-Based Neural Models*. arXiv:2512.24780.**
 
-**Bell, A. J., & Sejnowski, T. J. (1995). *An information-maximization approach to blind separation and blind deconvolution*. Neural Computation.**
-This work introduced InfoMax as a principle for learning independent components by maximizing output entropy and minimizing redundancy. The present paper borrows the *operational* insight rather than the exact mutual information formulation: variance maximization and decorrelation serve as practical proxies for independence. InfoMax here plays the role of volume control in implicit EM, rather than serving as a complete statistical objective.
-
----
-
-**Kohonen, T. (1982). *Self-organized formation of topologically correct feature maps*. Biological Cybernetics.**
-Kohonen’s competitive learning dynamics show how prototypes distribute themselves to cover input space through attraction to data and mutual competition. The model derived in this paper recovers similar dynamics—prototypes specialize in different regions—but does so in a fully differentiable, probabilistic framework with soft responsibilities arising from implicit EM rather than hard winner-take-all updates.
-
----
-
-**LeCun, Y., Chopra, S., Hadsell, R., Ranzato, M., & Huang, F. J. (2006). *A tutorial on energy-based learning*.**
-This tutorial formalizes the idea of defining learning objectives via energy functions rather than explicit probabilistic models. The log-sum-exp term in this paper is precisely the negative log marginal likelihood of a mixture of energy-based components. The InfoMax regularization can be interpreted as shaping the energy landscape to prevent degenerate minima, placing this work squarely within the energy-based modeling tradition.
-
----
-
-**Linsker, R. (1988). *Self-organization in a perceptual network*. Computer.**
-Linsker showed that maximizing information transmission alone can lead to the spontaneous emergence of structured, meaningful representations. This paper follows the same philosophical stance: useful features arise from information-theoretic constraints rather than task supervision. The present work extends this idea by embedding InfoMax inside an implicit EM mechanism, giving structure to the learning dynamics rather than relying on unconstrained gradient ascent.
-
----
-
-**Olshausen, B. A., & Field, D. J. (1996). *Emergence of simple-cell receptive field properties by learning a sparse code for natural images*. Nature.**
-Sparse coding demonstrated that interpretable features can emerge from unsupervised learning when sparsity is enforced via reconstruction and an L1 penalty. The present work reaches similar outcomes—sparse, interpretable features—but removes the decoder entirely. Sparsity here emerges from competitive responsibility allocation rather than explicit sparsity penalties, reframing sparse coding as an implicit EM problem with volume control.
+This paper provides the central theoretical foundation. It establishes an exact algebraic identity showing that gradient descent on log-sum-exp (LSE) objectives implicitly performs Expectation–Maximization: gradients correspond to soft responsibilities (E-step), while parameter updates correspond to prototype updates (M-step). The present work builds directly on this result, supplying the missing objective-level constraints—via InfoMax regularization—that make implicit EM viable for unsupervised representation learning without collapse.
 
 ---
 
 **Oursland, A. (2024). *Interpreting Neural Networks through Mahalanobis Distance*. arXiv:2410.19352.**
-This work provides the geometric interpretation that linear layers compute distances to prototypes under a Mahalanobis metric. That interpretation motivates treating encoder activations as energies and weight vectors as prototype directions. It also predicts the need for orthogonality or redundancy control in the weights, which reappears here as part of the full volume-control regularization.
+
+This work provides the geometric interpretation that linear layers compute Mahalanobis distances to learned prototypes. This reframing motivates treating encoder activations as *energies* rather than similarities, justifying the use of LSE as a marginal likelihood. It also predicts the necessity of orthogonality or redundancy control on weights, which reappears in the present work as part of the full volume-control regularization.
 
 ---
 
-**Oursland, A. (2025). *Gradient Descent as Implicit EM in Distance-Based Neural Models*. arXiv:2512.24780.**
-This paper establishes the exact algebraic identity showing that gradient descent on log-sum-exp objectives performs expectation-maximization implicitly. The present work builds directly on that result, supplying the missing objective-side constraints—via InfoMax—that make implicit EM viable for unsupervised representation learning without collapse.
+### Energy-Based Modeling
+
+**LeCun, Y., Chopra, S., Hadsell, R., Ranzato, M., & Huang, F. J. (2006). *A tutorial on energy-based learning*. In *Predicting Structured Data*.**
+
+This tutorial formalizes learning via energy functions rather than explicit normalized probability models. The LSE term used here is precisely the negative log marginal likelihood of a mixture of energy-based components. The InfoMax regularization can be interpreted as shaping the energy landscape to prevent degenerate minima, situating this work squarely within the energy-based modeling tradition.
 
 ---
 
-# Applicable Citations
+## 2. The Objective: InfoMax and Volume Control
 
-## Foundational: InfoMax and ICA
+### Information Maximization
 
-**Bell, A. J., & Sejnowski, T. J. (1995). An information-maximization approach to blind separation and blind deconvolution. Neural Computation.**
+**Bell, A. J., & Sejnowski, T. J. (1995). *An information-maximization approach to blind separation and blind deconvolution*. Neural Computation.**
 
-Established InfoMax as a principle for learning independent components. Our variance and decorrelation terms are operational approximations of this principle. We cite this as inspiration for the regularization approach, while being careful not to claim we compute mutual information exactly.
-
-**Linsker, R. (1988). Self-organization in a perceptual network. Computer.**
-
-Original formulation of the InfoMax principle for neural networks. Linsker showed that maximizing information transmission leads to useful representations. We invoke this principle to justify our variance term (entropy proxy) as volume control.
+This work introduced InfoMax as a principle for learning independent components by maximizing output entropy and minimizing redundancy. The present framework borrows the *operational* insight rather than the exact mutual-information formulation: variance maximization and decorrelation are used as practical proxies for independence. InfoMax here functions as volume control for implicit EM, rather than as a complete statistical objective.
 
 ---
 
-## Foundational: Sparse Coding
+**Linsker, R. (1988). *Self-organization in a perceptual network*. Computer.**
 
-**Olshausen, B. A., & Field, D. J. (1996). Emergence of simple-cell receptive field properties by learning a sparse code for natural images. Nature.**
-
-The original sparse coding paper. Uses reconstruction + L1 sparsity. We position our work as removing the reconstruction term—sparsity emerges from competition rather than explicit penalty. This is the baseline conceptual approach we're simplifying.
+Linsker demonstrated that maximizing information transmission alone can lead to the spontaneous emergence of structured, meaningful representations. The present work follows this philosophy: useful features arise from information-theoretic constraints rather than task supervision. This work extends the idea by embedding InfoMax inside an implicit EM mechanism, giving structure to the learning dynamics rather than relying on unconstrained gradient ascent.
 
 ---
 
-## Foundational: Energy-Based Models
+### Redundancy Reduction and Collapse Prevention
 
-**LeCun, Y., Chopra, S., Hadsell, R., Ranzato, M., & Huang, F. J. (2006). A tutorial on energy-based learning. In Predicting Structured Data.**
+**Zbontar, J., Jing, L., Misra, I., LeCun, Y., & Deny, S. (2021). *Barlow Twins: Self-Supervised Learning via Redundancy Reduction*. ICML.**
 
-Comprehensive treatment of energy-based models. Our LSE term is the negative log marginal likelihood under a mixture of energy functions. We frame our encoder outputs as energies, and this tutorial provides the conceptual vocabulary for that interpretation.
-
----
-
-## Foundational: Competitive Learning
-
-**Kohonen, T. (1982). Self-organized formation of topologically correct feature maps. Biological Cybernetics.**
-
-Self-organizing maps use competitive learning where prototypes compete to represent inputs. Our model has similar dynamics: LSE creates soft competition, InfoMax prevents collapse. We cite this as a non-probabilistic precursor with hard assignments where we use soft responsibilities.
+This work introduces a tractable decorrelation objective based on cross-correlation matrices. The decorrelation proxy used in the present framework is mathematically equivalent. Although developed for contrastive-free self-supervised learning, the same insight applies: redundancy reduction is essential to prevent representational collapse.
 
 ---
 
-## Foundational: This Work's Theoretical Basis
+**Bardes, A., Ponce, J., & LeCun, Y. (2022). *VICReg: Variance-Invariance-Covariance Regularization for Self-Supervised Learning*. ICLR.**
 
-**Oursland, A. (2025). Gradient Descent as Implicit EM in Distance-Based Neural Models. arXiv:2512.24780.**
-
-Establishes the core identity: for LSE objectives, gradient equals responsibility. This paper provides the implicit EM framework we build upon. We extend it by identifying InfoMax as the missing volume control that makes unsupervised implicit EM practical.
-
-**Oursland, A. (2024). Interpreting Neural Networks through Mahalanobis Distance. arXiv:2410.19352.**
-
-Interprets linear layers as computing distances to prototypes. Motivates viewing encoder outputs as energies/distances rather than similarities. Also predicts the need for orthogonality regularization on weights—which we include as optional λ_wr term.
+VICReg explicitly decomposes self-supervised objectives into variance, invariance, and covariance terms. The variance and decorrelation terms used here correspond directly to VICReg’s variance and covariance penalties, providing strong independent evidence that these regularizers are broadly effective as collapse-prevention mechanisms.
 
 ---
 
-## Sparse Autoencoders
+## 3. Architecture and Learning Dynamics
 
-**Bricken, T., Templeton, A., Batson, J., Chen, B., Jermyn, A., Conerly, T., ... & Olah, C. (2023). Towards Monosemanticity: Decomposing Language Models With Dictionary Learning. Anthropic.**
+### Sparse Coding and Its Simplification
 
-The landmark paper establishing SAEs for LLM interpretability. Uses standard encoder-decoder architecture with L1 sparsity. We position our work as providing theoretical grounding for why decoders might be unnecessary, though we don't claim to outperform their empirical results.
+**Olshausen, B. A., & Field, D. J. (1996). *Emergence of simple-cell receptive field properties by learning a sparse code for natural images*. Nature.**
 
-**Cunningham, H., Ewart, A., Riggs, L., Huben, R., & Sharkey, L. (2023). Sparse Autoencoders Find Highly Interpretable Features in Language Models. arXiv:2309.08600.**
-
-Another key SAE paper for interpretability. Demonstrates practical utility of sparse features. Relevant as empirical motivation for why understanding SAE objectives matters.
+Sparse coding demonstrated that interpretable features can emerge from unsupervised learning when sparsity is enforced via reconstruction and an L1 penalty. The present work achieves similar outcomes—sparse, interpretable features—but removes the decoder entirely. Sparsity emerges from competitive responsibility allocation and ReLU nonlinearities, reframing sparse coding as an implicit EM problem with volume control rather than explicit reconstruction.
 
 ---
 
-## EM Algorithm and Mixture Models
+### Competitive Learning
 
-**Dempster, A. P., Laird, N. M., & Rubin, D. B. (1977). Maximum likelihood from incomplete data via the EM algorithm. Journal of the Royal Statistical Society: Series B.**
+**Kohonen, T. (1982). *Self-organized formation of topologically correct feature maps*. Biological Cybernetics.**
 
-The original EM paper. We claim gradient descent performs EM implicitly for LSE objectives. This citation establishes what classical EM is, so readers understand what "implicit EM" means.
-
-**Bishop, C. M. (2006). Pattern Recognition and Machine Learning. Springer.**
-
-Textbook treatment of GMMs, EM, and the collapse problem. Section on GMMs explains the role of the log-determinant in preventing singularities. We draw the analogy: InfoMax is to neural LSE as log-determinant is to GMMs.
+Kohonen’s self-organizing maps demonstrate how prototypes distribute themselves to cover input space through attraction to data and mutual competition. The dynamics recovered here are closely related but arise in a fully differentiable, probabilistic framework. Soft responsibilities replace hard winner-take-all updates, and InfoMax regularization replaces heuristic repulsion terms.
 
 ---
 
-## Self-Supervised Learning with Similar Regularizers
+## 4. EM, Mixture Models, and Collapse
 
-**Zbontar, J., Jing, L., Misra, I., LeCun, Y., & Deny, S. (2021). Barlow Twins: Self-Supervised Learning via Redundancy Reduction. ICML.**
+**Dempster, A. P., Laird, N. M., & Rubin, D. B. (1977). *Maximum likelihood from incomplete data via the EM algorithm*. Journal of the Royal Statistical Society: Series B.**
 
-Uses cross-correlation loss to prevent redundancy in self-supervised learning. Our decorrelation term ||Corr(A) - I||² is essentially the same penalty. Different context (contrastive learning vs. sparse coding), but same insight: decorrelation prevents collapse.
-
-**Bardes, A., Ponce, J., & LeCun, Y. (2022). VICReg: Variance-Invariance-Covariance Regularization for Self-Supervised Learning. ICLR.**
-
-Explicitly decomposes self-supervised objectives into variance, invariance, and covariance terms. Our variance and decorrelation terms match their variance and covariance terms exactly. Strong evidence that these regularizers are broadly useful for preventing collapse.
+The original EM paper. This citation establishes the classical EM framework so that the notion of “implicit EM” has a clear reference point.
 
 ---
 
-## Neural Network Interpretability
+**Bishop, C. M. (2006). *Pattern Recognition and Machine Learning*. Springer.**
 
-**Elhage, N., Nanda, N., Olsson, C., Henighan, T., Joseph, N., Mann, B., ... & Olah, C. (2022). A Mathematical Framework for Transformer Circuits. Anthropic.**
-
-Establishes the circuits research agenda that motivates SAE work. Understanding why SAEs work matters because they're tools for this research program. Provides application context.
-
-**Olah, C., Mordvintsev, A., & Schubert, L. (2017). Feature Visualization. Distill.**
-
-Early work on interpreting neural network features. Establishes that understanding learned representations is valuable. Motivates why a principled SAE derivation matters.
+Provides textbook treatment of Gaussian mixture models, EM, and the collapse problem. In GMMs, the log-determinant term prevents singular solutions. The present work draws a direct analogy: InfoMax regularization plays the same stabilizing role for neural LSE objectives that the log-determinant plays in classical mixture models.
 
 ---
 
-## Activation Functions and Sparsity
+## 5. Decoder-Based Autoencoders and Historical Context
 
-**Glorot, X., Bordes, A., & Bengio, Y. (2011). Deep Sparse Rectifier Neural Networks. AISTATS.**
+**Hinton, G. E., & Salakhutdinov, R. R. (2006). *Reducing the dimensionality of data with neural networks*. Science.**
 
-Shows ReLU induces sparsity naturally. Relevant because our architecture uses ReLU and achieves sparsity without explicit L1 penalty. The sparsity emerges from competition + ReLU, not from a sparsity loss term.
-
----
-
-## Optional: Variational and Information-Theoretic Approaches
-
-**Kingma, D. P., & Welling, M. (2014). Auto-Encoding Variational Bayes. ICLR.**
-
-VAEs use probabilistic encoding with KL regularization. Different approach to the same problem (learning useful latent representations). We could cite as alternative framework that also avoids pure reconstruction, though our approach is non-variational.
-
-**Higgins, I., Matthey, L., Pal, A., Burgess, C., Glorot, X., Botvinick, M., ... & Lerchner, A. (2017). β-VAE: Learning Basic Visual Concepts with a Constrained Variational Framework. ICLR.**
-
-Shows that stronger regularization (higher β) leads to more disentangled representations. Parallels our finding that InfoMax regularization is necessary for good features. Different mechanism, similar insight about regularization strength.
+Represents early motivation for unsupervised feature learning via layer-wise pretraining with RBMs. This work contextualizes why unsupervised objectives were historically important before being eclipsed by end-to-end supervised training.
 
 ---
 
-## Summary Table
+**Vincent, P., et al. (2008). *Extracting and composing robust features with denoising autoencoders*. ICML.**
 
-| Citation | Why Cited |
-|----------|-----------|
-| Bell & Sejnowski 1995 | InfoMax principle; our regularization inspiration |
-| Linsker 1988 | Original InfoMax formulation |
-| Olshausen & Field 1996 | Sparse coding baseline we simplify |
-| LeCun et al. 2006 | Energy-based model framing |
-| Kohonen 1982 | Competitive learning precursor |
-| Oursland 2025 | Implicit EM identity we build on |
-| Oursland 2024 | Distance interpretation of linear layers |
-| Bricken et al. 2023 | SAE for interpretability (application) |
-| Dempster et al. 1977 | Classical EM definition |
-| Bishop 2006 | GMM collapse and log-determinant |
-| Zbontar et al. 2021 | Barlow Twins; same decorrelation term |
-| Bardes et al. 2022 | VICReg; same variance + covariance terms |
-| Glorot et al. 2011 | ReLU sparsity without L1 |
+Established the encoder–decoder paradigm as the default unsupervised architecture. The present work identifies the resulting “decoder tax,” where reconstruction dominates the objective, and demonstrates that decoders are unnecessary when implicit EM and volume control are used instead.
+
+---
+
+## 6. Sparse Autoencoders and Interpretability
+
+**Bricken, T., et al. (2023). *Towards Monosemanticity: Decomposing Language Models With Dictionary Learning*. Anthropic.**
+
+The landmark sparse autoencoder (SAE) paper for interpretability. Uses an encoder–decoder architecture with L1 sparsity. The present work does not claim empirical superiority, but provides theoretical grounding for why decoders may be unnecessary in principle.
+
+---
+
+**Cunningham, H., et al. (2023). *Sparse Autoencoders Find Highly Interpretable Features in Language Models*. arXiv:2309.08600.**
+
+Demonstrates the practical utility of sparse features in large language models. Serves as empirical motivation for understanding and simplifying SAE objectives.
+
+---
+
+## 7. Activation Functions and Emergent Sparsity
+
+**Glorot, X., Bordes, A., & Bengio, Y. (2011). *Deep Sparse Rectifier Neural Networks*. AISTATS.**
+
+Shows that ReLU nonlinearities induce sparsity naturally. Relevant because the present architecture achieves sparsity without an explicit L1 penalty, relying instead on competition and rectification.
+
+---
+
+## 8. Optional: Variational Alternatives
+
+**Kingma, D. P., & Welling, M. (2014). *Auto-Encoding Variational Bayes*. ICLR.**
+
+VAEs represent an alternative probabilistic approach to representation learning that avoids pure reconstruction objectives. Cited as a contrasting framework rather than a direct precursor.
+
+---
+
+**Higgins, I., et al. (2017). *β-VAE: Learning Basic Visual Concepts with a Constrained Variational Framework*. ICLR.**
+
+Demonstrates that stronger regularization leads to more disentangled representations. Parallels the present finding that strong InfoMax regularization is necessary for useful features, despite a different underlying mechanism.
+
+---
+
+## 9. Summary Table
+
+| Citation | Primary Role |
+|--------|--------------|
+| Bell & Sejnowski (1995) | InfoMax principle |
+| Linsker (1988) | Information preservation |
+| Olshausen & Field (1996) | Sparse coding baseline |
+| LeCun et al. (2006) | Energy-based framing |
+| Kohonen (1982) | Competitive learning precursor |
+| Oursland (2025) | Implicit EM identity |
+| Oursland (2024) | Distance-based interpretation |
+| Dempster et al. (1977) | Classical EM |
+| Bishop (2006) | EM collapse analogy |
+| Zbontar et al. (2021) | Decorrelation regularizer |
+| Bardes et al. (2022) | Variance + covariance control |
+| Glorot et al. (2011) | ReLU-induced sparsity |
+| Bricken et al. (2023) | SAE interpretability context |
+
+---
