@@ -28,6 +28,8 @@ This work provides the geometric interpretation that linear layers compute Mahal
 
 This tutorial formalizes learning via energy functions rather than explicit normalized probability models. The LSE term used here is precisely the negative log marginal likelihood of a mixture of energy-based components. The InfoMax regularization can be interpreted as shaping the energy landscape to prevent degenerate minima, situating this work squarely within the energy-based modeling tradition.
 
+Bardes, A., Ponce, J., & LeCun, Y. (2022). VICReg: Variance-Invariance-Covariance Regularization for Self-Supervised Learning. *ICLR 2022*. arXiv:2105.04906
+
 ---
 
 ## 2. The Objective: InfoMax and Volume Control

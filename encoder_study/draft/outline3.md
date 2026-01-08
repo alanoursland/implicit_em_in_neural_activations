@@ -1,39 +1,37 @@
 # Deriving Decoder-Free Sparse Autoencoders from First Principles
 
-## Paper Outline (Reframed)
-
-### Abstract
+## Abstract
 
 Recent work established that log-sum-exp objectives perform expectation-maximization implicitly: the gradient with respect to each component energy equals its responsibility. That theory also predicts collapse: without volume control analogous to the log-determinant in Gaussian mixture models, components degenerate. We ask whether implicit EM theory can derive working models from first principles. We construct the model the theory prescribes: a single-layer encoder with LSE objective and InfoMax regularization as neural volume control. Experiments validate every theoretical prediction: the gradient-responsibility identity holds exactly; LSE alone collapses as predicted; variance prevents death (diagonal of log-det); decorrelation prevents redundancy (off-diagonal); the full objective learns interpretable features. Training dynamics exhibit EM structure: SGD converges in fixed iterations regardless of learning rate. The learned features are mixture components—digit prototypes—not dictionary elements. The theory-derived model outperforms standard sparse autoencoders on downstream tasks with half the parameters. This validates implicit EM as a foundation for principled model design.
 
 ---
 
-### 1. Introduction
+## 1. Introduction
 
-**1.1 Implicit EM Theory**
+### 1.1 Implicit EM Theory
 - Prior work: gradient descent on LSE objectives performs EM implicitly
 - The gradient with respect to each energy equals its responsibility (Oursland 2025)
 - This is an algebraic identity, not an approximation
 - The theory also identifies a gap: neural objectives lack volume control
 
-**1.2 The Question**
+### 1.2 The Question
 - Can implicit EM theory derive working models from first principles?
 - Not: "Can we improve SAEs?" 
 - But: "Does the theory prescribe something that works?"
 
-**1.3 This Paper**
+### 1.3 This Paper
 - We construct the model implicit EM theory specifies
 - Architecture: Linear → Activation (computes distances)
 - Objective: LSE (performs implicit EM) + InfoMax (volume control)
 - Every component is derived, not heuristically chosen
 - Experiments validate the theoretical predictions
 
-**1.4 Contribution**
+### 1.4 Contribution
 - Demonstration that implicit EM theory is generative—it prescribes models, not just explains them
 - Validation of every theoretical prediction
 - Evidence that principled derivation outperforms heuristic design
 
-**1.5 Roadmap**
+### 1.5 Roadmap
 - Section 2: What implicit EM theory prescribes
 - Section 3: The derived model
 - Section 4: Experimental validation
@@ -41,26 +39,26 @@ Recent work established that log-sum-exp objectives perform expectation-maximiza
 
 ---
 
-### 2. What Implicit EM Theory Prescribes
+## 2. What Implicit EM Theory Prescribes
 
-**2.1 Distance-Based Representations**
+### 2.1 Distance-Based Representations
 - Neural layers compute distances from learned prototypes (Oursland 2024)
 - Low output = close to prototype; high output = far
 - This geometric interpretation grounds what follows
 
-**2.2 The LSE Identity**
+### 2.2 The LSE Identity
 - For L = -log Σ exp(-Eⱼ), the gradient satisfies ∂L/∂Eⱼ = rⱼ
 - Where rⱼ = softmax(-E)ⱼ is the responsibility
 - Gradient descent performs EM: forward pass = E-step, backward pass = M-step
 - No auxiliary computation required
 
-**2.3 The Volume Control Requirement**
+### 2.3 The Volume Control Requirement
 - GMMs include log-determinant: prevents components from collapsing
 - Neural LSE objectives omit this term
 - Theory predicts: without volume control, components degenerate
 - One component claims all inputs; others receive vanishing gradient; representation collapses
 
-**2.4 The Prescribed Solution**
+### 2.4 The Prescribed Solution
 - The log-determinant has two roles:
   - Diagonal: prevents any component from having zero variance
   - Off-diagonal: prevents components from being identical
@@ -69,7 +67,7 @@ Recent work established that log-sum-exp objectives perform expectation-maximiza
   - Decorrelation penalty: ||Corr(A) - I||² — prevents redundancy
 - This completes the prescription
 
-**2.5 Summary: The Theory-Specified Model**
+### 2.5 Summary: The Theory-Specified Model
 
 | Component | Theory Source | Implementation |
 |-----------|---------------|----------------|
@@ -83,9 +81,9 @@ The model is not designed. It is derived.
 
 ---
 
-### 3. The Derived Model
+## 3. The Derived Model
 
-**3.1 Architecture**
+### 3.1 Architecture
 $$z = Wx + b, \quad E = \phi(z)$$
 
 - W ∈ ℝ^(hidden × input): learned prototypes
@@ -93,19 +91,50 @@ $$z = Wx + b, \quad E = \phi(z)$$
 - φ: activation function (ReLU, softplus)
 - Output E: energies (distances to prototypes)
 
-**3.2 Complete Objective**
+### 3.2 Complete Objective
 $$L = -\log \sum_j \exp(-E_j) - \lambda_{\text{var}} \sum_j \log \text{Var}(A_j) + \lambda_{\text{tc}} \|\text{Corr}(A) - I\|^2$$
 
 - Term 1 (LSE): Implicit EM—soft competition for data
 - Term 2 (Variance): Diagonal volume control—prevents collapse
 - Term 3 (Decorrelation): Off-diagonal volume control—prevents redundancy
 
-**3.3 What This Model Is**
+### 3.3 What This Model Is
 - A decoder-free sparse autoencoder (architectural description)
 - A neural mixture model (theoretical description)
 - The simplest instantiation of implicit EM theory
 
-**3.4 Theoretical Predictions**
+### 3.4 Dynamics: Attraction vs Structure
+
+#### The LSE Term is Attractive
+- Minimizing -log Σ exp(-E) pulls prototypes toward data
+- Equivalent to maximizing likelihood that at least one component explains each input
+- Components reduce loss by lowering energy for inputs they can explain
+- Left unchecked → collapse (one component claims everything)
+
+#### The InfoMax Terms are Structural
+- Variance forces selectivity: respond strongly to some inputs, weakly to others
+- Decorrelation forces diversity: capture different aspects of the data
+- Together: constrain *how* components can reduce energy, not *where*
+
+#### The Equilibrium is Competitive Coverage
+- Components tile the data manifold
+- Each specializes in a region of input space
+- Low energy (high responsibility) for inputs in its region
+- High energy (low responsibility) elsewhere
+- Resembles self-organizing maps (Kohonen 1982), but with soft responsibilities
+
+#### Sparsity is Emergent
+- No explicit L1 penalty in Equation 7
+- Yet sparse representations arise naturally
+- When components specialize, most inputs activate only a few components strongly
+- Sparsity emerges from competition, not regularization
+- Contrast with standard SAEs where L1 forces sparsity regardless of data structure
+
+---
+
+This slots in after 3.3 (What This Model Is) and before 3.5 (Theoretical Predictions). It explains the mechanism by which the objective produces useful representations—the tension between attraction and structure that yields competitive coverage.
+
+### 3.5 Theoretical Predictions
 
 Before any experiment, the theory predicts:
 
@@ -120,9 +149,9 @@ Before any experiment, the theory predicts:
 
 ---
 
-### 4. Experimental Validation
+## 4. Experimental Validation
 
-**4.1 Experiment 1: Theorem Verification**
+### 4.1 Experiment 1: Theorem Verification
 
 *Prediction:* ∂L_LSE/∂Eⱼ = rⱼ exactly.
 
@@ -132,7 +161,7 @@ Before any experiment, the theory predicts:
 
 *Status:* **Verified.** The identity holds to floating-point precision.
 
-**4.2 Experiment 2: Ablation Study**
+### 4.2 Experiment 2: Ablation Study
 
 *Predictions:*
 - LSE only → collapse (no volume control)
@@ -151,7 +180,7 @@ Before any experiment, the theory predicts:
 
 *Status:* **Every prediction confirmed.** Each term serves exactly its theorized role.
 
-**4.3 Experiment 3: Benchmark Comparison**
+### 4.3 Experiment 3: Benchmark Comparison
 
 *Goal:* Validate that the theory-derived model produces useful features.
 
@@ -166,7 +195,7 @@ Before any experiment, the theory predicts:
 
 *Status:* Theory-derived model **outperforms** heuristic design. +3.1% accuracy, 2× sparser, 50% fewer parameters.
 
-**4.4 Experiment 4: Training Dynamics**
+### 4.4 Experiment 4: Training Dynamics
 
 *Prediction:* If implicit EM governs learning, convergence should be iteration-count-based, not learning-rate-dependent.
 
@@ -187,7 +216,7 @@ Before any experiment, the theory predicts:
 
 *Status:* **EM structure confirmed.** Optimization behaves as implicit EM predicts.
 
-**4.5 Experiment 5: Feature Visualization**
+### 4.5 Experiment 5: Feature Visualization
 
 *Prediction:* If the model performs implicit EM, features should be mixture components (prototypes), not dictionary elements (parts).
 
@@ -197,9 +226,9 @@ Before any experiment, the theory predicts:
 
 *Interpretation:* Theory-derived model learns variance directions of competing components. Standard SAE encoder learns nothing interpretable—the decoder does all the work.
 
-*Status:* **Mixture model interpretation confirmed.**
+*Status:* **Mixture model interpretation confirmed.
 
-**4.6 Summary of Validation**
+### 4.6 Summary of Validation
 
 | Prediction | Experiment | Result |
 |------------|------------|--------|
@@ -217,13 +246,13 @@ Every prediction confirmed. The theory works.
 
 ---
 
-### 5. Discussion
+## 5. Discussion
 
-**5.1 What This Validates**
+### 5.1 What This Validates
 
 Implicit EM theory is generative. It doesn't just explain existing models—it prescribes new ones. We built exactly what the theory specified, and it works exactly as predicted.
 
-**5.2 Why the Theory-Derived Model Outperforms**
+### 5.2 Why the Theory-Derived Model Outperforms
 
 We predicted competitive. We got superior. Why?
 
@@ -234,7 +263,7 @@ Standard SAEs are heuristically engineered:
 
 The theory-derived model has no compensatory mechanisms because none are needed. The objective does the right thing by construction.
 
-**5.3 Why Decoders Appeared Necessary**
+### 5.3 Why Decoders Appeared Necessary
 
 Reconstruction implicitly provides volume control:
 - Forces information preservation (anti-collapse)
@@ -244,13 +273,13 @@ With explicit InfoMax, this role is filled directly. The decoder was compensator
 
 Evidence: SAE encoder weights are near-noise. The decoder does all the work. Our encoder weights are interpretable prototypes.
 
-**5.4 On Optimization**
+### 5.4 On Optimization
 
 SGD converges in fixed iterations. Learning rate affects where you end up, not when you get there. Adam's adaptive scaling—designed for ill-conditioned landscapes—is unnecessary when the objective has EM structure. It may even be counterproductive.
 
 This suggests: for EM-structured objectives, simple optimizers suffice.
 
-**5.5 Limitations**
+### 5.5 Limitations
 
 - Single layer only
 - MNIST scale
@@ -259,24 +288,24 @@ This suggests: for EM-structured objectives, simple optimizers suffice.
 
 ---
 
-### 6. Future Work
+## 6. Future Work
 
-**6.1 Explicit EM**
+### 6.1 Explicit EM
 - Derive closed-form M-step for neural energies
 - No learning rate, deterministic convergence
 - K-means-like speed
 
-**6.2 Scale**
+### 6.2 Scale
 - Apply to GPT-2/Pythia residual streams
 - Compare to SAE-based interpretability methods
 
-**6.3 Depth**
+### 6.3 Depth
 - Multi-layer extensions
 - Features as set intersections (compositional structure)
 
 ---
 
-### 7. Conclusion
+## 7. Conclusion
 
 Implicit EM theory specifies a model: distances, LSE objective, InfoMax volume control. We built it. Every prediction was confirmed. The model outperforms heuristically-designed alternatives with half the parameters.
 
@@ -286,20 +315,20 @@ The theory works. This validates implicit EM as a foundation for principled mode
 
 ## Figures
 
-**Figure 1: Theorem Verification**
+### Figure 1: Theorem Verification
 - Scatter: gradient vs responsibility
 - Perfect y = x line
 - Caption: "The implicit EM identity holds exactly: ∂L/∂Eⱼ = rⱼ to floating-point precision."
 
-**Figure 2: Ablation Results**
+### Figure 2: Ablation Results
 - Table or bar chart showing dead units and redundancy by configuration
 - Caption: "Each term serves its predicted role. LSE alone collapses; variance prevents death; decorrelation prevents redundancy."
 
-**Figure 3: Learned Features (Theory-Derived)**
+### Figure 3: Learned Features (Theory-Derived)
 - 8×8 grid of encoder weights
 - Caption: "Learned features are digit prototypes—mixture components competing for data."
 
-**Figure 4: Learned Features (Standard SAE)**
+### Figure 4: Learned Features (Standard SAE)
 - 8×8 grid of SAE encoder weights
 - Caption: "Standard SAE encoder weights show little structure; the decoder compensates."
 
@@ -307,7 +336,7 @@ The theory works. This validates implicit EM as a foundation for principled mode
 
 ## Tables
 
-**Table 1: Ablation Study**
+### Table 1: Ablation Study
 | Config | Dead Units | Redundancy | Prediction | Confirmed |
 |--------|-----------|------------|------------|-----------|
 | LSE only | 64/64 | — | Collapse | ✓ |
@@ -315,13 +344,13 @@ The theory works. This validates implicit EM as a foundation for principled mode
 | LSE + var + tc | 0/64 | 29 | Stable, diverse | ✓ |
 | var + tc only | 0/64 | 28 | Different dynamics | ✓ |
 
-**Table 2: Benchmark Comparison**
+### Table 2: Benchmark Comparison
 | Model | Probe Acc | Density | Parameters |
 |-------|-----------|---------|------------|
 | Theory-derived | 93.4% | 26.8% | 50,240 |
 | Standard SAE | 90.3% | 50.3% | 101,200 |
 
-**Table 3: Training Dynamics (SGD)**
+### Table 3: Training Dynamics (SGD)
 | Learning Rate | Convergence | Probe Acc |
 |---------------|-------------|-----------|
 | 0.0001 | epoch 70 | 92.2% |
