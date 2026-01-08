@@ -11,6 +11,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 import torch
 import argparse
 import matplotlib.pyplot as plt
+from typing import List
 
 from src.model import Encoder
 from src.data import get_mnist
@@ -52,7 +53,9 @@ def train_model(device: torch.device) -> Encoder:
     return model
 
 
-def visualize_features(checkpoint_path: str, output_path: str, device: torch.device):
+def visualize_features(
+    checkpoint_path: str, output_paths: List[str], device: torch.device
+):
     """Load model and visualize features."""
 
     # Load or train model
@@ -66,8 +69,8 @@ def visualize_features(checkpoint_path: str, output_path: str, device: torch.dev
     else:
         model = train_model(device)
 
-    # Get weights
-    W = model.encoder.weight.data  # Shape: (64, 784)
+    # Get weights - Encoder uses model.linear.weight, not model.encoder.weight
+    W = model.linear.weight.data  # Shape: (64, 784)
 
     print(f"Visualizing {W.shape[0]} features (28x28 each)")
 
@@ -85,14 +88,14 @@ def visualize_features(checkpoint_path: str, output_path: str, device: torch.dev
 
     plt.tight_layout()
 
-    # Ensure output directory exists
-    output_file = Path(output_path)
-    output_file.parent.mkdir(parents=True, exist_ok=True)
+    # Save to all output paths
+    for output_path in output_paths:
+        output_file = Path(output_path)
+        output_file.parent.mkdir(parents=True, exist_ok=True)
+        plt.savefig(output_path, bbox_inches="tight", dpi=150)
+        print(f"Figure saved to {output_path}")
 
-    plt.savefig(output_path, bbox_inches="tight", dpi=150)
     plt.close()
-
-    print(f"Figure saved to {output_path}")
 
 
 def main():
@@ -106,8 +109,9 @@ def main():
     parser.add_argument(
         "--output",
         type=str,
-        default="figures/fig5_features.pdf",
-        help="Output figure path",
+        nargs="+",
+        default=["figures/fig5_features.pdf", "figures/fig5_features.png"],
+        help="Output figure path(s). Can specify multiple formats, e.g., --output fig.pdf fig.png",
     )
     parser.add_argument(
         "--device",
