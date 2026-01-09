@@ -8,47 +8,47 @@ Log-sum-exp (LSE) objectives perform expectation–maximization implicitly: the 
 
 ## 1. Introduction
 
-Deep learning models are typically designed through intuition and experimentation, with theory following to explain what works. This paper inverts the process. We begin with a theory—implicit EM in neural networks—derive the model it prescribes, and test whether the prescription succeeds. The theory makes specific predictions: what architecture is required, what objective to use, what failure modes will occur without each component. We build exactly what the theory specifies and validate every prediction. The result is a model that outperforms heuristically-designed alternatives, not because we optimized for benchmarks, but because principled derivation yields coherent design.
+Deep learning models are typically designed through intuition and experimentation, with theory following to explain what works. This paper inverts that order. We begin from a theoretical result—implicit expectation–maximization (EM) in neural networks—derive the model it prescribes, and test whether the prescription succeeds. The theory makes specific predictions: what architecture is required, what objective to use, and what failure modes will occur without each component. We build exactly what the theory specifies and test each prediction. The resulting model outperforms heuristically designed alternatives, not because it was optimized for benchmarks, but because principled derivation yields a coherent design.
 
 ### 1.1 Implicit EM Theory
 
-Prior work establishes that gradient descent on log-sum-exp objectives performs expectation-maximization implicitly (Oursland, 2025). The key result is an algebraic identity: for any LSE objective over component energies, the gradient with respect to each energy equals its responsibility—the posterior probability that the component explains the input. This is exact, not approximate. The forward pass computes responsibilities via softmax; the backward pass delivers them as gradients; parameter updates are the M-step.
+Prior work shows that gradient descent on log-sum-exp (LSE) objectives implements expectation–maximization implicitly (Oursland, 2025). The central result is an algebraic identity: for any LSE objective over component energies, the gradient with respect to each energy equals its responsibility—the posterior probability that the component explains the input. This identity is exact. The forward pass computes responsibilities via a softmax; the backward pass returns those same quantities as gradients; parameter updates therefore play the role of the M-step.
 
-This identity becomes meaningful under the distance-based interpretation of neural networks (Oursland, 2024). If outputs are understood as energies—distances from learned prototypes, where low values indicate proximity—then the softmax is not merely a normalization but an assignment: responsibilities that sum to one across competing components. Section 2 develops this interpretation in detail.
+This result becomes meaningful under the distance-based interpretation of neural networks (Oursland, 2024). When outputs are interpreted as energies—distances from learned prototypes, with lower values indicating better matches—the softmax is not merely a normalization but an assignment mechanism. Responsibilities sum to one across competing components, encoding how explanatory mass is distributed for each input. Section 2 develops this interpretation in detail.
 
-The theory also identifies a gap. Classical mixture models include a log-determinant term that prevents collapse: components cannot shrink to points or duplicate each other. Neural LSE objectives lack this term. The implicit EM machinery is present, but the safeguards are not. Without explicit volume control, representations will degenerate—a prediction we will test directly.
+The theory also exposes a limitation. Classical mixture models include a log-determinant term that prevents collapse: components cannot shrink to points or become redundant. Neural LSE objectives lack an analogous constraint. The implicit EM mechanism is present, but the corresponding safeguards are not. Without explicit volume control, representations will degenerate—a prediction we test directly.
 
 ### 1.2 The Question
 
-Theories can explain or they can prescribe. An explanatory theory redescribes existing models in new language—useful for understanding, but not for building. A prescriptive theory specifies what to build from first principles—and risks falsification if the specification fails.
+Theories can explain or they can prescribe. An explanatory theory redescribes existing models in new terms—useful for understanding, but not for building. A prescriptive theory specifies what to build from first principles and risks falsification if that specification fails.
 
-This paper asks whether implicit EM theory is prescriptive. The question is not "Can we improve sparse autoencoders?" That would treat the theory as a source of tricks to optimize existing designs. The question is: "Does the theory prescribe something that works?" If we build exactly what implicit EM specifies—nothing more, nothing less—do we get a functioning model? Do the predicted failure modes appear when components are removed? Do the predicted behaviors emerge when the full system is trained?
+This paper asks whether implicit EM theory is prescriptive. The question is not whether it can be used to improve sparse autoencoders, which would treat the theory as a source of heuristics layered onto existing designs. The question is whether the theory itself specifies a working model. If we build exactly what implicit EM requires—nothing more, nothing less—do we obtain a functioning system? Do the predicted failure modes appear when required components are removed, and do the predicted behaviors emerge when the full system is trained?
 
-A positive answer would validate implicit EM as a foundation for principled model design. A negative answer would confine it to post-hoc interpretation.
+A positive answer would establish implicit EM as a foundation for principled model design. A negative answer would confine it to post-hoc interpretation.
 
 ### 1.3 This Paper
 
-We construct the model that implicit EM theory specifies. The architecture is minimal: a linear layer followed by ReLU, computing energies as distances to learned prototypes. The objective combines LSE—which provides implicit EM dynamics—with InfoMax regularization as volume control. Variance penalties prevent collapse; decorrelation penalties prevent redundancy. These are the neural equivalents of the log-determinant term in Gaussian mixture models.
+We construct the model that implicit EM theory specifies. The architecture is minimal: a single linear layer followed by ReLU, computing energies as distances to learned prototypes. The objective combines an LSE term, which provides implicit EM dynamics, with InfoMax regularization as volume control. Variance penalties prevent collapse; decorrelation penalties prevent redundancy. These are the neural equivalents of the log-determinant term in Gaussian mixture models.
 
-Every component traces to a theoretical requirement. The architecture follows from the need to compute energies. The LSE term follows from the implicit EM identity. The InfoMax terms follow from the volume control gap. We add nothing for empirical convenience; we omit nothing the theory requires.
+Each component follows directly from a theoretical requirement. The architecture arises from the need to compute energies. The LSE term follows from the implicit EM identity. The InfoMax terms address the missing volume control. We add nothing for empirical convenience and omit nothing the theory requires.
 
-The result is a decoder-free sparse autoencoder—or equivalently, a neural mixture model. There is no reconstruction loss, no L1 sparsity penalty, no decoder weights. The model learns sparse, interpretable features through competition alone: components specialize because the objective rewards specialization.
+The result is a decoder-free sparse autoencoder—or, equivalently, a neural mixture model. There is no reconstruction loss, no L1 sparsity penalty, and no decoder. Sparse, interpretable features emerge through competition alone: components specialize because the objective rewards specialization.
 
-Experiments validate the theoretical predictions. We verify the gradient-responsibility identity exactly. We show that LSE alone collapses, that variance prevents death, that decorrelation prevents redundancy. We compare against standard sparse autoencoders and find that the theory-derived model outperforms heuristic design with half the parameters.
+Experiments test the theory’s predictions directly. We verify the gradient–responsibility identity exactly. We show that LSE alone collapses, that variance prevents dead components, and that decorrelation prevents redundancy. Compared to standard sparse autoencoders, the theory-derived model achieves better downstream performance with half the parameters.
 
 ### 1.4 Contribution
 
-This paper makes three contributions:
+This paper makes three contributions.
 
-**Implicit EM theory is generative.** The theory does not merely redescribe existing models—it prescribes new ones. We derive an architecture and objective from first principles, build exactly what the theory specifies, and show that it works. This establishes implicit EM as a foundation for principled model design, not just post-hoc interpretation.
+**Implicit EM theory is generative.** The theory does not merely redescribe existing models; it prescribes new ones. We derive an architecture and objective from first principles, build exactly what the theory specifies, and show that it works. This establishes implicit EM as a foundation for principled model design rather than post-hoc interpretation.
 
-**Every theoretical prediction is validated.** The gradient-responsibility identity holds to floating-point precision. LSE alone collapses as predicted. Variance prevents dead units; decorrelation prevents redundancy. Training dynamics exhibit the learning-rate insensitivity expected from EM structure. Learned features are mixture components—digit prototypes—not unstructured projections.
+**Each theoretical prediction is confirmed.** The gradient–responsibility identity holds to floating-point precision. LSE alone collapses as predicted. Variance prevents dead components; decorrelation prevents redundancy. Training dynamics exhibit the learning-rate insensitivity expected from EM structure. The learned features are mixture components—digit prototypes rather than unstructured projections.
 
-**Principled derivation outperforms heuristic design.** The theory-derived model achieves higher probe accuracy than standard sparse autoencoders (93.4% vs 90.3%) with half the parameters and no decoder. This is not because we optimized for the benchmark; it is because the objective does the right thing by construction. Heuristic models accumulate compensatory mechanisms; derived models need none.
+**Principled derivation outperforms heuristic design.** The theory-derived model achieves higher probe accuracy than standard sparse autoencoders (93.4% vs. 90.3%) with half the parameters and no decoder. This improvement does not come from benchmark-driven tuning but from an objective that is correct by construction. Heuristic models accumulate compensatory mechanisms; derived models need none.
 
 ### 1.5 Roadmap
 
-Section 2 develops the theoretical foundation: distance-based representations, the LSE identity, and volume control via InfoMax. Section 3 instantiates this prescription as a concrete model. Section 4 validates each theoretical prediction experimentally. Section 5 discusses implications—why the theory-derived model outperforms, why decoders appeared necessary, and what the optimization results reveal.
+Section 2 develops the theoretical foundation: distance-based representations, the LSE identity, and volume control via InfoMax. Section 3 instantiates this prescription as a concrete model. Section 4 validates the theory’s predictions experimentally. Section 5 discusses the implications—why the theory-derived model outperforms heuristic designs, why decoders appeared necessary, and what the optimization results reveal.
 
 ---
 
