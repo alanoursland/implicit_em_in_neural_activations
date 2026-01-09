@@ -421,7 +421,7 @@ We train two models on MNIST with matched hidden dimension:
 | Theory-derived (ours) | Linear (784→64) + ReLU                   | LSE + InfoMax | 50,240     |
 | Standard SAE          | Linear (784→64) + ReLU + Linear (64→784) | MSE + L1      | 101,200    |
 
-Both models produce 64-dimensional ReLU features. We evaluate feature quality using linear probe accuracy: the encoder is frozen, logistic regression is trained on the features, and MNIST test accuracy is reported. We also measure L0 sparsity (fraction of features active per input) and parameter count. Each model is trained for 100 epochs with five random seeds.
+Both models produce 64-dimensional ReLU features. We evaluate downstream utility using linear probe accuracy: the encoder is frozen, logistic regression is trained on the features, and MNIST test accuracy is reported. We also measure L0 sparsity (fraction of features active per input) and parameter count. Each model is trained for 100 epochs with five random seeds.
 
 **Results.**
 
@@ -447,7 +447,7 @@ Eliminating the decoder halves the parameter count. This reduction follows direc
 The standard SAE achieves substantially lower reconstruction error. This is expected: it explicitly optimizes reconstruction with a trained decoder, whereas we use the untrained transpose $W^\top$. Reconstruction fidelity was never an objective. The probe results show that information is preserved, but encoded in a form optimized for discrimination rather than pixel-wise reconstruction.
 
 **Status.**
-The theory-derived model outperforms the heuristic baseline on the metrics relevant to representation quality: higher probe accuracy (+3.2%), greater sparsity (2×), and half the parameters. This supports the claim that principled derivation from implicit EM theory yields not just a viable model, but a better one.
+The theory-derived model outperforms the heuristic baseline on downstream utility and sparsity: higher probe accuracy (+3.2%), greater sparsity (2×), and half the parameters. This supports the claim that principled derivation from implicit EM theory yields not just a viable model, but a better one.
 
 ### 4.4 Experiment 4: Feature Visualization
 
@@ -476,7 +476,7 @@ The theory-derived model learns prototypes because it *is* a mixture model. Each
 
 The standard SAE encoder weights lack structure because the encoder is not required to be interpretable. In the SAE architecture, the decoder performs reconstruction; the encoder only needs to produce activations that the decoder can invert. Structure resides in the decoder, not the encoder. The encoder can therefore learn arbitrary projections, including near-random ones, as long as reconstruction succeeds.
 
-This accounts for the benchmark results. The theory-derived model achieves higher probe accuracy (93.4% vs 90.3%) because its encoder is already organized by digit class. A linear probe effectively reads out class identity from component activation. In contrast, a probe on SAE features must learn to compose unstructured activations into class predictions, a more difficult task.
+This also explains the probe accuracy gap in Section 4.3. Because the encoder weights are organized by digit class, a linear probe effectively reads out class identity from component activation. A probe on SAE features must learn to compose unstructured activations into class predictions, a harder task. Interpretability and linear separability are distinct properties, but here they share a common cause: the encoder learns class-aligned structure.
 
 **Status.**
 Prediction 5 is confirmed. The theory-derived model learns mixture components; the standard SAE encoder learns largely unstructured projections. The decoder in the SAE compensates for an encoder that is not itself representationally meaningful.
