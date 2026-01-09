@@ -52,13 +52,13 @@ Section 2 develops the theoretical foundation: distance-based representations, t
 
 ---
 
-## 2. What Implicit EM Theory Prescribes
+## 2. What Implicit EM Theory Requires
 
-This section develops the theoretical foundation from which our model is derived. We do not propose an architecture and ask whether it works; we ask what architecture the theory requires.
+This section develops the theoretical foundation from which our model is derived. We do not propose an architecture and ask whether it works; we ask what structure the theory requires.
 
-The derivation proceeds in four steps. First, we adopt the distance-based interpretation of neural network outputs, which provides the geometric substrate for what follows (Section 2.1). Second, we present the log-sum-exp identity: for LSE objectives, the gradient with respect to each component energy equals its responsibility, implying that gradient descent performs expectation-maximization implicitly (Section 2.2). Third, we identify a gap: neural LSE objectives lack the volume control that prevents collapse in classical mixture models (Section 2.3). Fourth, we fill this gap by identifying InfoMax regularization—variance and decorrelation penalties—as the neural equivalent of the log-determinant (Section 2.4). The section concludes with a summary mapping each theoretical requirement to its implementation (Section 2.5).
+The derivation proceeds in four steps. First, we adopt the distance-based interpretation of neural network outputs, which provides the geometric substrate for what follows (Section 2.1). Second, we present the log-sum-exp identity: for LSE objectives, the gradient with respect to each component energy equals its responsibility, implying that gradient descent performs expectation–maximization implicitly (Section 2.2). Third, we identify a gap: neural LSE objectives lack the volume control that prevents collapse in classical mixture models (Section 2.3). Fourth, we address this gap by identifying InfoMax regularization—variance and decorrelation penalties—as the neural analogue of the log-determinant (Section 2.4). The section concludes with a summary mapping each theoretical requirement to its implementation (Section 2.5).
 
-The result is a complete specification. The theory prescribes distances, an LSE objective, and volume control. Section 3 instantiates this prescription as a concrete model.
+The result is a complete specification. The theory requires distances, an LSE objective, and explicit volume control. Section 3 instantiates this specification as a concrete model.
 
 ### 2.1 Distance-Based Representations
 
@@ -66,112 +66,130 @@ The standard interpretation of neural network outputs treats them as confidences
 
 An alternative interpretation reframes outputs as distances or energies relative to learned prototypes (Oursland, 2024). Under this view, a linear layer followed by an activation computes a quantity that behaves as a deviation from a learned reference. Consider a linear transformation $z = Wx + b$ followed by ReLU. Each row $w_j$ of $W$ defines a direction in input space; the bias $b_j$ defines an offset along that direction. The output $\phi(z_j)$ measures how far the input lies from a decision boundary—a distance, not a similarity.
 
-This interpretation has a precise mathematical grounding. The Mahalanobis distance of a point $x$ from a Gaussian component with mean $\mu$ and precision along principal direction $v$ scaled by eigenvalue $\lambda$ is $|\lambda^{-1/2} v^\top (x - \mu)|$, which takes the form $|Wx + b|$ for appropriate $W$ and $b$. Standard ReLU networks compute this via the identity $|z| = \text{relu}(z) + \text{relu}(-z)$, decomposing signed distance into two half-space detectors.
+This interpretation has a precise mathematical grounding. The Mahalanobis distance of a point $x$ from a Gaussian component with mean $\mu$ and precision along principal direction $v$ scaled by eigenvalue $\lambda$ is $|\lambda^{-1/2} v^\top (x - \mu)|$, which takes the form $|Wx + b|$ for appropriate $W$ and $b$. Standard ReLU networks compute this via the identity $|z| = \text{ReLU}(z) + \text{ReLU}(-z)$, decomposing signed distance into two half-space detectors.
 
 The key shift is semantic, not computational. The same neural network performs the same operations; what changes is how we interpret the outputs. Low activation indicates proximity to a prototype. High activation indicates deviation. Probabilities are not primitive quantities but derived ones, arising only after exponentiation and normalization transform distances into relative likelihoods.
 
-Throughout this paper, we adopt the distance-based interpretation: **lower energy means better explanation**. A component with low energy for an input "claims" that input with high responsibility. This convention, standard in energy-based models (LeCun et al., 2006), is essential for the results that follow. The identification of gradients with responsibilities (Section 2.2) depends on this geometric framing.
+Throughout this paper, we adopt the distance-based interpretation: **lower energy means better explanation**. A component with low energy for an input claims that input with high responsibility. This convention, standard in energy-based models (LeCun et al., 2006), is essential for the results that follow. The identification of gradients with responsibilities in Section 2.2 depends on this geometric framing.
 
 ### 2.2 The LSE Identity
 
 Consider an encoder that maps an input $x$ to $K$ component energies $E_1(x), \ldots, E_K(x)$. Following Section 2.1, lower energy indicates a better match. Given these energies, define the log-sum-exp marginal objective:
 
-$$L_{\text{LSE}}(x) = -\log \sum_{j=1}^{K} \exp(-E_j(x)) \tag{1}$$
+$$
+L_{\text{LSE}}(x) = -\log \sum_{j=1}^{K} \exp(-E_j(x)) \tag{1}
+$$
 
-This objective has a natural interpretation: it is minimized when at least one component has low energy for the input. It encodes the requirement that *some* component must explain each data point—the same intuition underlying mixture models (Bishop, 2006).
+This objective has a straightforward interpretation: it is minimized when at least one component assigns low energy to the input. It encodes the requirement that *some* component must explain each data point—the same intuition underlying mixture models (Bishop, 2006).
 
-The key property of this objective is an exact algebraic identity (Oursland, 2025). Taking the gradient with respect to any component energy:
+The key property of this objective is an exact algebraic identity (Oursland, 2025). Taking the gradient with respect to any component energy gives:
 
-$$\frac{\partial L_{\text{LSE}}}{\partial E_j} = \frac{\exp(-E_j)}{\sum_{k=1}^{K} \exp(-E_k)} = r_j \tag{2}$$
+$$
+\frac{\partial L_{\text{LSE}}}{\partial E_j}
+= \frac{\exp(-E_j)}{\sum_{k=1}^{K} \exp(-E_k)}
+= r_j \tag{2}
+$$
 
-where $r_j$ is the softmax responsibility—the posterior probability that component $j$ explains the input, given the current energies.
+where $r_j$ is the softmax responsibility—the posterior probability that component $j$ explains the input under the current energies.
 
-This identity is not an approximation. It is not a first-order expansion or an asymptotic result. The gradient with respect to each component energy *is* its responsibility, exactly, for any differentiable parameterization of the energies.
+This identity is exact. It is not an approximation, a first-order expansion, or an asymptotic result. For any differentiable parameterization of the energies, the gradient with respect to each component energy *is* its responsibility.
 
-The consequence for learning is immediate. In classical expectation-maximization (Dempster et al., 1977), the E-step computes responsibilities and the M-step updates parameters using responsibility-weighted statistics. These steps alternate explicitly. With LSE objectives, this separation dissolves:
+The consequence for learning is immediate. In classical expectation–maximization (Dempster et al., 1977), the E-step computes responsibilities and the M-step updates parameters using responsibility-weighted statistics. These steps alternate explicitly. With an LSE objective, this separation dissolves:
 
-- **The forward pass computes energies.** These determine the responsibilities implicitly through the softmax in Equation 2.
-- **The backward pass computes gradients.** By Equation 2, these gradients *are* the responsibilities.
-- **The optimizer step updates parameters.** Each component receives gradient signal proportional to its responsibility for the input.
+* The forward pass computes energies, which determine responsibilities implicitly through the softmax in Equation (2).
+* The backward pass computes gradients, which by Equation (2) are exactly those responsibilities.
+* The optimizer step updates parameters, with each component receiving gradient signal proportional to its responsibility for the input.
 
-No auxiliary E-step is required. Responsibilities emerge automatically from backpropagation. The optimizer update constitutes the M-step, moving each component according to how much responsibility it claimed. Gradient descent on LSE objectives *is* expectation-maximization, performed continuously rather than in discrete alternating steps.
+No auxiliary E-step is required. Responsibilities arise directly through backpropagation, and the parameter update plays the role of the M-step, moving each component according to the data it claims. Gradient descent on an LSE objective *is* expectation–maximization, performed continuously rather than in discrete alternating steps.
 
-This structure already pervades deep learning. Cross-entropy classification has LSE form: $L = -z_y + \log \sum_k \exp(z_k)$, where $z_y$ is the logit for the correct class. The softmax probabilities that appear in the gradient are precisely the responsibilities—the posterior probability assigned to each class. The ubiquity of cross-entropy may explain why neural networks exhibit mixture-model behaviors despite lacking explicit probabilistic structure: the implicit EM dynamics are present in the objective itself.
+This structure already pervades deep learning. Cross-entropy classification has LSE form:
+
+$$
+L = -z_y + \log \sum_k \exp(z_k),
+$$
+
+where $z_y$ is the logit of the correct class. The softmax probabilities that appear in the gradient are precisely the responsibilities—the posterior probabilities assigned to each class. The ubiquity of cross-entropy may explain why neural networks exhibit mixture-model behavior despite lacking explicit probabilistic structure: the implicit EM dynamics are present in the objective itself.
 
 ### 2.3 The Volume Control Requirement
 
-The LSE identity (Equation 2) provides a mechanism for learning: responsibility-weighted gradient updates that implement implicit EM. But mechanism is not objective. The identity tells us *how* parameters update; it does not tell us *what* will be learned.
+The LSE identity (Equation 2) provides a mechanism for learning: responsibility-weighted gradient updates that implement implicit EM. But mechanism is not objective. The identity specifies *how* parameters update; it does not determine *what* is learned.
 
-For supervised learning, the objective is clear. Cross-entropy loss has LSE structure, and target labels define the desired outcome. The responsibilities (softmax outputs) are trained to match the labels. Mechanism and objective work together.
+In supervised learning, the objective is clear. Cross-entropy loss has LSE structure, and target labels define the desired outcome. Responsibilities are trained to match those labels. Mechanism and objective work together.
 
-For unsupervised learning, the situation is different. There are no labels. The LSE marginal in Equation 1 provides a candidate objective: minimize the energy of the best-matching component for each input. Intuitively, this says "at least one component should explain each data point." But this objective alone, without additional constraints, admits degenerate solutions.
+In unsupervised learning, the situation is different. There are no labels. The LSE marginal in Equation 1 provides a candidate objective—minimize the energy of the best-matching component for each input. Intuitively, this enforces that at least one component explains each data point. But this objective alone admits degenerate solutions.
 
-**The collapse problem.** Consider what happens if a single component $j^*$ learns to produce low energy for all inputs. Its responsibility $r_{j^*} \to 1$ across the dataset, while all other responsibilities $r_{j \neq j^*} \to 0$. By Equation 2, the gradient with respect to other components vanishes. They receive no learning signal. They die.
+**The collapse problem.** Suppose a single component $j^*$ learns to assign low energy to all inputs. Its responsibility $r_{j^*} \to 1$ across the dataset, while all other responsibilities $r_{j \neq j^*} \to 0$. By Equation 2, gradients to the remaining components vanish. They receive no learning signal. They die.
 
-The result is a collapsed representation: one component that responds to everything, and $K-1$ components that respond to nothing. The encoder has satisfied the LSE objective—every input is explained—but the representation carries no more information than a constant.
+The result is a collapsed representation: one component responds to everything, and $K-1$ components respond to nothing. The encoder satisfies the LSE objective—every input is explained—but the representation carries no more information than a constant.
 
-**The mixture model precedent.** This failure mode is not unique to neural networks. Gaussian mixture models face the same challenge, and their solution is instructive. The log-likelihood of a data point under a GMM component includes a log-determinant term:
+**The mixture model precedent.** This failure mode is not unique to neural networks. Gaussian mixture models face the same problem, and their solution is instructive. The log-likelihood of a data point under a GMM component includes a log-determinant term:
 
-$$\log P(x \mid k) \propto -\frac{1}{2}(x - \mu_k)^\top \Sigma_k^{-1}(x - \mu_k) - \frac{1}{2}\log\det(\Sigma_k)$$
+$$
+\log P(x \mid k) \propto
+-\frac{1}{2}(x - \mu_k)^\top \Sigma_k^{-1}(x - \mu_k)
+-\frac{1}{2}\log\det(\Sigma_k)
+$$
 
-The first term is the Mahalanobis distance. The second term, the log-determinant, is crucial: it penalizes components with small covariance (Bishop, 2006). Without it, a component could shrink to a point, placing infinite density on any data point it sits on. The log-determinant enforces volume—each component must maintain a region of support, not a singularity.
+The first term is the Mahalanobis distance. The second term, the log-determinant, is crucial: it penalizes components with small covariance (Bishop, 2006). Without it, a component can shrink to a point, placing arbitrarily high density on any data point it occupies. The log-determinant enforces volume: each component must occupy a region of support, not a singularity.
 
-**The missing term.** Neural LSE objectives have no equivalent. The encoder computes energies $E_j(x)$, and the LSE loss aggregates them, but nothing constrains the *distribution* of those energies across the dataset. A component can produce uniformly low energy (claiming everything) or uniformly high energy (claiming nothing) without penalty.
+**The missing term.** Neural LSE objectives have no equivalent. The encoder computes energies $E_j(x)$, and the LSE loss aggregates them, but nothing constrains the distribution of those energies across the dataset. A component can assign uniformly low energy (claiming everything) or uniformly high energy (claiming nothing) without penalty.
 
-The theory thus makes a clear prediction: without explicit volume control, neural implicit EM will collapse. This is not a risk to be managed but a certainty to be addressed. Section 2.4 identifies the solution.
+The theory therefore makes a sharp prediction: without explicit volume control, neural implicit EM will collapse. This collapse is not a risk but a certainty. Section 2.4 identifies the required correction.
 
-### 2.4 The Prescribed Solution
+### 2.4 The Solution
 
-The collapse problem identified in Section 2.3 has a known solution in the mixture model literature. Gaussian mixture models include a log-determinant term $\log \det(\Sigma)$ that prevents degenerate covariances. This term can be decomposed into two distinct roles, each addressing a different failure mode.
+The collapse problem identified in Section 2.3 has a well-known resolution in the mixture model literature. Gaussian mixture models include a log-determinant term, $\log \det(\Sigma)$, that prevents degenerate covariances. This term plays two distinct roles, each addressing a different failure mode.
 
-**The diagonal role.** For a covariance matrix with eigenvalues $\lambda_1, \ldots, \lambda_K$, the log-determinant is $\sum_j \log \lambda_j$. When outputs are uncorrelated (diagonal covariance), this reduces to $\sum_j \log \text{Var}(A_j)$. This term diverges to negative infinity as any variance approaches zero. A component cannot collapse to a point—cannot produce constant output across all inputs—without incurring unbounded penalty. The diagonal of the log-determinant enforces existence: every component must maintain non-zero variance.
+**The diagonal role.** For a covariance matrix with eigenvalues $\lambda_1, \ldots, \lambda_K$, the log-determinant is $\sum_j \log \lambda_j$. When components are uncorrelated (diagonal covariance), this reduces to $\sum_j \log \text{Var}(A_j)$. The term diverges to negative infinity as any variance approaches zero. A component therefore cannot collapse to a point—cannot produce constant output across all inputs—without incurring unbounded penalty. The diagonal of the log-determinant enforces existence: every component must maintain non-zero variance.
 
-**The off-diagonal role.** The full log-determinant also depends on the correlations between components. If two components are perfectly correlated, the covariance matrix becomes singular and its determinant is zero—the log-determinant diverges. More generally, correlated components reduce the determinant below what uncorrelated components with the same variances would achieve. The off-diagonal structure enforces diversity: components cannot be redundant copies of each other.
+**The off-diagonal role.** The log-determinant also depends on correlations between components. If two components are perfectly correlated, the covariance matrix becomes singular and its determinant vanishes. More generally, correlations reduce the determinant below what would be obtained by uncorrelated components with the same marginal variances. This off-diagonal structure enforces diversity: components cannot become redundant copies of one another.
 
-Neural LSE objectives lack both terms. The implicit EM machinery provides responsibility-weighted updates, but nothing constrains the distributional properties of the activations. We must supply the missing volume control explicitly.
+Neural LSE objectives contain neither constraint. The implicit EM mechanism supplies responsibility-weighted updates, but it places no restrictions on the distributional structure of the activations. Volume control must therefore be supplied explicitly.
 
-**Variance penalty.** We introduce a term that penalizes components with low variance across the dataset:
+**Variance penalty.** We introduce a penalty that discourages low-variance components:
 
-$$L_{\text{var}} = -\sum_{j=1}^{K} \log \text{Var}(A_j)$$
+$$
+L_{\text{var}} = -\sum_{j=1}^{K} \log \text{Var}(A_j)
+$$
 
-This is precisely the negative of what the diagonal log-determinant contributes in the uncorrelated case. The logarithmic barrier ensures that collapse is not merely discouraged but forbidden: as $\text{Var}(A_j) \to 0$, the penalty diverges. Under Gaussian assumptions, log-variance is proportional to differential entropy (Linsker, 1988), so maximizing this term encourages high marginal entropy—each component should transmit maximal information about its inputs.
+This term is exactly the negative contribution of the diagonal log-determinant in the uncorrelated case. The logarithmic barrier ensures that collapse is not merely discouraged but forbidden: as $\text{Var}(A_j) \to 0$, the penalty diverges. Under Gaussian assumptions, log-variance is proportional to differential entropy (Linsker, 1988), so maximizing this term encourages each component to carry information rather than remain constant.
 
-**Decorrelation penalty.** We introduce a term that penalizes correlations between components:
+**Decorrelation penalty.** To address redundancy, we introduce a penalty on correlations between components:
 
-$$L_{\text{tc}} = \|\text{Corr}(A) - I\|_F^2$$
+$$
+L_{\text{tc}} = \|\text{Corr}(A) - I\|_F^2
+$$
 
-where $\text{Corr}(A)$ is the correlation matrix computed over the dataset and $I$ is the identity. This penalty is zero when all components are uncorrelated and grows with off-diagonal correlations. Decorrelation approximates statistical independence at the level of second-order statistics (Bell & Sejnowski, 1995). It forces components to encode different structure: two components that respond identically to all inputs will be heavily penalized.
+Here $\text{Corr}(A)$ denotes the correlation matrix of activations across the dataset, and $I$ is the identity. The penalty is zero when components are uncorrelated and increases with off-diagonal correlations. Decorrelation approximates statistical independence at the level of second-order statistics (Bell & Sejnowski, 1995), forcing components that respond identically across inputs to be penalized.
 
-**Role equivalence.** The correspondence between GMM volume control and InfoMax regularization is summarized in the following table:
+**Role equivalence.** The correspondence between GMM volume control and InfoMax regularization is summarized below:
 
-| GMM Term | Neural Equivalent | Function |
-|----------|-------------------|----------|
-| $\log \det(\Sigma)$ diagonal | $-L_{\text{var}} = \sum_j \log \text{Var}(A_j)$ | Prevent dead components |
-| $\log \det(\Sigma)$ off-diagonal | $-L_{\text{tc}}$ (via decorrelation) | Prevent redundant components |
+| GMM term                           | Neural equivalent                               | Function                     |
+| ---------------------------------- | ----------------------------------------------- | ---------------------------- |
+| $\log \det(\Sigma)$ (diagonal)     | $-L_{\text{var}} = \sum_j \log \text{Var}(A_j)$ | Prevent dead components      |
+| $\log \det(\Sigma)$ (off-diagonal) | $-L_{\text{tc}}$ (decorrelation)                | Prevent redundant components |
 
-When activations are uncorrelated, the log-determinant of a diagonal covariance matrix equals $\sum_j \log \text{Var}(A_j)$. The decorrelation penalty enforces the condition that makes this equivalence hold. Together, the two terms constrain the full covariance structure of the representation.
+When activations are uncorrelated, the log-determinant of a diagonal covariance matrix reduces to $\sum_j \log \text{Var}(A_j)$. The decorrelation penalty enforces the condition under which this reduction is valid. Together, the two penalties constrain the full covariance structure of the representation.
 
-This completes the prescription. Implicit EM theory specifies three requirements: compute energies, optimize an LSE objective, include volume control. The first two were established in Sections 2.1–2.2. The variance and decorrelation penalties provide the third. Section 3 assembles these components into a complete model.
+This completes the theoretical requirements. Implicit EM theory demands three elements: energy computation, an LSE objective, and explicit volume control. The first two were established in Sections 2.1–2.2; the variance and decorrelation penalties supply the third. Section 3 assembles these elements into a concrete model.
 
-### 2.5 Summary: The Theory-Specified Model
+### 2.5 Summary: The Theory-Derived Model
 
-The preceding sections establish what implicit EM theory requires. Each component of the model we will present traces to a specific theoretical source:
+The preceding sections establish what implicit EM theory requires. Each component of the model follows from a specific theoretical source:
 
-| Component | Theory Source | Implementation |
-|-----------|---------------|----------------|
-| Distances | Oursland (2024) | Linear layer: $z = Wx + b$ |
-| Activation | Distance interpretation | ReLU or softplus |
-| EM structure | Oursland (2025) | LSE objective (Equation 1) |
-| Volume control (diagonal) | GMM analogy | Variance penalty |
-| Volume control (off-diagonal) | GMM analogy | Decorrelation penalty |
+| Component                     | Theory Source           | Implementation             |
+| ----------------------------- | ----------------------- | -------------------------- |
+| Distances                     | Oursland (2024)         | Linear layer: $z = Wx + b$ |
+| Activation                    | Distance interpretation | ReLU or softplus           |
+| EM structure                  | Oursland (2025)         | LSE objective (Equation 1) |
+| Volume control (diagonal)     | GMM analogy             | Variance penalty           |
+| Volume control (off-diagonal) | GMM analogy             | Decorrelation penalty      |
 
-The linear layer computes distances to learned prototypes (Section 2.1). The LSE objective provides implicit EM dynamics, with gradients equal to responsibilities (Section 2.2). The variance penalty prevents collapse by ensuring every component maintains non-zero dispersion (Section 2.4). The decorrelation penalty prevents redundancy by ensuring components encode distinct structure (Section 2.4).
+The linear layer computes distances to learned prototypes (Section 2.1). The LSE objective supplies implicit EM dynamics, with gradients equal to responsibilities (Section 2.2). The variance penalty prevents collapse by enforcing non-zero dispersion for each component, while the decorrelation penalty prevents redundancy by requiring components to encode distinct structure (Section 2.4).
 
-No component is added for empirical convenience. No hyperparameter is introduced without theoretical justification. The architecture follows from the requirement to compute energies; the objective follows from the requirement to perform implicit EM with volume control.
+No component is included for empirical convenience, and no hyperparameter is introduced without theoretical justification. The architecture follows from the requirement to compute energies; the objective follows from the requirement to perform implicit EM with volume control.
 
-The model is not designed. It is derived.
-
-Section 3 presents the complete instantiation.
+Section 3 presents the full instantiation.
 
 ---
 
