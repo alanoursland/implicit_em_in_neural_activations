@@ -1,0 +1,10 @@
+\section{Conclusion}
+\label{sec:conclusion}
+
+Implicit EM theory specifies a model: compute distances, optimize a log-sum-exp objective, and include volume control. We built exactly what the theory requires---a single-layer encoder with an LSE objective and InfoMax regularization---and tested every prediction the framework makes.
+
+All predictions were confirmed. The gradient--responsibility identity holds to floating-point precision. LSE alone collapses exactly as predicted; variance prevents dead components; decorrelation prevents redundancy. The learned features are digit prototypes---mixture components competing for data---rather than the unstructured encoder projections produced by standard sparse autoencoders. The theory-derived model reaches 93.4\% probe accuracy with half the parameters, outperforming heuristic designs that rely on decoders and L1 penalties.
+
+The optimization behavior is distinctive. Adam offers no advantage; lower loss does not produce better features; SGD is insensitive to learning rate across three orders of magnitude. These results suggest that implicit EM structure yields an unusually well-conditioned objective, with degrees of freedom that decouple loss minimization from representational quality.
+
+The broader implication is methodological. Implicit EM theory is generative. It specifies what to build. We derived an architecture and objective directly from theory, implemented them without modification, and obtained a model that works for the reasons the theory predicts. This establishes implicit EM as a viable foundation for principled model design.
