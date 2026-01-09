@@ -68,6 +68,8 @@ An alternative interpretation reframes outputs as distances or energies relative
 
 This interpretation has a precise mathematical grounding. The Mahalanobis distance of a point $x$ from a Gaussian component with mean $\mu$ and precision along principal direction $v$ scaled by eigenvalue $\lambda$ is $|\lambda^{-1/2} v^\top (x - \mu)|$, which takes the form $|Wx + b|$ for appropriate $W$ and $b$. Standard ReLU networks compute this via the identity $|z| = \text{ReLU}(z) + \text{ReLU}(-z)$, decomposing signed distance into two half-space detectors.
 
+Our model uses a single ReLU, which yields a half-space energy: inputs on one side of the decision boundary have zero energy (a strong match), while those on the other side have energy proportional to their deviation.
+
 The key shift is semantic, not computational. The same neural network performs the same operations; what changes is how we interpret the outputs. Low activation indicates proximity to a prototype. High activation indicates deviation. Probabilities are not primitive quantities but derived ones, arising only after exponentiation and normalization transform distances into relative likelihoods.
 
 Throughout this paper, we adopt the distance-based interpretation: **lower energy means better explanation**. A component with low energy for an input claims that input with high responsibility. This convention, standard in energy-based models (LeCun et al., 2006), is essential for the results that follow. The identification of gradients with responsibilities in Section 2.2 depends on this geometric framing.
@@ -118,9 +120,9 @@ In supervised learning, the objective is clear. Cross-entropy loss has LSE struc
 
 In unsupervised learning, the situation is different. There are no labels. The LSE marginal in Equation 1 provides a candidate objective—minimize the energy of the best-matching component for each input. Intuitively, this enforces that at least one component explains each data point. But this objective alone admits degenerate solutions.
 
-**The collapse problem.** Suppose a single component $j^*$ learns to assign low energy to all inputs. Its responsibility $r_{j^*} \to 1$ across the dataset, while all other responsibilities $r_{j \neq j^*} \to 0$. By Equation 2, gradients to the remaining components vanish. They receive no learning signal. They die.
+**The collapse problem.** The LSE objective is minimized when at least one component assigns low energy to each input. The easiest way to satisfy this is for all components to assign low energy to all inputs—converging to constant output. With ReLU, this means $E_j \approx 0$ everywhere. Responsibilities become uniform, gradients become uninformative, and learning halts.
 
-The result is a collapsed representation: one component responds to everything, and $K-1$ components respond to nothing. The encoder satisfies the LSE objective—every input is explained—but the representation carries no more information than a constant.
+The result is a collapsed representation: all components produce the same output for every input. The encoder satisfies the LSE objective—every input is explained—but the representation carries no more information than a constant.
 
 **The mixture model precedent.** This failure mode is not unique to neural networks. Gaussian mixture models face the same problem, and their solution is instructive. The log-likelihood of a data point under a GMM component includes a log-determinant term:
 
@@ -236,6 +238,8 @@ L = -\log \sum_{j=1}^{K} \exp(-E_j) - \lambda_{\text{var}} \sum_{j=1}^{K} \log \
 \tag{5}
 $$
 
+Here $A = E$ denotes the vector of activations; variance and correlation are computed across the dataset.
+
 Each term serves a distinct and theoretically grounded role.
 
 **Term 1: Log-sum-exp.**
@@ -331,7 +335,7 @@ The framework developed in Sections 2 and 3 makes specific, testable predictions
 Equation 2 is an algebraic identity (Oursland, 2025). For any LSE objective over energies, the gradient with respect to each energy is exactly the corresponding softmax responsibility. This should hold to numerical precision.
 
 **Prediction 2: LSE alone collapses.**
-Without volume control, the LSE objective admits degenerate solutions (Section 2.3). A single component can claim all inputs, driving other components to zero responsibility and zero gradient. Training with only the LSE term should therefore produce complete collapse, with all but one component dead.
+Without volume control, the LSE objective admits degenerate solutions (Section 2.3). All components can converge to constant output, satisfying the objective trivially. Training with only the LSE term should produce complete collapse, with all components dead by the variance criterion.
 
 **Prediction 3: Variance prevents collapse.**
 The variance penalty corresponds to the diagonal of the log-determinant (Section 2.4). Adding this term should prevent dead components: every component should maintain non-zero variance across the dataset. In the absence of decorrelation, however, components may still be redundant.
@@ -370,7 +374,7 @@ No training is involved. The test isolates the mathematical identity from any le
 
 **Predictions.** The theoretical framework makes specific predictions about each term in the objective:
 
-- *LSE only:* Complete collapse. Without volume control, one component claims all inputs while others receive vanishing gradients (Section 2.3).
+- *LSE only:* Complete collapse. Without volume control, all components converge to constant output, yielding zero variance and no learning signal (Section 2.3).
 - *LSE + variance:* No dead units, but redundancy. The variance term prevents collapse (diagonal of log-determinant) but does not prevent components from encoding identical structure.
 - *LSE + variance + decorrelation:* Stable, diverse representations. The full objective provides complete volume control (Section 2.4).
 - *Variance + decorrelation only:* Viable representations but different dynamics. Without LSE, there is no implicit EM structure—no soft competition via responsibilities.
@@ -398,7 +402,7 @@ We measure dead units (components with variance < 0.01), redundancy ($\|\text{Co
 
 **Interpretation.**
 
-*LSE only: Complete collapse.* All 64 units died. The loss remained constant from epoch 10 onward—no learning occurred. This is exactly the failure mode predicted in Section 2.3: without volume control, a single component dominates while others receive vanishing gradients and cease to update.
+*LSE only: complete collapse.* All 64 components died. The loss plateaued by epoch 10 and learning halted. This matches the failure mode predicted in Section 2.3: without volume control, all components converge to constant output, satisfying the LSE objective trivially while carrying no information.
 
 *LSE + variance: No death, but redundancy.* Adding the variance penalty eliminates dead units entirely. The logarithmic barrier makes collapse impossible. However, redundancy explodes to 1875 (of a maximum 4032). The features are alive but nearly identical—multiple components encode the same structure with high variance each. This confirms that the variance term addresses existence but not diversity.
 
@@ -611,7 +615,7 @@ The decoder was compensatory. It patched a deficiency in the objective by supply
 
 ### 5.4 On Optimization
 
-The training dynamics experiment (Section 4.5) revealed a striking pattern: SGD converges in roughly 70 epochs across a 1000× range of learning rates, while Adam does not converge at all. This behavior is not an implementation artifact but a consequence of the objective’s structure.
+The training dynamics experiment (Section 4.5) revealed a striking pattern: SGD plateaus by roughly epoch 70 regardless of learning rate, while Adam continues decreasing loss without improving feature quality. This behavior reflects the objective's structure.
 
 Classical EM has no learning rate. The algorithm alternates between computing responsibilities (E-step) and updating parameters to maximize expected log-likelihood (M-step). Step size is fixed by the mathematics, not by a hyperparameter. Convergence occurs when responsibilities stabilize—when soft assignments stop changing—and this happens in a number of iterations determined by the problem, not by tuning.
 
