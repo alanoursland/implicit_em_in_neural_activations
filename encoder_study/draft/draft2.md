@@ -2,7 +2,7 @@
 
 ## Abstract
 
-Log-sum-exp (LSE) objectives perform expectation–maximization implicitly: the gradient with respect to each component energy equals its responsibility. The same theory predicts collapse. Without volume control analogous to the log-determinant in Gaussian mixture models, components degenerate. We derive the model this theory prescribes: a single-layer energy encoder trained with an LSE objective and InfoMax regularization providing neural volume control. Experiments confirm the theoretical predictions. The gradient–responsibility identity holds exactly; LSE alone collapses; variance prevents dead components; decorrelation prevents redundancy. The full objective learns interpretable mixture components—digit prototypes rather than dictionary elements. It exhibits EM-like optimization dynamics in which lower loss does not correspond to better features and adaptive optimizers offer no advantage. The resulting decoder-free model outperforms standard sparse autoencoders on downstream tasks with half the parameters, supporting implicit EM as a foundation for principled model design.
+Log-sum-exp (LSE) objectives perform expectation–maximization implicitly: the gradient with respect to each component energy equals its responsibility. The same theory predicts collapse: without volume control analogous to the log-determinant in Gaussian mixture models, components degenerate. We derive the model this theory prescribes: a single-layer energy encoder trained with an LSE objective and InfoMax regularization providing neural volume control. Experiments confirm the theoretical predictions. The gradient–responsibility identity holds exactly; LSE alone collapses; variance prevents dead components; decorrelation prevents redundancy. The full objective learns interpretable mixture components—digit prototypes rather than dictionary elements. It exhibits EM-like optimization dynamics in which lower loss does not correspond to better features and adaptive optimizers offer no advantage. The resulting decoder-free model outperforms standard sparse autoencoders on downstream tasks with half the parameters, supporting implicit EM as a foundation for principled model design.
 
 ---
 
@@ -458,7 +458,7 @@ If the model performs implicit EM on a mixture model objective, the learned feat
 We visualize encoder weights from both models by reshaping each row of $W \in \mathbb{R}^{64 \times 784}$ into a 28×28 image. A diverging colormap is used: blue indicates positive weights, red negative weights, and white zero. Both models are visualized with identical color scaling.
 
 **Results.**
-Figure 5 shows the learned encoder weights for both models.
+Figure 4 shows the learned encoder weights for both models.
 
 The theory-derived model (Figure 5a) learns clear digit prototypes. Across the 64 features, multiple variants of each digit appear: circular 0s, vertical and slanted 1s, loopy and angular 2s, distinct forms of 3s through 9s. Many features exhibit center–surround structure—a digit-shaped region of one sign surrounded by the opposite sign—indicating that each component acts both as a detector for its preferred digit and a suppressor for others. All features are active and interpretable; there are no dead units or degenerate patterns.
 
@@ -581,7 +581,7 @@ Sparsity emerges from competition rather than being imposed against the objectiv
 
 Information preservation emerges from volume control rather than from reconstruction pressure. The variance penalty ensures each feature carries information (non-constant output); the decorrelation penalty ensures features carry different information (non-redundant outputs). No decoder is needed to verify that information survives, because the regularization directly ensures it.
 
-The feature visualization (Section 4.5) makes this concrete. The theory-derived model learns digit prototypes; the SAE encoder learns near-random projections. The SAE achieves good reconstruction because its decoder compensates for an unstructured encoder. Our model achieves good classification because its encoder is structured by construction.
+The feature visualization (Section 4.4) makes this concrete. The theory-derived model learns digit prototypes; the SAE encoder learns near-random projections. The SAE achieves good reconstruction because its decoder compensates for an unstructured encoder. Our model achieves good classification because its encoder is structured by construction.
 
 This suggests a broader lesson. Heuristic engineering accumulates mechanisms to patch failure modes. Principled derivation identifies the right objective and lets the mathematics do the work. When the objective aligns with the goal, compensatory mechanisms become unnecessary—and their absence simplifies both the model and its behavior.
 
