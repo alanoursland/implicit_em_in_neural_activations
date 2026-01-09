@@ -18,7 +18,7 @@ No training is involved. The test isolates the mathematical identity from any le
 
 \paragraph{Results.} \Cref{fig:theorem} plots the gradient $\partial L_{\text{LSE}} / \partial a_j$ against the responsibility $r_j = \text{softmax}(-a)_j$ for all 8,192 values. All points lie on the $y=x$ line. The correlation is 1.0000; the maximum absolute error is $4.47 \times 10^{-8}$; the mean absolute error is $2.79 \times 10^{-9}$. These deviations are at floating-point precision.
 
-\begin{figure}[t]
+\begin{figure}[!htbp]
 \centering
 \includegraphics[width=0.6\columnwidth]{fig1_theorem.pdf}
 \caption{Gradient vs.\ responsibility for 8,192 random activations. All points lie on $y = x$, confirming the identity in \Cref{eq:gradient-responsibility} to floating-point precision.}
@@ -167,18 +167,23 @@ The theory-derived model (\Cref{fig:features-ours}) learns clear digit prototype
 
 The standard SAE encoder (\Cref{fig:features-sae}) shows largely unstructured weights. Most features resemble low-magnitude noise, with only faint digit-like structure visible in a subset. Under identical visualization conditions, the SAE encoder weights are qualitatively noisier and less organized than those of the theory-derived model.
 
-\begin{figure}[t]
+\begin{figure}[!htbp]
 \centering
-\includegraphics[width=\columnwidth]{fig4a_features.pdf}
-\caption{Learned encoder weights for the theory-derived model. Features form recognizable digit prototypes with center--surround structure, consistent with mixture components competing for data.}
+\begin{subfigure}[t]{0.48\columnwidth}
+\centering
+\includegraphics[width=\textwidth]{fig4a_features.pdf}
+\caption{Theory-derived model}
 \label{fig:features-ours}
-\end{figure}
-
-\begin{figure}[t]
+\end{subfigure}
+\hfill
+\begin{subfigure}[t]{0.48\columnwidth}
 \centering
-\includegraphics[width=\columnwidth]{fig4b_sae_features.pdf}
-\caption{Learned encoder weights for the standard SAE. Encoder weights show little interpretable structure; representational content is carried primarily by the decoder.}
+\includegraphics[width=\textwidth]{fig4b_sae_features.pdf}
+\caption{Standard SAE}
 \label{fig:features-sae}
+\end{subfigure}
+\caption{Learned encoder weights. (a) Theory-derived model: features form recognizable digit prototypes with center--surround structure, consistent with mixture components competing for data. (b) Standard SAE: encoder weights show little interpretable structure; representational content is carried primarily by the decoder.}
+\label{fig:features}
 \end{figure}
 
 \paragraph{Interpretation.}
@@ -224,7 +229,7 @@ Adam & 0.1 & $-1420 \pm 13$ & 93.1\% $\pm$ 0.2\% \\
 \end{tabular}
 \end{table}
 
-\begin{figure}[t]
+\begin{figure}[!htbp]
 \centering
 \includegraphics[width=\columnwidth]{fig5_dynamics_loss.pdf}
 \caption{Loss curves for SGD (left) and Adam (right) across learning rates. SGD curves plateau; Adam curves continue descending. Despite achieving substantially lower loss, Adam produces features of comparable quality.}
