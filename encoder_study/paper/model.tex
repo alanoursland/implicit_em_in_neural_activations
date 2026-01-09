@@ -1,72 +1,56 @@
 \section{The Derived Model}
 \label{sec:model}
 
-\Cref{sec:theory} established what implicit EM theory requires: a model that computes energies, optimizes an LSE objective, and includes volume control analogous to the log-determinant in Gaussian mixture models. This section instantiates that specification.
-
-We first present the minimal architecture required (\Cref{sec:architecture}), then define the complete objective combining LSE with InfoMax regularization (\Cref{sec:objective}). We next characterize the model from three perspectives---architectural, theoretical, and methodological (\Cref{sec:what-model-is}). To clarify why the objective yields useful representations, we analyze the dynamics that emerge from the tension between attraction and structure (\Cref{sec:dynamics}). Finally, we state the theoretical predictions implied by the framework, which \Cref{sec:experiments} tests empirically (\Cref{sec:predictions}).
-
-Every component traces back to a theoretical requirement: the linear layer computes distances \citep{oursland2024mahalanobis}, the LSE term provides implicit EM structure \citep{oursland2025implicit}, and the InfoMax terms supply volume control (\Cref{sec:solution}). We add nothing beyond what the theory specifies.
+We first present the architecture (\Cref{sec:architecture}), then define the complete objective (\Cref{sec:objective}). We analyze the dynamics that emerge from the objective (\Cref{sec:dynamics}) and state the theoretical predictions that \Cref{sec:experiments} tests (\Cref{sec:predictions}).
 
 \subsection{Architecture}
 \label{sec:architecture}
 
-The implicit EM framework places minimal constraints on architecture. The identity in \Cref{eq:gradient-responsibility} holds for any differentiable parameterization of the energies $E_j(x)$ \citep{oursland2025implicit}. We therefore adopt the simplest instantiation: a single linear layer followed by a nonlinearity.
+The identity in \Cref{eq:gradient-responsibility} holds for any differentiable parameterization of the distances $d_j(x)$ \citep{oursland2025implicit}. We therefore adopt the simplest instantiation: a single linear layer followed by a nonlinearity.
 \begin{equation}
 \label{eq:architecture}
-z = Wx + b, \qquad E = \phi(z)
+z = Wx + b, \qquad d = \phi(z)
 \end{equation}
 
-Here $W \in \mathbb{R}^{K \times D}$ maps inputs $x \in \mathbb{R}^D$ to $K$ pre-activation values $z$, the bias $b \in \mathbb{R}^K$ shifts each component, and the activation function $\phi$ produces the final energies $E$.
+Here $W \in \mathbb{R}^{K \times D}$ maps inputs to $K$ components. 
 
-This architecture has a direct geometric interpretation. Under the distance-based view of neural networks \citep{oursland2024mahalanobis}, each row of $W$ defines a prototype direction in input space. The pre-activation $z_j = w_j^\top x + b_j$ measures the signed projection of the input onto prototype $j$, offset by $b_j$. The activation $\phi$ converts this projection into an energy, following the convention that lower energy corresponds to a better match \citep{lecun2006tutorial}.
+We use ReLU in our experiments. Other activations can be substituted without affecting the implicit EM property. ReLU produces non-negative distances, with zero indicating a strong match.
 
-The choice of activation shapes the geometry of the energy landscape but does not affect the implicit EM property. We consider two options:
-\begin{itemize}
-    \item \textbf{ReLU:} $\phi(z) = \max(0, z)$. This produces non-negative energies. Inputs for which $z_j < 0$ yield zero energy for component $j$, indicating a strong match. Rectification induces sparsity in the energy representation \citep{glorot2011deep}.
-    \item \textbf{Softplus:} $\phi(z) = \log(1 + \exp(z))$. A smooth approximation to ReLU that avoids the discontinuous gradient at zero while preserving non-negative energies.
-\end{itemize}
-
-Responsibilities need not be computed explicitly during training. By \Cref{eq:gradient-responsibility}, they appear implicitly in the gradients. For analysis and visualization, they can be recovered as
+Responsibilities need not be computed explicitly during training. By \Cref{eq:gradient-responsibility}, they appear in the gradients. For analysis, they can be recovered as
 \begin{equation}
 \label{eq:responsibilities}
-r = \text{softmax}(-E)
+r = \text{softmax}(-d)
 \end{equation}
 
-Critically, the architecture contains no decoder. There is nothing mapping activations back to input space and there is no reconstruction loss.
+This is unsupervised learning. We do not reconstruct the input. There is no decoder.
 
 \subsection{Complete Objective}
 \label{sec:objective}
 
-Combining the implicit EM structure from \Cref{sec:lse-identity} with the volume control from \Cref{sec:solution} yields the complete objective:
+The objective from \Cref{eq:objective-intro} expands to
 \begin{equation}
 \label{eq:full-objective}
-L = -\log \sum_{j=1}^{K} \exp(-E_j) - \lambda_{\text{var}} \sum_{j=1}^{K} \log \text{Var}(A_j) + \lambda_{\text{tc}} \|\text{Corr}(A) - I\|_F^2
+L = -\log \sum_{j=1}^{K} \exp(-d_j) - \lambda_{\text{var}} \sum_{j=1}^{K} \log \text{Var}(d_j) + \lambda_{\text{tc}} \|\text{Corr}(d) - I\|_F^2
 \end{equation}
 
-Here $A = E$ denotes the vector of activations; variance and correlation are computed across the dataset.
+Variance and correlation are computed across batches during training.
 
-Each term serves a distinct and theoretically grounded role.
+\paragraph{LSE term.}
+At least one component must explain each input. The LSE term attracts components toward data they explain well.
 
-\paragraph{Term 1: Log-sum-exp.}
-The LSE term supplies the implicit EM structure established in \Cref{sec:lse-identity}. By \Cref{eq:gradient-responsibility}, its gradient with respect to each energy equals the corresponding responsibility, producing responsibility-weighted parameter updates \citep{oursland2025implicit}. The term enforces a minimal requirement: at least one component must explain each input, matching the core objective of mixture models \citep{bishop2006pattern}. In practice, it acts as an attractive force, drawing components toward regions of the data manifold they explain well.
+\paragraph{Variance penalty.}
+Components must maintain non-zero variance. The hyperparameter $\lambda_{\text{var}}$ controls the strength of this constraint.
 
-\paragraph{Term 2: Variance penalty.}
-This term corresponds to the diagonal of the log-determinant in Gaussian mixture models (\Cref{sec:theory-summary}). A component with zero variance across the dataset has collapsed: it produces identical output for all inputs and carries no information. The logarithmic barrier prevents this outcome. As $\text{Var}(A_j) \to 0$, the penalty diverges, ruling out collapse. Under Gaussian assumptions, log-variance is proportional to differential entropy \citep{linsker1988self}, so this term encourages each component to maintain nontrivial information about the input. The hyperparameter $\lambda_{\text{var}}$ controls the strength of this constraint.
+\paragraph{Decorrelation penalty.}
+Prevents redundancy. Controlled by $\lambda_{\text{tc}}$.
 
-\paragraph{Term 3: Decorrelation penalty.}
-This term corresponds to the off-diagonal structure of the log-determinant. Correlated components encode redundant information; in the limit of perfect correlation, one component becomes a linear function of another and adds nothing. Penalizing deviations from the identity correlation matrix encourages statistical independence at second order \citep{bell1995information}. The same regularizer appears in recent self-supervised methods such as Barlow Twins \citep{zbontar2021barlow} and VICReg \citep{bardes2022vicreg}, providing independent evidence for its effectiveness as a collapse-prevention mechanism. The hyperparameter $\lambda_{\text{tc}}$ sets the strength of this constraint.
-
-Together, the variance and decorrelation terms constrain the full covariance structure of the activations, serving the same role that $\log \det(\Sigma)$ serves in classical mixture models. When activations are uncorrelated, the log-determinant of a diagonal covariance matrix reduces to $\sum_j \log \text{Var}(A_j)$, which is exactly the negative of the variance penalty. The decorrelation term enforces the condition under which this equivalence holds.
-
-Notably, the objective contains no reconstruction term. Standard sparse autoencoders include a loss of the form $\|x - \hat{x}\|^2$ to anchor features to input fidelity \citep{vincent2008extracting}. Our objective replaces reconstruction with volume control: information preservation follows from requiring components to remain active (variance) and non-redundant (decorrelation), rather than from explicit input matching.
-
-For some architectures, an additional weight regularizer can be useful:
+For some architectures, a weight regularizer can help:
 \begin{equation}
 \label{eq:weight-reg}
 L_{\text{wr}} = \lambda_{\text{wr}} \|W^\top W - I\|_F^2
 \end{equation}
 
-This term encourages orthogonality among the encoder's weight vectors, preventing multiple components from converging to the same direction in input space \citep{oursland2024mahalanobis}. It also constrains row norms, bounding weight magnitudes. We treat it as optional; all primary experiments use \Cref{eq:full-objective} alone.
+This encourages orthogonality among weight vectors, preventing multiple components from converging to the same direction. We do not use it in our experiments.
 
 \subsection{What This Model Is}
 \label{sec:what-model-is}
@@ -74,61 +58,41 @@ This term encourages orthogonality among the encoder's weight vectors, preventin
 The architecture in \Cref{eq:architecture} and the objective in \Cref{eq:full-objective} admit three complementary descriptions, each illuminating a different aspect of the same system.
 
 \paragraph{A decoder-free sparse autoencoder.}
-Architecturally, the model resembles a sparse autoencoder with the decoder removed. Standard SAEs map inputs through an encoder to a sparse bottleneck and then reconstruct via a decoder, training on reconstruction loss plus an L1 sparsity penalty \citep{olshausen1996emergence,bricken2023monosemanticity}. Our model retains only the encoder. There is no reconstruction term, no decoder weights, and no explicit sparsity penalty. Yet, as shown in \Cref{sec:experiments}, it learns sparse, interpretable features comparable to those of standard SAEs. The decoder, it turns out, was compensating for missing structure in the objective---structure we now supply directly through volume control.
+Standard SAEs map inputs through an encoder to a sparse bottleneck, then reconstruct via a decoder, training on reconstruction loss plus an L1 sparsity penalty \citep{olshausen1996emergence,bricken2023monosemanticity}. Our model retains only the encoder with no explicit sparsity penalty. It learns sparse, interpretable features comparable to those of standard SAEs (\Cref{sec:experiments}).
 
 \paragraph{A neural mixture model.}
-Theoretically, the model is a mixture model implemented in neural form. Each row of $W$ defines a component; the energies $E_j(x)$ measure how well each component explains the input; the responsibilities $r_j = \text{softmax}(-E)_j$ give the posterior probability of component assignment. The LSE objective is the negative log marginal likelihood---the standard mixture model objective \citep{bishop2006pattern}. The InfoMax terms play the role of the log-determinant, preventing components from collapsing or duplicating. Training proceeds by implicit EM: the forward pass computes unnormalized likelihoods, backpropagation produces responsibility-weighted gradients, and the optimizer updates component parameters accordingly \citep{oursland2025implicit}. This is not an analogy. The mathematics are identical; only the parameterization differs.
+Each row of $W$ defines a component. The distances $d_j(x)$ measure how well each component explains the input. The LSE objective is the negative log marginal likelihood. The InfoMax terms play the role of the log-determinant. This is not an analogy. The mathematics are identical; only the parameterization differs.
 
-\paragraph{The simplest instantiation of implicit EM theory.}
-From the perspective of this paper, the model serves as a minimal test case. We asked what implicit EM theory requires. The answer is a model that computes energies (\Cref{sec:distance-representations}), optimizes an LSE objective (\Cref{sec:lse-identity}), and includes volume control (\Cref{sec:solution}). \Cref{eq:architecture} is the simplest architecture that computes energies. \Cref{eq:full-objective} is the complete objective the theory specifies. We add nothing beyond this---no architectural embellishments, no auxiliary losses, no heuristics. The model exists to test the theory, not to chase state-of-the-art performance. That it performs well in practice (\Cref{sec:experiments}) is evidence that the theory captures something real about representation learning.
+\paragraph{A minimal test case.}
+The model exists to test the theory. \Cref{eq:architecture} is the simplest architecture that computes distances. \Cref{eq:full-objective} is the objective the theory specifies. We add no architectural embellishments, auxiliary losses, or heuristics.
 
-These descriptions are not competing interpretations but different lenses on the same object. The architectural lens connects the model to the SAE literature and interpretability practice. The mixture-model lens provides theoretical grounding and explains its behavior. The implicit EM lens explains why the model takes this particular form: the theory determines it.
-
-\subsection{Dynamics: Attraction vs Structure}
+\subsection{Dynamics}
 \label{sec:dynamics}
 
-The objective in \Cref{eq:full-objective} creates a tension between two forces. Understanding this tension explains why the model learns useful representations rather than collapsing to trivial solutions.
+The objective balances attraction against structure. This explains why the model learns useful representations rather than collapsing.
 
 \subsubsection{The LSE Term Is Attractive}
 
-The log-sum-exp term $-\log \sum_j \exp(-E_j)$ acts as an attractive force, pulling components toward the data. Minimizing this term is equivalent to maximizing the likelihood that at least one component explains each input---the standard mixture model objective \citep{bishop2006pattern}.
-
-A component reduces its contribution to the loss by lowering its energy for inputs it explains well. The gradient identity (\Cref{eq:gradient-responsibility}) ensures that this attraction is responsibility-weighted: components that already claim high responsibility for an input receive larger gradients for that input. This is the implicit M-step---prototypes move toward the data points they are responsible for \citep{oursland2025implicit}.
-
-Left unchecked, this attraction leads to collapse. A single component can lower its energy for all inputs, driving its responsibility toward one across the dataset. Other components receive vanishing gradient and die. The representation degenerates to a constant, as described in \Cref{sec:volume-control}.
+The LSE term pulls components toward data they explain well. The gradient identity ensures this attraction is responsibility-weighted. Left unchecked, this leads to collapse (\Cref{sec:volume-control}).
 
 \subsubsection{The InfoMax Terms Are Structural}
 
-The variance and decorrelation penalties oppose collapse by constraining \emph{how} components can reduce their energy, without dictating \emph{where} they should go.
-
-The variance term enforces selectivity. To maintain non-zero variance, a component cannot assign similar energies to all inputs. It must respond strongly to some inputs (low energy, high responsibility) and weakly to others (high energy, low responsibility). A component that attempts to claim everything drives its variance toward zero and incurs a large penalty.
-
-The decorrelation term enforces diversity. To remain uncorrelated with other components, each must encode different structure in the data. Two components that respond identically---or even proportionally---are penalized. This prevents the redundancy that would otherwise arise when multiple components converge to similar solutions.
-
-Together, these terms impose structure on the implicit EM dynamics. The LSE term provides attraction; the InfoMax terms shape it into a stable equilibrium.
+The variance and decorrelation penalties constrain \emph{how} components can reduce their distance, without dictating \emph{where} they should go. Variance enforces selectivity. Decorrelation enforces diversity. Together, they shape attraction into a stable equilibrium.
 
 \subsubsection{The Equilibrium Is Competitive Coverage}
 
-Under these opposing forces, the system settles into a state of competitive coverage. Components distribute themselves to tile the data manifold, each specializing in a region of input space.
+Components distribute themselves to tile the data manifold, each specializing in a region of input space. A component cannot expand its territory without reducing its variance or overlapping with others, both of which are penalized. The result is a soft partition of the input space.
 
-At equilibrium, a component achieves low energy (high responsibility) for inputs in its region and high energy (low responsibility) elsewhere. It cannot expand its territory without either reducing its variance or overlapping with other components, both of which are penalized. The result is a soft partition of the input space, with responsibilities encoding degrees of membership.
-
-This behavior resembles competitive learning in self-organizing maps \citep{kohonen1982self}, where prototypes spread through attraction to data and mutual repulsion. The difference is that this framework is probabilistic: soft responsibilities replace hard winner-take-all assignments, and the equilibrium follows from a well-defined objective rather than heuristic update rules. The implicit EM structure (\Cref{sec:lse-identity}) ensures that these dynamics correspond to maximum likelihood estimation under a mixture model.
+This resembles competitive learning in self-organizing maps \citep{kohonen1982self}, but with soft responsibilities rather than winner-take-all assignments.
 
 \subsubsection{Sparsity Is Emergent}
 
-\Cref{eq:full-objective} contains no explicit sparsity penalty---no L1 term on activations and no regularizer that encourages zeros. Sparse representations nevertheless arise.
-
-As components specialize, each input falls squarely in the territory of only a few components. Those components exhibit low energy (and high activation after conversion), while the remainder exhibit high energy and near-zero activation. The responsibility distribution concentrates: for a typical input, one or two components carry most of the probability mass.
-
-This sparsity differs from the L1-induced sparsity of standard sparse autoencoders \citep{olshausen1996emergence}. L1 regularization forces activations toward zero regardless of structure. Here, sparsity appears only when the data admit a covering by localized components---sparsity as a consequence of organization rather than an imposed constraint.
-
-The ReLU activation reinforces this effect. Components with high energy produce exactly zero activation after rectification, yielding true sparsity rather than small values \citep{glorot2011deep}. The combination of competitive dynamics and rectification produces representations that are sparse because they are structured.
+The objective contains no explicit sparsity penalty. Sparse representations nevertheless arise. As components specialize, each input activates only a few components. Sparsity emerges from structure, not from L1 regularization.
 
 \subsection{Theoretical Predictions}
 \label{sec:predictions}
 
-The framework developed in \Cref{sec:theory,sec:model} makes specific, testable predictions. These follow directly from the theory and were articulated before any experiments were conducted. \Cref{sec:experiments} evaluates them empirically.
+The theory makes five testable predictions.
 
 \begin{table}[t]
 \centering
@@ -148,18 +112,18 @@ Features are mixture components & Implicit EM interpretation (\Cref{sec:lse-iden
 \end{table}
 
 \paragraph{Prediction 1: Gradient equals responsibility.}
-\Cref{eq:gradient-responsibility} is an algebraic identity \citep{oursland2025implicit}. For any LSE objective over energies, the gradient with respect to each energy is exactly the corresponding softmax responsibility. This should hold to numerical precision.
+\Cref{eq:gradient-responsibility} is an algebraic identity. It should hold to numerical precision.
 
 \paragraph{Prediction 2: LSE alone collapses.}
-Without volume control, the LSE objective admits degenerate solutions (\Cref{sec:volume-control}). All components can converge to constant output, satisfying the objective trivially. Training with only the LSE term should produce complete collapse, with all components dead by the variance criterion.
+Without volume control, all components should die.
 
 \paragraph{Prediction 3: Variance prevents collapse.}
-The variance penalty corresponds to the diagonal of the log-determinant (\Cref{sec:solution}). Adding this term should prevent dead components: every component should maintain non-zero variance across the dataset. In the absence of decorrelation, however, components may still be redundant.
+Adding variance penalty should prevent dead components. Without decorrelation, components may still be redundant.
 
 \paragraph{Prediction 4: Decorrelation prevents redundancy.}
-The decorrelation penalty corresponds to the off-diagonal structure of the log-determinant (\Cref{sec:solution}). Adding this term should force components to encode distinct information. The full objective---LSE with both InfoMax terms---should therefore yield representations that are neither collapsed nor redundant.
+Adding decorrelation should force components to encode distinct information.
 
 \paragraph{Prediction 5: Features are mixture components.}
-If the model performs implicit EM on a mixture model objective, the learned features should resemble mixture components---prototypes that compete for data---rather than dictionary elements that combine additively \citep{olshausen1996emergence}. Visualized features should exhibit global structure (whole patterns) rather than local parts (edges or strokes).
+Learned features should resemble prototypes that compete for data, not dictionary elements that combine additively. Visualized features should exhibit global structure rather than local parts.
 
-These predictions span multiple levels: a mathematical identity (Prediction 1), failure modes and their remedies (Predictions 2--4), and representational form (Prediction 5). Confirming all five would provide strong evidence that implicit EM theory correctly characterizes this class of models.
+Confirming all five would support implicit EM theory as a foundation for model design.
