@@ -2,7 +2,7 @@
 
 ## Abstract
 
-Log-sum-exp (LSE) objectives perform expectation–maximization implicitly: the gradient with respect to each component energy equals its responsibility. The same theory predicts collapse—without volume control analogous to the log-determinant in Gaussian mixture models, components degenerate. We derive the model this theory prescribes: a single-layer energy encoder trained with an LSE objective and InfoMax regularization providing neural volume control. Experiments confirm the theoretical predictions. The gradient–responsibility identity holds exactly; LSE alone collapses; variance prevents dead components; decorrelation prevents redundancy. The full objective learns interpretable mixture components—digit prototypes rather than dictionary elements—and exhibits EM-like optimization dynamics in which lower loss does not correspond to better features and adaptive optimizers offer no advantage. The resulting decoder-free model outperforms standard sparse autoencoders on downstream tasks with half the parameters, supporting implicit EM as a foundation for principled model design.
+Log-sum-exp (LSE) objectives perform expectation–maximization implicitly: the gradient with respect to each component energy equals its responsibility. The same theory predicts collapse. Without volume control analogous to the log-determinant in Gaussian mixture models, components degenerate. We derive the model this theory prescribes: a single-layer energy encoder trained with an LSE objective and InfoMax regularization providing neural volume control. Experiments confirm the theoretical predictions. The gradient–responsibility identity holds exactly; LSE alone collapses; variance prevents dead components; decorrelation prevents redundancy. The full objective learns interpretable mixture components—digit prototypes rather than dictionary elements. It exhibits EM-like optimization dynamics in which lower loss does not correspond to better features and adaptive optimizers offer no advantage. The resulting decoder-free model outperforms standard sparse autoencoders on downstream tasks with half the parameters, supporting implicit EM as a foundation for principled model design.
 
 ---
 
@@ -346,28 +346,25 @@ These predictions span multiple levels: a mathematical identity (Prediction 1), 
 
 ## 4. Experimental Validation
 
-Sections 2 and 3 derived a model from implicit EM theory and stated six predictions that follow from the framework. This section tests those predictions empirically.
+Sections 2 and 3 derived a model from implicit EM theory and articulated five predictions that follow from the framework. This section evaluates those predictions empirically.
 
-The experiments are organized by what they validate. Experiment 1 verifies the foundational identity: that the gradient of the LSE loss equals the responsibility exactly (Section 4.1). Experiment 2 tests the ablation predictions: that LSE alone collapses, variance prevents death, and decorrelation prevents redundancy (Section 4.2). Experiment 3 benchmarks against a standard sparse autoencoder to confirm the theory-derived model produces useful features (Section 4.3). Experiment 4 examines training dynamics to test whether optimization exhibits the learning-rate invariance expected from EM structure (Section 4.4). Experiment 5 visualizes learned features to confirm they are mixture components rather than dictionary elements (Section 4.5).
+The experiments are organized by what they test. Experiment 1 verifies the foundational identity: that the gradient of the LSE loss equals the responsibility exactly (Section 4.1). Experiment 2 examines the predicted failure modes and remedies: that LSE alone collapses, variance prevents dead units, and decorrelation prevents redundancy (Section 4.2). Experiment 3 benchmarks against a standard sparse autoencoder to assess whether the theory-derived model learns useful features (Section 4.3). Experiment 4 visualizes learned features to determine whether they take the form of mixture components rather than dictionary elements (Section 4.4). Experiment 5 investigates whether the implicit EM structure affects optimizer behavior (Section 4.5). 
 
-Throughout, we emphasize that these experiments validate predictions made before any data was collected. The theory came first; the experiments confirm or refute it. This is not exploratory research but hypothesis testing.
+Experiments 1-4 test predictions stated before any data was collected. Experiment 5 is exploratory.
 
 ### 4.1 Experiment 1: Theorem Verification
 
-**Prediction.** Equation 2 states that the gradient of the LSE loss with respect to each component energy equals its responsibility: $\partial L_{\text{LSE}} / \partial E_j = r_j$. This is claimed to be an exact algebraic identity, not an approximation (Oursland, 2025).
+**Prediction.** Equation 2 states that the gradient of the LSE loss with respect to each component energy equals its responsibility: $\partial L_{\text{LSE}} / \partial E_j = r_j$. This is an algebraic identity (Oursland, 2025).
 
-**Method.** We verify this identity directly with a single forward-backward pass. We create random activations $a \in \mathbb{R}^{64 \times 128}$ (64 samples, 128 components), compute the LSE loss $L = -\sum_i \log \sum_j \exp(-a_{ij})$, compute responsibilities $r = \text{softmax}(-a)$, and backpropagate to obtain gradients. We then compare `a.grad` to $r$ element-wise across all 8,192 values.
+**Method.** We verify the identity with a single forward–backward pass. We generate random activations $a \in \mathbb{R}^{64 \times 128}$ (64 samples, 128 components), compute the LSE loss $L = -\sum_i \log \sum_j \exp(-a_{ij})$, compute responsibilities $r = \text{softmax}(-a)$, and backpropagate to obtain gradients. We then compare `a.grad` and $r$ element-wise across all 8,192 values.
 
-No training is involved. This experiment tests the mathematical identity itself, independent of any learned parameters.
+No training is involved. The test isolates the mathematical identity from any learned parameters.
 
-**Results.** Figure 1 plots the gradient $\partial L_{\text{LSE}} / \partial a_j$ against the responsibility $r_j = \text{softmax}(-a)_j$ for all 8,192 values. Every point lies exactly on the $y = x$ identity line. The correlation is 1.0000; the maximum absolute error is $4.47 \times 10^{-8}$; the mean absolute error is $2.79 \times 10^{-9}$. These errors are at floating-point precision—the limits of numerical representation, not approximation error.
+**Results.** Figure 1 plots the gradient $\partial L_{\text{LSE}} / \partial a_j$ against the responsibility $r_j = \text{softmax}(-a)_j$ for all 8,192 values. All points lie on the $y=x$ line. The correlation is 1.0000; the maximum absolute error is $4.47 \times 10^{-8}$; the mean absolute error is $2.79 \times 10^{-9}$. These deviations are at floating-point precision.
 
-![Theorem Verification](../figures/fig1_theorem.png)
-*Figure 1: Verification of the gradient-responsibility identity. Each point represents one component for one sample (8,192 total). The x-axis is the responsibility $r_j = \text{softmax}(-a)_j$; the y-axis is the gradient $\partial L_{\text{LSE}} / \partial a_j$. All points lie exactly on the $y = x$ line (dashed), confirming that the gradient equals the responsibility to numerical precision.*
+**Interpretation.** The gradient with respect to each energy equals its responsibility. Backpropagation through an LSE objective therefore implements the E-step implicitly: responsibilities arise in the backward pass without explicit computation. The mechanism described in Section 2.2 is exact.
 
-**Interpretation.** The gradient with respect to each energy *is* its responsibility. This confirms that backpropagation through an LSE objective performs the E-step implicitly: responsibilities emerge from the backward pass without explicit computation. The implicit EM machinery described in Section 2.2 is not a conceptual analogy but an exact mathematical property.
-
-**Status.** Prediction 1 confirmed. The identity holds exactly.
+**Status.** Prediction 1 confirmed.
 
 ### 4.2 Experiment 2: Ablation Study
 
@@ -378,25 +375,26 @@ No training is involved. This experiment tests the mathematical identity itself,
 - *LSE + variance + decorrelation:* Stable, diverse representations. The full objective provides complete volume control (Section 2.4).
 - *Variance + decorrelation only:* Viable representations but different dynamics. Without LSE, there is no implicit EM structure—no soft competition via responsibilities.
 
-**Method.** We train four configurations on MNIST with 64 hidden units, 100 epochs, and 3 random seeds per configuration:
+**Method.**
+We train four configurations on MNIST with 64 components, 100 epochs, and three random seeds per configuration:
 
-| Config | LSE | Variance | Decorrelation |
-|--------|:---:|:--------:|:-------------:|
-| lse_only | ✓ | | |
-| lse_var | ✓ | ✓ | |
-| lse_var_tc | ✓ | ✓ | ✓ |
-| var_tc_only | | ✓ | ✓ |
+| Configuration  | LSE | Variance | Decorrelation |
+| -------------- | :-: | :------: | :-----------: |
+| LSE only       |  ✓  |          |               |
+| LSE + var      |  ✓  |     ✓    |               |
+| LSE + var + tc |  ✓  |     ✓    |       ✓       |
+| var + tc only  |     |     ✓    |       ✓       |
 
 We measure dead units (components with variance < 0.01), redundancy ($\|\text{Corr}(A) - I\|_F^2$), and responsibility entropy ($\mathbb{E}_x[H(r(x))]$, where higher values indicate softer competition).
 
 **Results.**
 
-| Config | Dead Units | Redundancy | Resp. Entropy |
-|--------|-----------|------------|---------------|
-| LSE only | 64/64 (100%) | — | 4.16 |
-| LSE + var | 0/64 (0%) | 1875 | 3.77 |
-| LSE + var + tc | 0/64 (0%) | 29 | 3.85 |
-| var + tc only | 0/64 (0%) | 28 | 1.99 |
+| Configuration  | Dead Units   | Redundancy | Resp. Entropy |
+|----------------|------------  |------------|---------------|
+| LSE only       | 64/64 (100%) | —          | 4.16          |
+| LSE + var      | 0/64 (0%)    | 1875       | 3.77          |
+| LSE + var + tc | 0/64 (0%)    | 29         | 3.85          |
+| var + tc only  | 0/64 (0%)    | 28         | 1.99          |
 
 **Interpretation.**
 
@@ -412,150 +410,166 @@ We measure dead units (components with variance < 0.01), redundancy ($\|\text{Co
 
 ### 4.3 Experiment 3: Benchmark Comparison
 
-**Goal.** Validate that the theory-derived model produces useful features in practice. We compare against a standard sparse autoencoder—the established architecture for learning sparse, interpretable representations (Olshausen & Field, 1996; Bricken et al., 2023).
+**Goal.**
+Assess whether the theory-derived model learns useful representations in practice. We compare against a standard sparse autoencoder—the canonical architecture for learning sparse, interpretable features (Olshausen & Field, 1996; Bricken et al., 2023).
 
-**Method.** We train two models on MNIST with matched hidden dimension:
+**Method.**
+We train two models on MNIST with matched hidden dimension:
 
-| Model | Architecture | Loss | Parameters |
-|-------|--------------|------|------------|
-| Theory-derived (ours) | Linear (784→64) + ReLU | LSE + InfoMax | 50,240 |
-| Standard SAE | Linear (784→64) + ReLU + Linear (64→784) | MSE + L1 | 101,200 |
+| Model                 | Architecture                             | Loss          | Parameters |
+| --------------------- | ---------------------------------------- | ------------- | ---------- |
+| Theory-derived (ours) | Linear (784→64) + ReLU                   | LSE + InfoMax | 50,240     |
+| Standard SAE          | Linear (784→64) + ReLU + Linear (64→784) | MSE + L1      | 101,200    |
 
-Both models produce 64-dimensional ReLU features. We evaluate feature quality via linear probe accuracy: freeze the encoder, train logistic regression on the features, report MNIST test accuracy. We also measure L0 sparsity (fraction of features active per input) and parameter count. Each model is trained for 100 epochs with 5 random seeds.
+Both models produce 64-dimensional ReLU features. We evaluate feature quality using linear probe accuracy: the encoder is frozen, logistic regression is trained on the features, and MNIST test accuracy is reported. We also measure L0 sparsity (fraction of features active per input) and parameter count. Each model is trained for 100 epochs with five random seeds.
 
 **Results.**
 
-| Metric | Theory-Derived (Ours) | Standard SAE |
-|--------|----------------------|--------------|
-| Linear Probe Accuracy | **93.43% ± 0.38%** | 90.26% ± 0.32% |
-| L0 Density | **26.8%** (17.2/64) | 50.3% (32.2/64) |
-| Parameters | **50,240** | 101,200 |
-| Reconstruction MSE | 0.143 ± 0.001 | **0.026 ± 0.001** |
+| Metric                | Theory-Derived (Ours) | Standard SAE      |
+| --------------------- | --------------------- | ----------------- |
+| Linear Probe Accuracy | **93.43% ± 0.38%**    | 90.26% ± 0.32%    |
+| L0 Density            | **26.8%** (17.2/64)   | 50.3% (32.2/64)   |
+| Parameters            | **50,240**            | 101,200           |
+| Reconstruction MSE    | 0.143 ± 0.001         | **0.026 ± 0.001** |
 
 **Interpretation.**
 
-*Feature quality: +3.2% accuracy.* The theory-derived model achieves 93.4% linear probe accuracy versus 90.3% for the standard SAE. For context, logistic regression on raw pixels achieves approximately 92%. Our 64-dimensional features outperform 784 raw pixels; the SAE's features underperform them. The decoder-free objective produces more linearly separable representations.
+*Feature quality: +3.2% accuracy.*
+The theory-derived model reaches 93.4% linear probe accuracy, compared to 90.3% for the standard SAE. For reference, logistic regression on raw MNIST pixels achieves approximately 92%. The learned 64-dimensional features outperform raw pixels, while the SAE features underperform them. The decoder-free objective yields representations that are more linearly separable.
 
-*Sparsity: 2× sparser without L1.* Despite having no explicit sparsity penalty, the theory-derived model activates only 27% of features per input, versus 50% for the SAE with L1 regularization. This confirms the emergent sparsity predicted in Section 3.4: the decorrelation penalty induces sparsity indirectly, as uncorrelated features must activate on different inputs.
+*Sparsity: 2× sparser without L1.*
+Despite lacking an explicit sparsity penalty, the theory-derived model activates only 27% of features per input, compared to 50% for the SAE trained with L1 regularization. This matches the emergent sparsity described in Section 3.4: decorrelation induces sparsity indirectly, because uncorrelated components must specialize on different inputs.
 
-*Parameters: 50% reduction.* Removing the decoder halves the parameter count. This is the direct benefit of the decoder-free formulation.
+*Parameters: 50% reduction.*
+Eliminating the decoder halves the parameter count. This reduction follows directly from the theory-derived, encoder-only formulation.
 
-*Reconstruction: SAE wins.* The standard SAE achieves 5× lower reconstruction error. This is expected: the SAE trains an explicit decoder to minimize reconstruction, while we use the untrained transpose $W^\top$. However, reconstruction was never our objective. The linear probe results demonstrate that information is preserved—it is simply encoded in a form optimized for discrimination rather than reconstruction.
+*Reconstruction: SAE wins.*
+The standard SAE achieves substantially lower reconstruction error. This is expected: it explicitly optimizes reconstruction with a trained decoder, whereas we use the untrained transpose $W^\top$. Reconstruction fidelity was never an objective. The probe results show that information is preserved, but encoded in a form optimized for discrimination rather than pixel-wise reconstruction.
 
-**Status.** The theory-derived model outperforms heuristic design on the metrics that matter for representation quality: +3.2% probe accuracy, 2× sparser, 50% fewer parameters. We predicted competitive; we achieved superior. This suggests that principled derivation from implicit EM theory yields not just a working model but a better one.
+**Status.**
+The theory-derived model outperforms the heuristic baseline on the metrics relevant to representation quality: higher probe accuracy (+3.2%), greater sparsity (2×), and half the parameters. This supports the claim that principled derivation from implicit EM theory yields not just a viable model, but a better one.
 
-### 4.4 Experiment 4: Training Dynamics
+### 4.4 Experiment 4: Feature Visualization
 
-**Prediction.** Classical EM has no learning rate. The E-step computes responsibilities exactly; the M-step solves for optimal parameters in closed form. Convergence is determined by problem structure, not by a hyperparameter. If implicit EM governs our objective, we might expect learning rate to matter less than usual—the gradient direction is determined by responsibilities, and scaling that direction should not fundamentally change what is learned.
+**Prediction.**
+If the model performs implicit EM on a mixture model objective, the learned features should resemble mixture components—prototypes that compete for data—rather than dictionary elements that combine additively to reconstruct inputs (Olshausen & Field, 1996). Visualized encoder weights should show global structure (whole patterns) rather than local parts (edges or strokes).
 
-**Method.** We train with SGD and Adam across learning rates spanning three orders of magnitude (1e-4 to 1e-1), with 3 seeds per configuration—24 runs total. We evaluate loss curves and linear probe accuracy on the learned features.
+**Method.**
+We visualize encoder weights from both models by reshaping each row of $W \in \mathbb{R}^{64 \times 784}$ into a 28×28 image. A diverging colormap is used: blue indicates positive weights, red negative weights, and white zero. Both models are visualized with identical color scaling.
 
 **Results.**
+Figure 5 shows the learned encoder weights for both models.
 
-| Optimizer | lr | Final Loss | Probe Acc |
-|-----------|------|------------|-----------|
-| SGD | 0.0001 | -520 ± 1 | 92.2% ± 0.3% |
-| SGD | 0.001 | -676 ± 0 | 92.6% ± 0.2% |
-| SGD | 0.01 | -795 ± 29 | 93.6% ± 0.1% |
-| SGD | 0.1 | -967 ± 18 | 93.5% ± 0.1% |
-| Adam | 0.0001 | -745 ± 2 | 92.9% ± 0.0% |
-| Adam | 0.001 | -999 ± 1 | 93.5% ± 0.4% |
-| Adam | 0.01 | -1215 ± 21 | 93.5% ± 0.2% |
-| Adam | 0.1 | -1420 ± 13 | 93.1% ± 0.2% |
+The theory-derived model (Figure 5a) learns clear digit prototypes. Across the 64 features, multiple variants of each digit appear: circular 0s, vertical and slanted 1s, loopy and angular 2s, distinct forms of 3s through 9s. Many features exhibit center–surround structure—a digit-shaped region of one sign surrounded by the opposite sign—indicating that each component acts both as a detector for its preferred digit and a suppressor for others. All features are active and interpretable; there are no dead units or degenerate patterns.
 
-![Training dynamics](../figures/fig4a_dynamics_loss.png)
-
-*Figure 4: Loss curves for SGD (left) and Adam (right) across learning rates. SGD curves plateau; Adam curves continue descending. Despite achieving 50% lower loss, Adam produces features of equivalent quality.*
-
-**Finding 1: Adam's usual advantage disappears.** This result is unusual. On most neural network objectives, Adam dramatically outperforms SGD, particularly at low learning rates where SGD's fixed step size becomes a bottleneck. Adam's adaptive per-parameter scaling typically provides both faster convergence and better final solutions.
-
-Here, the advantage largely vanishes. SGD at lr=0.1 reaches loss -967; Adam at lr=0.1 reaches -1420—lower, but not dramatically so given Adam's typical dominance. More striking: SGD at lr=1e-4, which would normally be painfully slow, reaches -520 in 100 epochs and achieves 92.2% probe accuracy. The adaptive machinery that makes Adam the default choice for neural network training provides little benefit on this objective.
-
-**Finding 2: Lower loss does not mean better features.** Adam achieves substantially lower loss than SGD across all learning rate pairings. At lr=0.1, Adam's loss (-1420) is nearly 50% lower than SGD's (-967). Yet probe accuracy is statistically indistinguishable: 93.1% for Adam versus 93.5% for SGD.
-
-This is not how neural network training usually works. Typically, if loss is still decreasing, the model is still improving. Here, Adam continues optimizing something, but that something does not affect feature quality. The loss admits a degree of freedom—some direction in parameter space—that can be optimized without improving downstream utility.
-
-**Finding 3: SGD is learning-rate insensitive.** Across a 1000× range in learning rate, SGD produces features with probe accuracy varying only from 92.2% to 93.6%. The loss curves (Figure 4, left) show different trajectories but similar plateaus. Learning rate affects *where* SGD settles, but all settings find good features. This insensitivity is consistent with the structure of implicit EM: the gradient direction is determined by responsibilities, and scaling that direction changes step size but not the fundamental dynamics.
-
-**Interpretation.** These findings point to an objective that is already well-conditioned. The responsibility weighting in Equation 2 normalizes gradient magnitudes across components automatically—a component with high responsibility receives proportionally larger gradients. This is precisely what adaptive optimizers like Adam are designed to provide. When the objective structure already provides it, Adam's machinery has nothing to do.
-
-The connection to classical EM is suggestive. Explicit EM has no learning rate because the M-step computes optimal parameters exactly given current responsibilities. Implicit EM via gradient descent introduces a learning rate, but if the gradient direction is "correct" (responsibility-weighted), then learning rate merely scales progress along a well-defined path. Different learning rates trace different approximations to the same trajectory. This would explain both the learning-rate insensitivity of SGD and the failure of Adam's adaptive scaling to help.
-
-The degree of freedom that Adam exploits—achieving lower loss without better features—remains unexplained. The objective appears to have a null space with respect to feature quality: directions that reduce loss but do not change the learned representation in ways that matter for downstream tasks.
-
-**Status.** Optimization on this objective behaves unlike typical neural network training. Adam's advantages disappear; lower loss does not mean better features; SGD is insensitive to learning rate. All three findings are consistent with implicit EM structure making the optimization landscape well-conditioned. Simple optimizers suffice.
-
-### 4.5 Experiment 5: Feature Visualization
-
-**Prediction.** If the model performs implicit EM on a mixture model objective, the learned features should resemble mixture components—prototypes that compete for data—rather than dictionary elements that combine additively to reconstruct inputs (Olshausen & Field, 1996). Visualized encoder weights should show global structure (whole patterns) rather than local parts (edges, strokes).
-
-**Method.** We visualize the encoder weight matrices from both models by reshaping each row of $W \in \mathbb{R}^{64 \times 784}$ to a 28×28 image. We use a diverging colormap: blue indicates positive weights, red indicates negative weights, white indicates zero. Both visualizations use the same color scaling for comparison.
-
-**Results.** Figure 5 presents the learned encoder weights for both models.
-
-The theory-derived model (Figure 5a) shows clear digit prototypes. Visible across the 64 features are multiple variants of each digit class: circular 0s, vertical 1s with various slants, loopy and angular 2s, distinct 3s, 4s, 5s, 6s, 7s, 8s, and 9s. Most features exhibit center-surround structure—a digit shape (blue) surrounded by a halo of opposite sign (red)—indicating that each feature acts as both a detector ("I fire for this digit") and an anti-detector ("I suppress for other digits"). All 64 features show distinct, interpretable structure. No dead units, no degenerate patterns.
-
-The standard SAE encoder (Figure 5b) shows largely unstructured weights—near-random noise with low magnitude. Faint digit-like patterns are visible in some features upon close inspection, but under identical visualization conditions, the SAE encoder weights are qualitatively noisier and lower-magnitude than those of the theory-derived model.
+The standard SAE encoder (Figure 5b) shows largely unstructured weights. Most features resemble low-magnitude noise, with only faint digit-like structure visible in a subset. Under identical visualization conditions, the SAE encoder weights are qualitatively noisier and less organized than those of the theory-derived model.
 
 ![Feature comparison](../figures/fig5_features.png)
 ![Feature comparison](../figures/fig6_sae_features.png)
 
-*Figure 5: Learned encoder weights. (a) Theory-derived model: features are recognizable digit prototypes with center-surround structure—mixture components competing for data. (b) Standard SAE: encoder weights show little interpretable structure; the decoder, not the encoder, carries the representational work.*
+*Figure 4: Learned encoder weights. (a) Theory-derived model: features form recognizable digit prototypes with center–surround structure, consistent with mixture components competing for data. (b) Standard SAE: encoder weights show little interpretable structure; representational content is carried primarily by the decoder.*
 
-**Interpretation.** The contrast is striking and theoretically informative.
+**Interpretation.**
+The contrast is both striking and theoretically informative.
 
-The theory-derived model learns prototypes because it *is* a mixture model. Each row of $W$ defines a component; the LSE objective creates soft competition for data; the InfoMax terms ensure components are distinct. The resulting weights look like GMM centroids—exemplars of the categories they claim—because that is precisely what the implicit EM dynamics produce.
+The theory-derived model learns prototypes because it *is* a mixture model. Each row of $W$ defines a component; the LSE objective induces soft competition for data; the InfoMax terms enforce distinctness. The resulting weights resemble GMM centroids—exemplars of the inputs they explain—because that is exactly what implicit EM produces.
 
-The standard SAE encoder weights show little interpretable structure because the encoder does not need to be interpretable. In the SAE architecture, the decoder $W'$ performs reconstruction; the encoder $W$ need only produce activations that the decoder can invert. The structure lives in the decoder, not the encoder. The encoder can learn arbitrary projections—including near-random ones—as long as the encoder-decoder composition reconstructs well.
+The standard SAE encoder weights lack structure because the encoder is not required to be interpretable. In the SAE architecture, the decoder performs reconstruction; the encoder only needs to produce activations that the decoder can invert. Structure resides in the decoder, not the encoder. The encoder can therefore learn arbitrary projections, including near-random ones, as long as reconstruction succeeds.
 
-This explains the benchmark results. The theory-derived model achieves higher probe accuracy (93.4% vs 90.3%) because its encoder weights are already organized by digit class. A linear probe on our features performs nearly direct table lookup: feature $j$ active → class $k$. A linear probe on SAE features must learn to compose unstructured activations into class predictions—a harder task.
+This accounts for the benchmark results. The theory-derived model achieves higher probe accuracy (93.4% vs 90.3%) because its encoder is already organized by digit class. A linear probe effectively reads out class identity from component activation. In contrast, a probe on SAE features must learn to compose unstructured activations into class predictions, a more difficult task.
 
-**Status.** Prediction 5 confirmed. The theory-derived model learns mixture components; the standard SAE encoder learns unstructured projections. The decoder was compensating for an encoder that learned nothing interpretable.
+**Status.**
+Prediction 5 is confirmed. The theory-derived model learns mixture components; the standard SAE encoder learns largely unstructured projections. The decoder in the SAE compensates for an encoder that is not itself representationally meaningful.
+
+### 4.5 Experiment 5: Training Dynamics
+
+**Motivation.**
+Classical EM has no learning rate: the M-step computes optimal updates given current responsibilities. Implicit EM introduces a step size through gradient descent, but the gradient direction is still determined by responsibilities. We wondered whether adaptive optimizers like Adam, which rescale gradients per-parameter, might interfere with this structure. If responsibility weighting already normalizes gradients appropriately, Adam's adaptivity might interfere with implicit EM. We also suspected that SGD might be stable with higher learning rates.
+
+**Method.**
+We train the model using SGD and Adam across learning rates spanning three orders of magnitude (1e−4 to 1e−1), with three random seeds per configuration (24 runs total). We analyze loss trajectories and evaluate feature quality via linear probe accuracy.
+
+**Results.**
+
+| Optimizer | lr     | Final Loss | Probe Acc    |
+| --------- | ------ | ---------- | ------------ |
+| SGD       | 0.0001 | -520 ± 1   | 92.2% ± 0.3% |
+| SGD       | 0.001  | -676 ± 0   | 92.6% ± 0.2% |
+| SGD       | 0.01   | -795 ± 29  | 93.6% ± 0.1% |
+| SGD       | 0.1    | -967 ± 18  | 93.5% ± 0.1% |
+| Adam      | 0.0001 | -745 ± 2   | 92.9% ± 0.0% |
+| Adam      | 0.001  | -999 ± 1   | 93.5% ± 0.4% |
+| Adam      | 0.01   | -1215 ± 21 | 93.5% ± 0.2% |
+| Adam      | 0.1    | -1420 ± 13 | 93.1% ± 0.2% |
+
+![Training dynamics](../figures/fig4a_dynamics_loss.png)
+
+*Figure 5: Loss curves for SGD (left) and Adam (right) across learning rates. SGD curves plateau; Adam curves continue descending. Despite achieving substantially lower loss, Adam produces features of comparable quality.*
+
+**Finding 1: Adam’s usual advantage disappears.**
+On most neural network objectives, Adam outperforms SGD, especially at low learning rates where fixed-step updates slow progress. That pattern does not appear here. Although Adam reaches lower loss values, the gap is modest relative to its typical dominance. More strikingly, SGD at lr = 1e−4—normally impractically slow—reaches a stable solution within 100 epochs and produces competitive features. The adaptive machinery that usually makes Adam effective provides little benefit on this objective.
+
+**Finding 2: Lower loss does not imply better features.**
+Adam consistently achieves lower loss than SGD. At lr = 0.1, Adam’s final loss is nearly 50% lower than SGD’s. Yet probe accuracy is statistically indistinguishable: 93.1% versus 93.5%. Loss continues to decrease, but feature quality does not improve. The objective therefore admits directions in parameter space that reduce loss without affecting downstream utility.
+
+**Finding 3: SGD is insensitive to learning rate.**
+Across a 1000× range in learning rate, SGD yields probe accuracy between 92.2% and 93.6%. The loss trajectories differ, but all settings converge to similarly useful representations. Learning rate affects where SGD settles along the trajectory, but not whether it finds good features. This behavior is consistent with implicit EM structure: responsibilities determine gradient direction, and step size only scales progress along that direction.
+
+**Interpretation.**
+These results point to an objective that is already well-conditioned. Responsibility weighting in Equation 2 normalizes gradient magnitudes across components: components with higher responsibility receive proportionally larger updates. This is precisely the effect adaptive optimizers aim to approximate. When the objective provides it directly, Adam has little to add.
+
+The analogy to classical EM is suggestive. Explicit EM has no learning rate because the M-step computes optimal updates given current responsibilities. Implicit EM introduces a step size through gradient descent, but if the gradient direction is already aligned with the correct update, scaling it changes speed rather than outcome. Different learning rates trace different discretizations of the same underlying path.
+
+The remaining anomaly—Adam’s ability to lower loss without improving features—suggests that the objective contains degrees of freedom orthogonal to representation quality. Certain directions reduce loss while leaving the learned structure unchanged. Characterizing this null space remains an open question.
+
+**Status.**
+These observations were not predicted in advance but are consistent with implicit EM structure producing a well-conditioned optimization landscape. Adam's advantages disappear, lower loss does not correspond to better features, and SGD is largely learning-rate insensitive. Simple optimizers suffice.
 
 ### 4.6 Summary of Validation
 
-| Prediction | Experiment | Result |
-|------------|------------|--------|
-| Gradient = responsibility | Theorem | Exact (10⁻⁸ error) |
-| LSE alone collapses | Ablation | 100% dead units |
-| Variance prevents death | Ablation | 0% dead units |
-| Decorrelation prevents redundancy | Ablation | 64× reduction |
-| Useful features | Benchmark | 93.4% probe accuracy |
-| Outperforms heuristics | Benchmark | +3.1% over SAE |
-| EM determines iterations | Dynamics | Epoch ~70, lr-invariant |
-| SGD suffices | Dynamics | Matches Adam |
-| Mixture components | Features | Digit prototypes |
+| Prediction                        | Experiment | Result               |
+| --------------------------------- | ---------- | -------------------- |
+| Gradient = responsibility         | Theorem    | Exact (10⁻⁸ error)   |
+| LSE alone collapses               | Ablation   | 100% dead units      |
+| Variance prevents death           | Ablation   | 0% dead units        |
+| Decorrelation prevents redundancy | Ablation   | 64× reduction        |
+| Useful features                   | Benchmark  | 93.4% probe accuracy |
+| Outperforms heuristics            | Benchmark  | +3.1% over SAE       |
+| Mixture components                | Features   | Digit prototypes     |
+| **Observation**                   |            |                      |
+| SGD learning-rate insensitive     | Dynamics   | 92–94% across 1000×  |
 
-Every prediction confirmed. The theory works.
+Every prediction confirmed. Training dynamics suggest a well-conditioned landscape.
 
 ---
 
 ## 5. Discussion
 
+The experiments confirm the theory’s predictions. This section considers the implications of that confirmation: what it establishes about implicit EM as a design principle (Section 5.1), why the theory-derived model outperforms heuristic alternatives (Section 5.2), what decoders actually do in sparse autoencoders (Section 5.3), what the optimization results imply about the loss landscape (Section 5.4), and where the present validation remains incomplete (Section 5.5).
+
 ### 5.1 What This Validates
 
-Implicit EM theory is generative. It does not merely explain existing models post hoc—it prescribes new ones from first principles. We built exactly what the theory specified: an architecture that computes distances (Section 2.1), an LSE objective that performs implicit EM (Section 2.2), and InfoMax regularization that provides volume control (Section 2.4). We added nothing beyond what the theory required.
+Implicit EM theory is generative. It does not merely explain existing models post hoc; it specifies new ones from first principles. We built exactly what the theory required: an architecture that computes distances (Section 2.1), an LSE objective that implements implicit EM (Section 2.2), and InfoMax regularization that supplies volume control (Section 2.4). We added nothing beyond those requirements.
 
 The experiments confirm every prediction:
 
-| Prediction | Result |
-|------------|--------|
+| Prediction                        | Result                     |
+| --------------------------------- | -------------------------- |
 | Gradient = responsibility exactly | Verified to 10⁻⁸ precision |
-| LSE alone collapses | 100% dead units |
-| Variance prevents death | 0% dead units |
-| Decorrelation prevents redundancy | 64× reduction |
-| Features are mixture components | Digit prototypes, not parts |
-| SGD converges in fixed iterations | Epoch ~70, lr-invariant |
+| LSE alone collapses               | 100% dead units            |
+| Variance prevents death           | 0% dead units              |
+| Decorrelation prevents redundancy | 64× reduction              |
+| Features are mixture components   | Digit prototypes           |
 
-This is not curve-fitting. We did not tune the model until it worked and then construct a theory to explain it. The theory preceded the experiments; the experiments confirmed the theory. Each component of the objective traces to a theoretical requirement, and each requirement proved necessary in practice.
+This is not curve-fitting. We did not tune the model until it worked and then construct a theory to justify it. The theory came first; the experiments tested it. Each component of the objective traces to a theoretical requirement, and each requirement proved necessary in practice.
 
-The validation extends beyond binary confirmation. The theory predicted not just that the model would work, but *how* it would work: soft competition via responsibilities, competitive coverage of the data manifold, emergent sparsity from specialization, and EM-like optimization dynamics. All of these qualitative predictions were borne out.
+The validation goes beyond binary confirmation. The theory predicted how the model would work: soft competition via responsibilities, competitive coverage of the data manifold, emergent sparsity through specialization. These qualitative predictions were observed as well.
 
-This demonstrates that implicit EM theory provides a foundation for principled model design. The theory tells you what to build; what you build works; and it works for the reasons the theory specifies.
+Taken together, these results establish implicit EM as a foundation for principled model design. The theory specifies what to build, the resulting model works, and it works for the reasons the theory identifies.
 
-### 5.2 Why the Theory-Derived Model Outperforms
+### 5.2 On Performance
 
-We predicted competitive performance. We achieved superior: +3.2% probe accuracy, 2× sparser representations, 50% fewer parameters. This was not the hypothesis. Why did principled derivation outperform heuristic engineering?
+The theory-derived model outperformed the baseline: +3.2% probe accuracy, 2× sparser representations, and 50% fewer parameters. That outcome was not the hypothesis.
 
 Standard sparse autoencoders are assembled from compensatory mechanisms. The decoder enforces information preservation—without it, the encoder could discard information. The L1 penalty enforces sparsity—without it, all features would activate densely. The reconstruction loss anchors features to input fidelity—without it, representations could drift arbitrarily. Each component compensates for a deficiency in the others.
 
@@ -571,43 +585,43 @@ The feature visualization (Section 4.5) makes this concrete. The theory-derived 
 
 This suggests a broader lesson. Heuristic engineering accumulates mechanisms to patch failure modes. Principled derivation identifies the right objective and lets the mathematics do the work. When the objective aligns with the goal, compensatory mechanisms become unnecessary—and their absence simplifies both the model and its behavior.
 
-### 5.3 Why Decoders Appeared Necessary
+### 5.3 Reconstruction and Volume Control
 
-The decoder has been a fixture of autoencoder architectures since their introduction (Hinton & Salakhutdinov, 2006). Sparse autoencoders inherited this structure, adding L1 penalties but retaining the encoder-decoder-reconstruction framework (Vincent et al., 2008). The decoder appeared necessary—remove it, and representations degenerate.
+The decoder has been a fixture of autoencoder architectures since their introduction (Hinton & Salakhutdinov, 2006). Sparse autoencoders inherited this structure, adding L1 penalties while retaining the encoder-decoder-reconstruction framework (Vincent et al., 2008). The decoder appeared necessary: remove it, and representations degenerate.
 
-But *why* did representations degenerate? The standard explanation is that reconstruction ensures information preservation: without pressure to reproduce the input, the encoder could discard information arbitrarily. This explanation is correct but incomplete. It identifies what the decoder does without asking whether the decoder is the only way to do it.
+Why did representations degenerate? The standard explanation is that reconstruction enforces information preservation. Without pressure to reproduce the input, the encoder could discard information arbitrarily. This explanation is correct but incomplete. It describes what the decoder does without asking whether reconstruction is the only way to achieve it.
 
-Reconstruction implicitly provides volume control. Consider what the reconstruction objective enforces:
+Reconstruction implicitly supplies volume control. Consider what the reconstruction objective enforces.
 
-**Anti-collapse.** If a feature never activates, it contributes nothing to reconstruction. The reconstruction error will be high for inputs that needed that feature. Gradient signal flows back, reviving the dead feature. Reconstruction pressure prevents features from dying because dead features hurt reconstruction.
+**Anti-collapse.** If a feature never activates, it contributes nothing to reconstruction. Inputs that require that feature incur higher reconstruction error, producing gradient signal that revives the dead unit. Reconstruction pressure prevents collapse because dead features degrade reconstruction.
 
-**Anti-redundancy.** If two features encode identical information, the decoder can use either one—but using both provides no additional benefit. The L1 penalty then suppresses the redundant copy, since it costs sparsity without improving reconstruction. Reconstruction plus sparsity pressure prevents redundancy because redundant features are wasteful.
+**Anti-redundancy.** If two features encode identical information, the decoder can use either one; using both offers no additional benefit. The L1 penalty then suppresses the redundant copy, since it incurs sparsity cost without improving reconstruction. Reconstruction combined with sparsity discourages redundancy because redundant features are wasteful.
 
-These are precisely the functions of the variance and decorrelation penalties in our framework. The decoder provides volume control indirectly, through the reconstruction bottleneck. We provide volume control directly, through explicit regularization.
+These are exactly the roles played by the variance and decorrelation penalties in our framework. The decoder provides volume control indirectly, through the reconstruction bottleneck. We provide it directly, through explicit regularization.
 
-With explicit InfoMax, the decoder becomes redundant. The variance penalty prevents collapse without needing reconstruction to detect dead features. The decorrelation penalty prevents redundancy without needing L1 to prune duplicates. The functions the decoder served are now served by terms in the objective.
+With explicit InfoMax, the decoder becomes unnecessary. The variance penalty prevents collapse without relying on reconstruction to revive dead units. The decorrelation penalty prevents redundancy without relying on L1 to prune duplicates. The functions the decoder served are now enforced by the objective itself.
 
-The feature visualization (Section 4.5) provides direct evidence. Our encoder weights are interpretable prototypes—each row of $W$ shows a recognizable digit pattern with center-surround structure. The SAE encoder weights are near-random noise—faint structure visible only upon close inspection, dominated by low-magnitude unstructured patterns.
+Feature visualization makes this concrete (Section 4.4). Our encoder weights are interpretable prototypes: each row of $W$ forms a recognizable digit pattern with center-surround structure. The SAE encoder weights are largely unstructured, with only faint patterns visible under close inspection.
 
-This asymmetry is revealing. In the SAE, the decoder does the representational work; the encoder merely projects inputs into a space the decoder can invert. The encoder need not be interpretable because interpretation is not its job. In our model, the encoder *is* the representation. There is no decoder to compensate for an unstructured encoder. The encoder must learn structure—and it does.
+This asymmetry is revealing. In the SAE, the decoder carries the representational burden; the encoder merely produces signals the decoder can invert. Interpretability is not required of the encoder because structure resides in the decoder. In our model, the encoder is the representation. There is no decoder to compensate for an unstructured projection. The encoder must learn structure, and it does.
 
-The decoder was compensatory, not fundamental. It patched a deficiency in the objective—missing volume control—by providing that control implicitly through reconstruction pressure. Once the deficiency is addressed directly, the patch is unnecessary. The decoder, it turns out, was never about reconstruction. It was about preventing collapse and redundancy. Those functions now live where they belong: in the loss function.
+The decoder was compensatory. It patched a deficiency in the objective by supplying volume control implicitly through reconstruction. Once the deficiency is addressed directly, the patch is unnecessary. The decoder was never about reconstruction. It was about preventing collapse and redundancy. Those functions now reside where they belong: in the loss function.
 
 ### 5.4 On Optimization
 
-The training dynamics experiment (Section 4.4) revealed a surprising pattern: SGD converges in approximately 70 epochs regardless of learning rate across a 1000× range, while Adam never converges at all. This is not a quirk of our implementation but a consequence of the objective's structure.
+The training dynamics experiment (Section 4.5) revealed a striking pattern: SGD converges in roughly 70 epochs across a 1000× range of learning rates, while Adam does not converge at all. This behavior is not an implementation artifact but a consequence of the objective’s structure.
 
-Classical EM has no learning rate. The algorithm alternates between computing responsibilities (E-step) and updating parameters to maximize expected log-likelihood (M-step). The step size is determined by the mathematics, not by a hyperparameter. Convergence occurs when responsibilities stabilize—when the soft assignments of data to components stop changing—and this happens in a number of iterations determined by problem structure.
+Classical EM has no learning rate. The algorithm alternates between computing responsibilities (E-step) and updating parameters to maximize expected log-likelihood (M-step). Step size is fixed by the mathematics, not by a hyperparameter. Convergence occurs when responsibilities stabilize—when soft assignments stop changing—and this happens in a number of iterations determined by the problem, not by tuning.
 
-Implicit EM inherits this property. The gradient of the LSE objective equals the responsibility (Equation 2). SGD follows this gradient directly—each update is a responsibility-weighted step, the continuous analogue of the M-step. When responsibilities stabilize, gradients vanish, and SGD stops. The learning rate scales the step size but does not change when stabilization occurs. A small learning rate means smaller steps toward the same equilibrium; a large learning rate means larger steps. Both arrive at approximately the same iteration count because both are governed by the same underlying dynamics: the convergence of responsibilities.
+Implicit EM inherits this behavior. The gradient of the LSE objective equals the responsibility (Equation 2). SGD follows this gradient directly: each update is responsibility-weighted, a continuous analogue of the M-step. When responsibilities stabilize, gradients vanish and SGD stops. The learning rate scales step size but does not determine when stabilization occurs. Smaller rates take smaller steps toward the same equilibrium; larger rates take larger ones. Both reach stabilization at approximately the same iteration count because both are governed by the same underlying dynamic: convergence of responsibilities.
 
-Adam disrupts this structure. Its per-parameter adaptive scaling is designed for ill-conditioned loss landscapes, where different parameters require different effective learning rates. But the implicit EM landscape is already well-conditioned—the responsibility weighting naturally normalizes gradients across components. Adam's adaptation is unnecessary. Worse, near equilibrium, Adam's second-moment estimate shrinks as gradients become small and consistent, effectively *increasing* the learning rate precisely when it should decrease. The optimizer overshoots, oscillates, and never settles. It achieves the same feature quality as SGD but fails to recognize arrival.
+Adam interferes with this structure. Its adaptive per-parameter scaling is designed for ill-conditioned objectives, where different parameters require different effective step sizes. Here, the landscape is already well-conditioned. Responsibility weighting naturally normalizes gradients across components. Adam’s adaptation is therefore unnecessary. Near equilibrium, its second-moment estimate shrinks as gradients become small and consistent, effectively increasing the step size when it should decrease. The optimizer overshoots, oscillates, and fails to settle. It reaches comparable feature quality but does not recognize convergence.
 
-This suggests a broader principle: for EM-structured objectives, simple optimizers suffice. The structure of the objective—soft competition, responsibility-weighted updates, natural gradient normalization—provides what adaptive optimizers were designed to provide. Adding Adam on top is redundant at best and counterproductive at worst.
+This points to a broader principle. For EM-structured objectives, simple optimizers are sufficient. Soft competition, responsibility-weighted updates, and built-in normalization provide the benefits adaptive methods are meant to supply. Adding Adam is redundant and can be counterproductive.
 
-The practical implication is significant. Hyperparameter tuning for EM-structured objectives may be unnecessary. Learning rate affects solution quality (how far you explore before stabilizing) but not convergence time (when you stabilize). A reasonable learning rate—0.01 worked well in our experiments—combined with vanilla SGD yields fast, stable training without schedules, warmup, or adaptive methods.
+The practical implication is clear. Extensive optimizer tuning may be unnecessary for EM-structured objectives. Learning rate affects how far the model moves before stabilizing, but not when stabilization occurs. In our experiments, a fixed learning rate of 0.01 with vanilla SGD yielded fast, stable training without schedules, warmup, or adaptive machinery.
 
-The theoretical implication is deeper. If implicit EM normalizes optimization, then the choice of optimizer is not a free parameter but a consequence of objective structure. Objectives with EM structure want simple gradient descent; fighting that structure with complex optimizers yields no benefit. This reframes optimizer selection from empirical tuning to theoretical deduction: examine the objective, identify its structure, and choose the optimizer that respects it.
+The theoretical implication is stronger. If implicit EM normalizes optimization, then optimizer choice follows from objective structure rather than empirical habit. Objectives with EM structure favor simple gradient descent. Using more elaborate optimizers does not help—and can actively work against the dynamics the objective induces.
 
 ### 5.5 Limitations
 
@@ -631,15 +645,13 @@ These limitations define the scope of validation, not the scope of the theory. T
 
 ## 6. Conclusion
 
-Implicit EM theory specifies a model: compute distances, optimize a log-sum-exp objective, include volume control. We built exactly what the theory prescribed—a single-layer encoder with LSE loss and InfoMax regularization—and tested every prediction the framework makes.
+Implicit EM theory specifies a model: compute distances, optimize a log-sum-exp objective, and include volume control. We built exactly what the theory requires—a single-layer encoder with an LSE objective and InfoMax regularization—and tested every prediction the framework makes.
 
-Every prediction was confirmed. The gradient-responsibility identity holds to floating-point precision. LSE alone collapses exactly as predicted; variance prevents death; decorrelation prevents redundancy. The learned features are digit prototypes—mixture components competing for data—not the unstructured projections of standard sparse autoencoders. The theory-derived model achieves 93.4% probe accuracy with 50% fewer parameters, outperforming heuristically-designed alternatives that require decoders and L1 penalties.
+All predictions were confirmed. The gradient–responsibility identity holds to floating-point precision. LSE alone collapses exactly as predicted; variance prevents dead components; decorrelation prevents redundancy. The learned features are digit prototypes—mixture components competing for data—rather than the unstructured encoder projections produced by standard sparse autoencoders. The theory-derived model reaches 93.4% probe accuracy with half the parameters, outperforming heuristic designs that rely on decoders and L1 penalties.
 
-The optimization results were unexpected. Adam's usual advantages disappear; lower loss does not yield better features; SGD is insensitive to learning rate across three orders of magnitude. These findings suggest that implicit EM structure makes the optimization landscape well-conditioned in ways that warrant further investigation.
+The optimization behavior is distinctive. Adam offers no advantage; lower loss does not produce better features; SGD is insensitive to learning rate across three orders of magnitude. These results suggest that implicit EM structure yields an unusually well-conditioned objective, with degrees of freedom that decouple loss minimization from representational quality.
 
-The broader implication is methodological. Implicit EM theory is not merely explanatory—it is generative. It does not just redescribe existing models; it prescribes new ones from first principles. We derived an architecture and objective from theory, built it without modification, and found that it works for the reasons the theory specifies. This validates implicit EM as a foundation for principled model design.
-
----
+The broader implication is methodological. Implicit EM theory is generative. It specifies what to build. We derived an architecture and objective directly from theory, implemented them without modification, and obtained a model that works for the reasons the theory predicts. This establishes implicit EM as a viable foundation for principled model design.
 
 ## References
 
