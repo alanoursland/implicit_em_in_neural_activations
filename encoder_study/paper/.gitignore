@@ -1,0 +1,33 @@
+# LaTeX auxiliary files
+*.aux
+*.log
+*.out
+*.toc
+*.lof
+*.lot
+*.fls
+*.fdb_latexmk
+*.synctex.gz
+*.synctex(busy)
+
+# Bibliography
+*.bbl
+*.blg
+*.bcf
+*.run.xml
+
+# Build output
+*.pdf
+
+# Editor backup files
+*~
+*.bak
+*.swp
+
+# latexmk
+*.latexmk
+
+# hyperref
+*.nav
+*.snm
+*.vrb
