@@ -258,7 +258,7 @@ L_{\text{wr}} = \lambda_{\text{wr}} \|W^\top W - I\|_F^2
 \tag{6}
 $$
 
-This term encourages orthogonality among the encoder’s weight vectors, preventing multiple components from converging to the same direction in input space (Oursland, 2024). We treat it as optional; all primary experiments use Equation 5 alone.
+This term encourages orthogonality among the encoder's weight vectors, preventing multiple components from converging to the same direction in input space (Oursland, 2024). It also constrains row norms, bounding weight magnitudes. We treat it as optional; all primary experiments use Equation 5 alone.
 
 ### 3.3 What This Model Is
 
@@ -584,6 +584,8 @@ Information preservation emerges from volume control rather than from reconstruc
 The feature visualization (Section 4.4) makes this concrete. The theory-derived model learns digit prototypes; the SAE encoder learns near-random projections. The SAE achieves good reconstruction because its decoder compensates for an unstructured encoder. Our model achieves good classification because its encoder is structured by construction.
 
 This suggests a broader lesson. Heuristic engineering accumulates mechanisms to patch failure modes. Principled derivation identifies the right objective and lets the mathematics do the work. When the objective aligns with the goal, compensatory mechanisms become unnecessary—and their absence simplifies both the model and its behavior.
+
+A note on the comparison: both models are baseline implementations. The SAE uses untied weights and standard L1 regularization; many improvements exist (tied weights, different sparsity penalties, decoder normalization). The theory-derived model likewise uses the simplest architecture that satisfies the theoretical requirements. The point is not that our model beats an optimized SAE—it is that a model derived purely from theory, without benchmark-driven tuning, performs well against a standard baseline. Whether the performance gap persists under more sophisticated implementations of both approaches is a separate question.
 
 ### 5.3 Reconstruction and Volume Control
 
