@@ -188,7 +188,7 @@ The standard SAE encoder (\Cref{fig:features-sae}) shows largely unstructured we
 \paragraph{Interpretation.}
 The theory-derived model learns prototypes because it is a mixture model. Each row of $W$ defines a component; the LSE objective induces soft competition; the InfoMax terms enforce distinctness. The weights resemble GMM centroids because that is what implicit EM produces.
 
-The SAE encoder weights lack structure because the encoder is not required to be interpretable. The decoder performs reconstruction; the encoder only needs to produce activations that the decoder can invert. Structure resides in the decoder, not the encoder.
+The SAE encoder weights lack structure because the encoder need only produce activations the decoder can invert. Structure resides in the decoder.
 
 This explains the probe accuracy gap in \Cref{sec:exp-benchmark}. Because encoder weights are organized by digit class, a linear probe effectively reads out class identity. A probe on SAE features must compose unstructured activations into class predictions, a harder task.
 

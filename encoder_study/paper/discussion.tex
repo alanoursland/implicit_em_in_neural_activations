@@ -1,114 +1,125 @@
 \section{Discussion}
 \label{sec:discussion}
 
-The experiments confirm the theory's predictions. This section considers the implications of that confirmation: what it establishes about implicit EM as a design principle (\Cref{sec:what-validates}), why the theory-derived model outperforms heuristic alternatives (\Cref{sec:on-performance}), what decoders actually do in sparse autoencoders (\Cref{sec:reconstruction}), what the optimization results imply about the loss landscape (\Cref{sec:on-optimization}), and where the present validation remains incomplete (\Cref{sec:limitations}).
+All of our EM theory predictions were confirmed through experimental results. This section considers what that means.
 
 \subsection{What This Validates}
 \label{sec:what-validates}
 
-Implicit EM theory is generative. It does not merely explain existing models post hoc; it specifies new ones from first principles. We built exactly what the theory required: an architecture that computes distances (\Cref{sec:distance-representations}), an LSE objective that implements implicit EM (\Cref{sec:lse-identity}), and InfoMax regularization that supplies volume control (\Cref{sec:solution}). We added nothing beyond those requirements.
+Implicit EM theory is generative. We built what it required. The model works, and it works for the reasons the theory predicts.
 
-The experiments confirm every prediction (\Cref{tab:validation-confirms}).
+The experiments confirm every prediction (\Cref{tab:validation-summary}).
 
-\begin{table}[t]
-\centering
-\caption{Confirmed predictions.}
-\label{tab:validation-confirms}
-\begin{tabular}{ll}
-\toprule
-Prediction & Result \\
-\midrule
-Gradient = responsibility exactly & Verified to $10^{-8}$ precision \\
-LSE alone collapses & 100\% dead units \\
-Variance prevents death & 0\% dead units \\
-Decorrelation prevents redundancy & $64\times$ reduction \\
-Features are mixture components & Digit prototypes \\
-\bottomrule
-\end{tabular}
-\end{table}
+The theory came first. The experiments tested whether the model it specifies actually works. It does. And not just in the binary sense—the qualitative behavior also matches. Soft competition via responsibilities, competitive coverage, emergent sparsity without L1. These weren't fitted; they were predicted.
 
-This is not curve-fitting. We did not tune the model until it worked and then construct a theory to justify it. The theory came first; the experiments tested it. Each component of the objective traces to a theoretical requirement, and each requirement proved necessary in practice.
-
-The validation goes beyond binary confirmation. The theory predicted how the model would work: soft competition via responsibilities, competitive coverage of the data manifold, emergent sparsity through specialization. These qualitative predictions were observed as well.
-
-Taken together, these results establish implicit EM as a foundation for principled model design. The theory specifies what to build, the resulting model works, and it works for the reasons the theory identifies.
-
-\subsection{On Performance}
+\subsection{Why It Works}
 \label{sec:on-performance}
 
-The theory-derived model outperformed the baseline: +3.2\% probe accuracy, $2\times$ sparser representations, and 50\% fewer parameters. That outcome was not the hypothesis.
+The theory-derived model compared favorably to the baseline. Higher probe accuracy, sparser representations, half the parameters. We expected a working model, perhaps a worse one. So why did it perform well?
 
-Standard sparse autoencoders are assembled from compensatory mechanisms. The decoder enforces information preservation---without it, the encoder could discard information. The L1 penalty enforces sparsity---without it, all features would activate densely. The reconstruction loss anchors features to input fidelity---without it, representations could drift arbitrarily. Each component compensates for a deficiency in the others.
+Standard sparse autoencoders are assembled from compensatory mechanisms. The decoder enforces information preservation because without it, the encoder could discard information. The L1 penalty enforces sparsity because without it, all features would activate densely. The reconstruction loss anchors features to input fidelity because without it, representations could drift arbitrarily. Each component exists to counteract a failure mode that would otherwise emerge.
 
-The result is a system at war with itself. The reconstruction loss wants features that combine to reproduce the input; the L1 penalty wants features that do not activate. The encoder wants to distribute information across features; the decoder wants to invert whatever the encoder produces. Training navigates these conflicting pressures, settling into a compromise that satisfies none of them fully.
+The result is a system at war with itself. Reconstruction wants features that combine to reproduce the input. L1 wants features that do not activate. The encoder wants to distribute information across features. The decoder wants to invert whatever the encoder produces. Training navigates these conflicting pressures, settling into a compromise that satisfies none of them fully.
 
-The theory-derived model has no compensatory mechanisms because none are needed. The LSE objective creates soft competition---features specialize because competition rewards specialization. The variance penalty prevents collapse---features stay active because inactivity is penalized. The decorrelation penalty prevents redundancy---features diversify because redundancy is penalized. Each term does one thing; the terms do not conflict.
+Our model has no such conflicts. The LSE term attracts components toward data. The variance penalty prevents collapse. The decorrelation penalty prevents redundancy. Each term does one thing. The terms do not fight each other.
 
-Sparsity emerges from competition rather than being imposed against the objective's wishes. When features specialize in regions of input space, most inputs activate few features---not because L1 penalizes activation, but because other features are simply not relevant. This is sparsity as a consequence of structure, not sparsity as a constraint fighting structure.
+This may explain the performance gap. When the objective is internally coherent, optimization is straightforward. When the objective is a collection of patches, optimization is a negotiation. The SAE's encoder learns to produce something the decoder can invert while the L1 penalty tries to shut it down. Our encoder just learns prototypes.
 
-Information preservation emerges from volume control rather than from reconstruction pressure. The variance penalty ensures each feature carries information (non-constant output); the decorrelation penalty ensures features carry different information (non-redundant outputs). No decoder is needed to verify that information survives, because the regularization directly ensures it.
-
-The feature visualization (\Cref{sec:exp-features}) makes this concrete. The theory-derived model learns digit prototypes; the SAE encoder learns near-random projections. The SAE achieves good reconstruction because its decoder compensates for an unstructured encoder. Our model achieves good classification because its encoder is structured by construction.
-
-This suggests a broader lesson. Heuristic engineering accumulates mechanisms to patch failure modes. Principled derivation identifies the right objective and lets the mathematics do the work. When the objective aligns with the goal, compensatory mechanisms become unnecessary---and their absence simplifies both the model and its behavior.
-
-A note on the comparison: both models are baseline implementations. The SAE uses untied weights and standard L1 regularization; many improvements exist (tied weights, different sparsity penalties, decoder normalization). The theory-derived model likewise uses the simplest architecture that satisfies the theoretical requirements. The point is not that our model beats an optimized SAE---it is that a model derived purely from theory, without benchmark-driven tuning, performs well against a standard baseline. Whether the performance gap persists under more sophisticated implementations of both approaches is a separate question.
+A caveat: both models are baseline implementations. The SAE uses untied weights and standard L1 regularization. Many improvements exist. The theory-derived model uses the simplest architecture that satisfies the theoretical requirements. The point is not that principled derivation always beats heuristic engineering. The point is that it can, and when it does, the reason is coherence.
 
 \subsection{Reconstruction and Volume Control}
 \label{sec:reconstruction}
 
-The decoder has been a fixture of autoencoder architectures since their introduction \citep{hinton2006reducing}. Sparse autoencoders inherited this structure, adding L1 penalties while retaining the encoder-decoder-reconstruction framework \citep{vincent2008extracting}. The decoder appeared necessary: remove it, and representations degenerate.
+The decoder has been a fixture of autoencoder architectures since their introduction \citep{hinton2006reducing}. Sparse autoencoders inherited this structure, adding L1 penalties while retaining the encoder-decoder-reconstruction framework \citep{vincent2008extracting}. The decoder appeared necessary. Remove it, and representations degenerate.
 
 Why did representations degenerate? The standard explanation is that reconstruction enforces information preservation. Without pressure to reproduce the input, the encoder could discard information arbitrarily. This explanation is correct but incomplete. It describes what the decoder does without asking whether reconstruction is the only way to achieve it.
 
-Reconstruction implicitly supplies volume control. Consider what the reconstruction objective enforces.
+Reconstruction implicitly supplies volume control.
 
-\paragraph{Anti-collapse.} If a feature never activates, it contributes nothing to reconstruction. Inputs that require that feature incur higher reconstruction error, producing gradient signal that revives the dead unit. Reconstruction pressure prevents collapse because dead features degrade reconstruction.
+\paragraph{Anti-collapse.} If a feature never activates, it contributes nothing to reconstruction. Inputs that need that feature incur higher reconstruction error, producing gradient signal that revives the dead unit. Reconstruction prevents collapse because dead features degrade reconstruction. This is the diagonal of the log-determinant: components must have non-zero variance.
 
-\paragraph{Anti-redundancy.} If two features encode identical information, the decoder can use either one; using both offers no additional benefit. The L1 penalty then suppresses the redundant copy, since it incurs sparsity cost without improving reconstruction. Reconstruction combined with sparsity discourages redundancy because redundant features are wasteful.
+\paragraph{Anti-redundancy.} If two features encode identical information, the decoder can use either one. Using both offers no benefit. The L1 penalty then suppresses the redundant copy, since it incurs sparsity cost without improving reconstruction. Reconstruction combined with L1 discourages redundancy because redundant features are wasteful. This is the off-diagonal of the log-determinant: components must be decorrelated.
 
-These are exactly the roles played by the variance and decorrelation penalties in our framework. The decoder provides volume control indirectly, through the reconstruction bottleneck. We provide it directly, through explicit regularization.
+The decoder provides volume control indirectly, through the reconstruction bottleneck. We provide it directly, through explicit regularization. Same function, different mechanism.
 
-With explicit InfoMax, the decoder becomes unnecessary. The variance penalty prevents collapse without relying on reconstruction to revive dead units. The decorrelation penalty prevents redundancy without relying on L1 to prune duplicates. The functions the decoder served are now enforced by the objective itself.
+With explicit volume control, the decoder becomes unnecessary. The variance penalty prevents collapse without relying on reconstruction to revive dead units. The decorrelation penalty prevents redundancy without relying on L1 to prune duplicates. The functions the decoder served are now enforced by the objective itself.
 
-Feature visualization makes this concrete (\Cref{sec:exp-features}). Our encoder weights are interpretable prototypes: each row of $W$ forms a recognizable digit pattern with center-surround structure. The SAE encoder weights are largely unstructured, with only faint patterns visible under close inspection.
+And something interesting happens. Properties that SAEs achieve through opposing forces emerge naturally from coherent ones.
 
-This asymmetry is revealing. In the SAE, the decoder carries the representational burden; the encoder merely produces signals the decoder can invert. Interpretability is not required of the encoder because structure resides in the decoder. In our model, the encoder is the representation. There is no decoder to compensate for an unstructured projection. The encoder must learn structure, and it does.
+Sparsity, for instance. SAEs achieve sparsity through L1, which penalizes activation. The objective wants features to activate for reconstruction; L1 wants them to stay off. Sparsity emerges from this fight. In our model, sparsity emerges from specialization. When components carve up the input space, most inputs fall in the territory of only a few. The others simply are not relevant. Sparsity as consequence of structure.
 
-The decoder was compensatory. It patched a deficiency in the objective by supplying volume control implicitly through reconstruction. Once the deficiency is addressed directly, the patch is unnecessary. The decoder was never about reconstruction. It was about preventing collapse and redundancy. Those functions now reside where they belong: in the loss function.
+Information preservation, similarly. SAEs verify that information survives by demanding reconstruction. If the decoder cannot reproduce the input, something was lost. Our model ensures information survives directly. Variance means each feature carries information. Decorrelation means features carry different information. No decoder needed to check.
+
+Feature visualization makes this concrete (\Cref{sec:exp-features}). Our encoder weights are interpretable prototypes. Each row of $W$ forms a recognizable digit pattern with center-surround structure. The SAE encoder weights are largely unstructured, with only faint patterns visible under close inspection.
+
+This asymmetry is revealing. In the SAE, the decoder carries the representational burden. The encoder merely produces signals the decoder can invert. Interpretability is not required of the encoder because structure resides in the decoder. In our model, the encoder is the representation. There is no decoder to compensate for an unstructured projection. The encoder must learn structure, and it does.
+
+The decoder was compensatory. It patched a deficiency in the objective by supplying volume control implicitly through reconstruction. The log-determinant's functions, smuggled in through the back door. Once the deficiency is addressed directly, the patch is unnecessary. The decoder was never about reconstruction. It was about preventing collapse and redundancy. Those functions now reside where they belong.
+
+\subsection{Connection to Self-Supervised Learning}
+\label{sec:self-supervised}
+
+The goals of our InfoMax terms appear in recent self-supervised methods, discovered independently through extensive empirical research. Barlow Twins \citep{zbontar2021barlow} and VICReg \citep{bardes2022vicreg} both prevent collapse and redundancy through explicit regularization.
+
+VICReg makes the structure particularly clear: variance, invariance, covariance. The variance term keeps feature standard deviations above a threshold. The covariance term penalizes off-diagonal entries of the covariance matrix. Same goals as our variance and decorrelation penalties, different implementations. Where they use invariance to augmentations as the primary objective, we use LSE attraction.
+
+This convergence from different directions is striking. The self-supervised community arrived at these constraints through years of careful experimentation on large-scale vision tasks, systematically identifying what prevents representation collapse. We arrived at them through analogy to the log-determinant in mixture models. That both paths lead to variance and decorrelation suggests this structure is fundamental.
+
+The implicit EM framework offers a theoretical interpretation for their empirical findings: these regularizers enforce volume control. Conversely, the success of Barlow Twins and VICReg at scale provides evidence that our derivation, validated here only on MNIST, rests on solid foundations. Their work suggests the approach scales. Our work suggests why it works.
 
 \subsection{On Optimization}
 \label{sec:on-optimization}
 
-The training dynamics experiment (\Cref{sec:exp-dynamics}) revealed a striking pattern: SGD plateaus by roughly epoch 70 regardless of learning rate, while Adam continues decreasing loss without improving feature quality. This behavior reflects the objective's structure.
+The training dynamics experiment revealed something odd. SGD plateaus by roughly epoch 70 regardless of learning rate. Adam keeps descending, reaching nearly 50\% lower loss, but feature quality stays the same. What is going on?
 
-Classical EM has no learning rate. The algorithm alternates between computing responsibilities (E-step) and updating parameters to maximize expected log-likelihood (M-step). Step size is fixed by the mathematics, not by a hyperparameter. Convergence occurs when responsibilities stabilize---when soft assignments stop changing---and this happens in a number of iterations determined by the problem, not by tuning.
+Classical EM has no learning rate. The algorithm alternates between computing responsibilities and updating parameters to maximize expected log-likelihood. Step size is fixed by the mathematics. Convergence occurs when responsibilities stabilize, in a number of iterations determined by the problem.
 
-Implicit EM inherits this behavior. The gradient of the LSE objective equals the responsibility (\Cref{eq:gradient-responsibility}). SGD follows this gradient directly: each update is responsibility-weighted, a continuous analogue of the M-step. When responsibilities stabilize, gradients vanish and SGD stops. The learning rate scales step size but does not determine when stabilization occurs. Smaller rates take smaller steps toward the same equilibrium; larger rates take larger ones. Both reach stabilization at approximately the same iteration count because both are governed by the same underlying dynamic: convergence of responsibilities.
+Implicit EM may inherit this behavior. The gradient of the LSE objective equals the responsibility. SGD follows this gradient directly. When responsibilities stabilize, gradients vanish and SGD stops. Learning rate scales how fast you get there, but not when you arrive. This would explain why SGD at $10^{-4}$ and SGD at $10^{-1}$ reach similar feature quality: they trace the same path at different speeds.
 
-Adam interferes with this structure. Its adaptive per-parameter scaling is designed for ill-conditioned objectives, where different parameters require different effective step sizes. Here, the landscape is already well-conditioned. Responsibility weighting naturally normalizes gradients across components. Adam's adaptation is therefore unnecessary. Near equilibrium, its second-moment estimate shrinks as gradients become small and consistent, effectively increasing the step size when it should decrease. The optimizer overshoots, oscillates, and fails to settle. It reaches comparable feature quality but does not recognize convergence.
+Adam complicates the picture. Its adaptive per-parameter scaling is designed for ill-conditioned objectives. But if responsibility weighting already normalizes gradients across components, the landscape is well-conditioned by construction. Adam's machinery becomes unnecessary. Worse, near equilibrium its second-moment estimate shrinks as gradients become small, effectively increasing step size when it should decrease. The optimizer keeps pushing when it should stop.
 
-This points to a broader principle. For EM-structured objectives, simple optimizers are sufficient. Soft competition, responsibility-weighted updates, and built-in normalization provide the benefits adaptive methods are meant to supply. Adding Adam is redundant and can be counterproductive.
+The puzzle is what Adam is optimizing. Loss keeps dropping. Features do not improve. This suggests the objective has degrees of freedom orthogonal to representation quality. Directions in parameter space that reduce loss without changing what the model learns. What are they? We do not know. Characterizing this null space remains open.
 
-The practical implication is clear. Extensive optimizer tuning may be unnecessary for EM-structured objectives. Learning rate affects how far the model moves before stabilizing, but not when stabilization occurs. In our experiments, a fixed learning rate of 0.01 with vanilla SGD yielded fast, stable training without schedules, warmup, or adaptive machinery.
-
-The theoretical implication is stronger. If implicit EM normalizes optimization, then optimizer choice follows from objective structure rather than empirical habit. Objectives with EM structure favor simple gradient descent. Using more elaborate optimizers does not help---and can actively work against the dynamics the objective induces.
+A caveat: this is speculation. The observations are consistent with implicit EM producing a well-conditioned landscape where simple optimizers suffice. Responsibility structure and learning-rate invariance co-occur; whether one causes the other remains open. The connection to classical EM is suggestive.
 
 \subsection{Limitations}
 \label{sec:limitations}
 
-This work validates implicit EM theory on a minimal test case. Several limitations constrain the scope of our conclusions.
+This work validates implicit EM theory on a minimal test case.
 
-\paragraph{Single layer only.} The model is a single linear layer followed by ReLU. We have not tested whether the implicit EM dynamics extend to deeper architectures, where energies might be computed by multi-layer networks and where layer-wise interactions could complicate the responsibility structure. The theory (\Cref{eq:gradient-responsibility}) holds for any differentiable parameterization of energies, but practical behavior in deep networks may differ from the single-layer case.
+\paragraph{Scale.} The model is a single linear layer with 64 components, trained on MNIST. The theory holds for any differentiable parameterization of distances, but we have not tested deeper architectures, larger datasets, or hundreds of components. The competitive dynamics that work here may behave differently at scale.
 
-\paragraph{MNIST scale.} All experiments use MNIST---a dataset of 60,000 $28 \times 28$ grayscale images with 10 classes. This is sufficient for validating theoretical predictions but far from the scale of modern representation learning. Whether the objective remains stable with millions of samples, high-dimensional inputs, or hundreds of components is unknown. The competitive dynamics that work with 64 components on MNIST may behave differently at scale.
+\paragraph{LLM activations untested.} A primary motivation for sparse autoencoders is interpretability of large language models \citep{bricken2023monosemanticity,cunningham2023sparse}. We tested on images. The features learned on MNIST are digit prototypes, visually interpretable. Whether similar structure emerges for linguistic or abstract features is an open question.
 
-\paragraph{Did not test on LLM activations.} A primary motivation for sparse autoencoders is interpretability of large language models \citep{bricken2023monosemanticity,cunningham2023sparse}. We have not applied the theory-derived objective to transformer activations. The features learned on MNIST---digit prototypes---are visually interpretable, but whether similar interpretability emerges for linguistic or abstract features remains untested.
+\paragraph{Formal EM connection incomplete.} We call this implicit EM based on the gradient-responsibility identity. But we have not derived closed-form M-step updates, proved convergence guarantees, or established the precise relationship between gradient descent and EM fixed-point iterations. The interpretation remains empirical.
 
-\paragraph{Theoretical connection to explicit EM not formalized.} We describe the model as performing ``implicit EM'' based on the gradient-responsibility identity (\Cref{eq:gradient-responsibility}). However, we have not formally connected this to explicit EM---we do not derive closed-form M-step updates, prove convergence guarantees, or establish the precise relationship between gradient descent dynamics and the EM fixed-point iterations. The EM interpretation is supported by strong empirical evidence (learning-rate invariant convergence, mixture-component features) but lacks full theoretical formalization.
+\paragraph{Hyperparameters not tuned.} We used $\lambda_{\text{var}} = \lambda_{\text{tc}} = 1.0$ throughout with no systematic search. The SAE baseline used L1 weight 0.01 without tuning. Different settings might narrow or widen the performance gap. Our goal was to validate the theory.
 
-\paragraph{Hyperparameters not exhaustively tuned.} We used $\lambda_{\text{var}} = 1.0$ and $\lambda_{\text{tc}} = 1.0$ throughout, with no systematic search. The SAE baseline used L1 weight $\lambda = 0.01$ without tuning. Different hyperparameter settings might narrow or widen the performance gap between methods. Our goal was to validate the theory, not to optimize benchmark numbers, but this limits claims about practical superiority.
+We tested the theory in one setting. Its scope may be broader. Deeper networks, larger scale, language model activations, and formal EM connections remain for future work.
 
-\paragraph{Reconstruction comparison is asymmetric.} We compared reconstruction using a trained decoder (SAE) against an untrained transpose $W^\top$ (ours). This favors the SAE on reconstruction metrics. A fairer comparison would use $W^\top$ for both or train a decoder for our model. We did not pursue this because reconstruction is not our objective---but it limits direct comparison on that metric.
+\subsection{Future Directions}
+\label{sec:future}
 
-These limitations define the scope of validation, not the scope of the theory. The implicit EM framework makes claims about any LSE-structured objective with volume control. We have tested those claims in one setting. Broader validation---deeper networks, larger scale, language model activations, explicit EM connections---remains for future work.
+This theory suggests several paths to explore.
+
+\paragraph{Explicit EM.} Can we derive closed-form M-steps for the linear case? Gradient descent works, but explicit EM might converge faster, require no learning rate, and come with guarantees.
+
+\paragraph{Supervised regularization.} Cross-entropy already has LSE structure. Adding InfoMax during supervised learning would encourage mixture-like representations even with labels. Structured features alongside discriminative ones.
+
+\paragraph{Layer-wise pretraining.} Hinton and others showed this works \citep{hinton2006reducing,bengio2006greedy}. The field moved on when end-to-end backprop proved sufficient. But reconstruction was always an awkward objective for intermediate layers. LSE+InfoMax is principled. Each layer learns a mixture model over its inputs. Hierarchical mixtures, all the way up.
+
+\paragraph{Conditioning pretrained models.} Apply LSE+InfoMax to representations learned by supervised training. How does the unsupervised structure differ? Fine-tune and measure how far supervision pushes from the mixture solution.
+
+\paragraph{Activation geometry.} ReLU gives half-space prototypes, with zero distance for an entire region. Softplus gives smooth, always-positive distance. What happens to mixture component character when the geometry changes? Do sharp boundaries produce sharper prototypes? Does smoothness help or hurt specialization? A systematic study across activations could reveal whether the choice matters more than we assumed.
+
+\paragraph{Attention.} Prior work established that attention is implicit EM—softmax over key similarities produces responsibilities, and value vectors receive responsibility-weighted updates \citep{oursland2025implicit}. The natural question is whether InfoMax regularization transfers. Decorrelation across attention heads could address the known redundancy problem where heads learn similar patterns. Variance penalties could prevent head collapse. The same volume control that stabilizes mixture components might stabilize attention.
+
+\paragraph{Anomaly detection.} High LSE loss means no component explains the input well. This is a natural anomaly score, available without modification. Does it outperform reconstruction error? Does it catch different failure modes? The framework hands us an anomaly detector for free—someone should test whether it works.
+
+\paragraph{Optimal transport.} Responsibilities distribute inputs across components. Optimal transport distributes mass across sinks. The LSE objective may be minimizing a transport cost we have not identified. If so, OT convergence guarantees might transfer, and Sinkhorn-like algorithms might accelerate training.
+
+\paragraph{Interpretability.} Apply the framework post-hoc to trained models. Compute responsibilities for existing representations. Do pretrained vision models already have mixture structure hiding in their activations? If so, the framework becomes a lens for understanding what networks have already learned.
+
+We have validated the theory in one setting. These directions suggest it may reach further.
+
+

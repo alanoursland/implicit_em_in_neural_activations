@@ -81,7 +81,7 @@ The result in either case is a collapsed representation. Components either produ
 -\frac{1}{2}\log\det(\Sigma_k)
 \]
 
-The first term is the Mahalanobis distance. The second term, the log-determinant, penalizes components with small covariance \citep{bishop2006pattern}. Without it, a component can shrink to a point, placing arbitrarily high density on any data point it occupies. The log-determinant enforces volume. Each component must occupy a region of support, not a singularity.
+The first term is the Mahalanobis distance. The second term, the log-determinant, penalizes components with small covariance \citep{bishop2006pattern}. Without it, a component can shrink to a point, placing arbitrarily high density on any data point it occupies. The log-determinant enforces volume. Each component must occupy a larger region of support.
 
 \paragraph{The missing term.} Neural LSE objectives have no equivalent to the log-determinant. Without explicit volume control, nothing prevents collapse. \Cref{sec:solution} identifies the required correction.
 
@@ -101,7 +101,7 @@ InfoMax regularization follows the same structural pattern with variance and dec
 L_{\text{var}} = -\sum_{j=1}^{K} \log \text{Var}(A_j)
 \]
 
-Under Gaussian assumptions, log-variance is proportional to differential entropy \citep{linsker1988self}. Maximizing this term encourages each component to carry information rather than remain constant. The logarithmic barrier ensures that collapse is forbidden, not merely discouraged. As $\text{Var}(A_j) \to 0$, the penalty diverges. This is exactly the diagonal of the log-determinant in the uncorrelated case.
+Under Gaussian assumptions, log-variance is proportional to differential entropy \citep{linsker1988self}. Maximizing this term encourages each component to carry information rather than remain constant. The logarithmic barrier ensures that collapse is forbidden. As $\text{Var}(A_j) \to 0$, the penalty diverges. This is exactly the diagonal of the log-determinant in the uncorrelated case.
 
 
 \paragraph{Decorrelation penalty.} The decorrelation penalty discourages redundant components:

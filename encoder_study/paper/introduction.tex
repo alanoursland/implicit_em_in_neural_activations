@@ -8,7 +8,7 @@ Deep learning models are typically designed through intuition and experimentatio
 
 Prior work shows that gradient descent on log-sum-exp (LSE) loss results in implicit EM during backpropagation \citep{oursland2025implicit}. This occurs because the gradient with respect to each component output equals its responsibility, the posterior probability that the component explains the input. This identity is exact. The forward pass computes responsibilities via a softmax; the backward pass returns those same quantities as gradients; parameter updates therefore play the role of the M-step.
 
-Prior work interprets neural network outputs as distances from learned prototypes, where lower values indicate better matches \citep{oursland2024mahalanobis}. Under this view, softmax is an assignment mechanism, not merely normalization. Responsibilities sum to one across competing components, distributing each input among them. \Cref{sec:theory} develops this in detail.
+Prior work interprets neural network outputs as distances from learned prototypes, where lower values indicate better matches \citep{oursland2024mahalanobis}. Under this view, softmax is an assignment mechanism. Responsibilities sum to one across competing components, distributing each input among them. \Cref{sec:theory} develops this in detail.
 
 The theory also exposes a limitation. Classical mixture models include a log-determinant term that prevents components from collapsing to points. Neural LSE objectives typically lack an analogous constraint. When implicit EM is present without corresponding safeguards, representations degenerate. We test this prediction directly.
 

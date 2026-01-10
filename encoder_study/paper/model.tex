@@ -87,7 +87,7 @@ This resembles competitive learning in self-organizing maps \citep{kohonen1982se
 
 \subsubsection{Sparsity Is Emergent}
 
-The objective contains no explicit sparsity penalty. Sparse representations nevertheless arise. As components specialize, each input activates only a few components. Sparsity emerges from structure, not from L1 regularization.
+The objective contains no explicit sparsity penalty. Sparse representations nevertheless arise. As components specialize, each input activates only a few components. Sparsity emerges from structure.
 
 \subsection{Theoretical Predictions}
 \label{sec:predictions}
@@ -124,6 +124,6 @@ Adding variance penalty should prevent dead components. Without decorrelation, c
 Adding decorrelation should force components to encode distinct information.
 
 \paragraph{Prediction 5: Features are mixture components.}
-Learned features should resemble prototypes that compete for data, not dictionary elements that combine additively. Visualized features should exhibit global structure rather than local parts.
+Learned features should resemble prototypes that compete for data. Visualized features should exhibit global structure.
 
 Confirming all five would support implicit EM theory as a foundation for model design.
