@@ -1,0 +1,24 @@
+model:
+  input_dim: 784
+  hidden_dim: 64
+
+sae:
+  l1_weight: 0.01
+
+infomax:
+  lambda_lse: 1.0
+  lambda_var: 1.0
+  lambda_tc: 1.0
+  lambda_wr: 0.0
+  variance_eps: 1.0e-6
+
+training:
+  epochs: 100
+  batch_size: 128
+  lr: 0.001
+
+data:
+  dataset: mnist
+  data_dir: "E:/ml_datasets"
+
+seed: 42
