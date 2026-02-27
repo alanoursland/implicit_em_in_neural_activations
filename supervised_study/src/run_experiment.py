@@ -264,6 +264,8 @@ def main():
     weights_dir.mkdir(parents=True, exist_ok=True)
     curves_dir = output_dir / "curves"
     curves_dir.mkdir(parents=True, exist_ok=True)
+    models_dir = output_dir / "models"
+    models_dir.mkdir(parents=True, exist_ok=True)
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     print(f"Device: {device}")
@@ -304,6 +306,17 @@ def main():
             seed_results.append(result)
             seed_curves[seed] = curves
             print(f"  Result: {result}")
+
+            # Save model checkpoint
+            ckpt_path = models_dir / f"{config_name}_seed{seed}.pt"
+            torch.save({
+                "config_name": config_name,
+                "seed": seed,
+                "hidden_dim": args.hidden_dim,
+                "model_state_dict": model.state_dict(),
+                "config_kwargs": CONFIGS[config_name],
+            }, ckpt_path)
+            print(f"  Saved model: {ckpt_path}")
 
             # Save weights for last seed
             if seed == args.seeds[-1]:
