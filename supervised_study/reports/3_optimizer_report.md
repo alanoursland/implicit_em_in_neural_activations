@@ -56,15 +56,51 @@ High learning rate Adam is over-optimizing the regularization loss — driving v
 
 Adam at lr=0.001 achieves the best balance: 96.38% accuracy, sensible min_var (7.8), lowest redundancy (13.8), and the tightest accuracy std (±0.11%). This matches the Experiment 1 results exactly (96.34% ± 0.11%), confirming it as the stable operating point for this architecture.
 
-## Interpretation
+## Interpretation: Why Composition Breaks EM Conditioning
 
-Paper 2's well-conditioned landscape was a property of single-layer EM objectives. In Paper 2, a single linear layer was optimized with LSE + InfoMax. The loss gradient with respect to the parameters was directly responsibility-weighted — the gradients *were* the responsibilities. No chain rule through another layer. The landscape was well-conditioned because the EM math normalizes everything.
+### The single-layer EM ideal
 
-This model has two layers, each with EM structure. The output layer has EM via cross-entropy with softmax. The intermediate layer has EM via NegLogSoftmin + volume control. But the composition of two EM layers is not itself EM. The gradients that reach W₁ pass through the chain rule — through W₂'s linear transform, the ReLU Jacobian, and the intermediate EM Jacobian. That product is not responsibility-weighted. It is a standard deep network gradient that happens to pass through EM-structured components.
+In Paper 2, a single linear layer was optimized with LSE + InfoMax. The gradient with respect to each component's parameters was directly responsibility-weighted:
 
-EM conditioning is a single-layer property. It holds when the loss gradient directly reaches the parameters through one EM-structured computation. It breaks under composition, because the chain rule across layers destroys the responsibility-weighted structure. Depth breaks the conditioning, not because something non-EM was added, but because composing EM layers through a linear transform and activation is not an EM operation.
+∂L_EM / ∂W_k = γ_k · (x − W_k)
 
-This clarifies the Paper 2 result. The SGD insensitivity and Adam redundancy that Paper 2 observed were consequences of single-layer EM structure, not of volume control in general. The volume control terms contribute a well-conditioned component to the gradient, but once that gradient is composed with other layers, standard optimization considerations dominate. Adam is needed not because the EM structure is absent, but because composition destroys the property that made it sufficient.
+where γ_k is the responsibility from the softmax over distances. The optimization landscape is well-conditioned by construction: gradient magnitude scales with responsibility, components decouple, and SGD works regardless of learning rate because the Jacobian *is* the EM update.
+
+### The composed architecture
+
+This model has two layers, each with EM structure. The output layer has EM via cross-entropy with softmax. The intermediate layer has EM via NegLogSoftmin + volume control. But the gradient that reaches W₁ must pass through the chain rule, and three specific mechanisms destroy the EM conditioning.
+
+**1. W₂ᵀ scrambles the class-error signals.** The CE gradient at the output is a clean EM update: g_out = (ŷ − y), one entry per class, responsibility-weighted. To reach the intermediate layer, this must be multiplied by the transpose of the second layer's weights:
+
+∂L_CE / ∂a₁ = W₂ᵀ(ŷ − y)
+
+This projection takes 10 independently structured class-error signals and linearly combines them into 25 dimensions. The orthogonal, responsibility-weighted structure is scrambled by the condition number and alignment of W₂ᵀ. The gradient at the intermediate layer no longer has the per-component independence that made EM conditioning work.
+
+**2. Additive interference overwhelms the NLS Jacobian.** At the intermediate layer, the total gradient is:
+
+∇_total = W₂ᵀ(ŷ − y) + λ · ∂L_VC/∂a₁
+
+The first term is a standard, ill-conditioned gradient flowing down from the output. The second term contains the EM-conditioned NLS competitive Jacobian. But λ=0.001 means the VC gradient is 1/1000th the scale of the CE gradient. The carefully structured responsibility-weighted signal is a small perturbation on a dominant ill-conditioned signal.
+
+This also explains why NLS contributes so little to accuracy (Experiment 1, nls_var_tc vs var_tc_only). The NLS Jacobian is the EM-conditioned part of the intermediate gradient, but it is overwhelmed by the W₂ᵀ(ŷ − y) signal flowing down. Removing NLS barely changes what W₁ sees.
+
+**3. ReLU masking.** The combined gradient must pass through the ReLU activation to update W₁:
+
+∂L/∂W₁ = (∇_total ⊙ 𝟙(h₁ > 0)) xᵀ
+
+In pure EM, a component far from a data point receives γ ≈ 0 — a smooth, near-zero gradient allowing gentle convergence. Under ReLU, the gradient is harshly truncated to exactly zero when the pre-activation is negative. If the dominant CE gradient pushes a unit into the negative regime, it dies — and the EM gradient cannot rescue it because the mask kills it first. This is exactly why units die in the baseline, and why the variance penalty must be strong enough to counteract ReLU masking before it happens, not after.
+
+### Why Adam is required
+
+Because W₂ᵀ stretches the gradient landscape across the hidden dimensions, and the CE loss dominates the magnitude, the gradient ∂L/∂W₁ behaves like a standard ill-conditioned deep network gradient. The landscape is no longer determined by local distances between x and W₁ (which EM would condition); it is determined by the covariance of the input xxᵀ and the spectral norm of W₂ᵀW₂. This is precisely the ill-conditioning that Adam's per-parameter momentum and adaptive scaling are designed to fix.
+
+### Implications
+
+EM conditioning is a single-layer property. It holds when the loss gradient directly reaches the parameters through one EM-structured computation. Composition through the chain rule — even composition of individually EM-structured layers — destroys the responsibility-weighted structure. The well-conditioned landscape that Paper 2 observed was a consequence of single-layer EM, not of volume control in general.
+
+This connects to the capacity experiment (Experiment 2). At high hidden dim, W₂ has more columns, the W₂ᵀ projection spreads the CE gradient across more dimensions, and each unit receives a smaller, noisier signal. The VC gradient becomes even more overwhelmed relative to the CE gradient. This may explain why optimal λ decreases with capacity — not because the VC is too strong in absolute terms, but because the ratio of VC gradient to CE gradient shifts as the network widens.
+
+A principled scaling rule for λ might emerge from this analysis: if the CE gradient scales with ‖W₂‖ and the VC gradient scales with λ, then balancing them could require λ ∝ 1/‖W₂‖ or a similar spectral-norm-dependent rule. This is a direction for future work.
 
 ## Summary
 
