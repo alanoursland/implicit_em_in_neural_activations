@@ -3,6 +3,19 @@
 import torch
 
 
+def dead_unit_count(a: torch.Tensor, threshold: float = 0.01) -> int:
+    """Count units with per-component variance below threshold.
+
+    Args:
+        a: Activations (batch, hidden_dim)
+        threshold: Variance threshold below which a unit is considered dead
+
+    Returns:
+        Number of dead units
+    """
+    return int((a.var(dim=0) < threshold).sum().item())
+
+
 def min_variance(a: torch.Tensor) -> float:
     """Minimum per-component variance across the batch.
 

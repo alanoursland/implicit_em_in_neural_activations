@@ -113,24 +113,36 @@ Log all metrics above at every epoch. This produces the training dynamics curves
 
 ### Purpose
 
-Show that volume control's benefit depends on capacity. When capacity is tight, every unit matters and volume control helps substantially. When capacity is abundant, the network tolerates dead and redundant units. Overparameterization is a brute-force substitute for principled volume control.
+Show how volume control interacts with model capacity, and isolate which component of volume control (variance vs decorrelation) drives the accuracy cost at large hidden dimensions.
+
+Experiment 1 showed that under EM (NLS), variance without decorrelation is pathological. But without NLS, variance alone is just "keep units alive" regularization — no EM to amplify redundancy. Comparing configs with and without decorrelation across hidden dims isolates whether the accuracy cost at large capacity comes from the decorrelation penalty constraining cooperative boundary refinement.
 
 ### Design
 
-Two configs compared across five hidden dimensions:
+Five configs compared across five hidden dimensions:
 
-| Config | NLS | Var | TC |
-|---|:---:|:---:|:---:|
-| baseline | — | — | — |
-| nls_var_tc | ✓ | ✓ | ✓ |
+| Config | NLS | Var | TC | What It Tests |
+|---|:---:|:---:|:---:|---|
+| baseline | — | — | — | Unregularized reference |
+| nls_var_tc | ✓ | ✓ | ✓ | Full EM + VC |
+| var_tc_only | — | ✓ | ✓ | VC without EM |
+| var_only | — | ✓ | — | Anti-collapse only, no EM, no anti-redundancy |
+| nls_var | ✓ | ✓ | — | EM + anti-collapse only (pathological at dim=25) |
 
 | Hidden dim | 16 | 25 | 36 | 49 | 64 |
 |---|---|---|---|---|---|
 
+Key comparisons:
+
+- **baseline vs var_only:** Does the variance penalty alone hurt accuracy at any hidden dim? If not, the accuracy cost is from decorrelation, not variance.
+- **var_only vs var_tc_only:** What does adding decorrelation cost at each hidden dim? This isolates the decorrelation tax on accuracy.
+- **nls_var at multiple sizes:** Does the redundancy explosion scale with capacity? How bad does the pathology get at 64 units?
+- **nls_var_tc vs var_tc_only at multiple sizes:** Does the NLS contribution change with capacity?
+
 ### Parameters
 
 - **Seeds:** 5 (seeds 42–46)
-- **λ_reg:** 0.001 for nls_var_tc
+- **λ_reg:** 0.001 for all regularized configs
 - **Epochs:** 50
 
 ### Metrics
@@ -145,19 +157,21 @@ Same as Experiment 1 (same per-epoch tracking, same last-10-epoch averaging for 
 | Prediction | Source |
 |---|---|
 | Dead units at all hidden dims (baseline) | Supervision doesn't scale with capacity |
+| Dead unit fraction roughly constant (~5-7%) across sizes | Collapse rate is a property of optimization, not width |
 | Redundancy scales roughly linearly with hidden dim (baseline) | More units, more redundancy |
-| Accuracy benefit of VC largest at small hidden dim | Every unit matters when capacity is tight |
-| Accuracy benefit of VC shrinks toward noise at large hidden dim | Network routes around dead units |
-| VC halves redundancy at every hidden dim | Anti-redundancy is capacity-independent |
-| Dead unit fraction roughly constant (baseline) | Collapse rate is a property of the optimization, not the width |
+| var_only eliminates dead units without accuracy cost at any size | Variance penalty is a soft floor, not a constraint |
+| var_tc_only loses accuracy at large hidden dims | Decorrelation prevents cooperative boundary refinement |
+| nls_var redundancy explosion scales with capacity | More units, more copies under EM + variance-only |
+| Accuracy cost at large dims comes from decorrelation, not variance | var_only should match or beat baseline accuracy everywhere |
 
 ### Deliverables
 
-1. **Capacity table:** For each hidden dim, baseline vs nls_var_tc on accuracy, dead units, dead unit fraction, redundancy. Mean ± std across 5 seeds.
-2. **Capacity figure:** Accuracy gain (nls_var_tc − baseline) vs hidden dim. Should show decreasing benefit with increasing capacity.
-3. **Redundancy figure:** Redundancy vs hidden dim for both configs. Should show linear scaling for baseline, flatter for nls_var_tc.
+1. **Capacity table:** For each hidden dim × config: accuracy, dead units, dead unit fraction, redundancy. Mean ± std across 5 seeds.
+2. **Accuracy vs capacity figure:** All 5 configs across hidden dims.
+3. **Redundancy vs capacity figure:** All 5 configs across hidden dims.
+4. **Accuracy gain figure:** Each regularized config minus baseline, vs hidden dim. Shows which components help/hurt at which capacity.
 
-### Total runs: 50
+### Total runs: 125
 
 ---
 

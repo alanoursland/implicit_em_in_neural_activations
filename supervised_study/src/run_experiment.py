@@ -23,7 +23,7 @@ import matplotlib.pyplot as plt
 
 from model import SupervisedModel
 from configs import CONFIGS
-from metrics import min_variance, redundancy_score, responsibility_entropy
+from metrics import dead_unit_count, min_variance, redundancy_score, responsibility_entropy
 from data import get_mnist
 from utils import set_seed
 
@@ -46,6 +46,7 @@ def train_one(
     lr: float = 0.001,
     lambda_reg: float = 1.0,
     log_interval: int = 10,
+    optimizer_name: str = "adam",
 ) -> tuple[SupervisedModel, dict]:
     """Train a single model for one config/seed combination.
 
@@ -56,7 +57,13 @@ def train_one(
     set_seed(seed)
     cfg = CONFIGS[config_name]
     model = SupervisedModel(hidden_dim=hidden_dim, **cfg).to(device)
-    optimizer = torch.optim.Adam(model.parameters(), lr=lr)
+
+    if optimizer_name.lower() == "adam":
+        optimizer = torch.optim.Adam(model.parameters(), lr=lr)
+    elif optimizer_name.lower() == "sgd":
+        optimizer = torch.optim.SGD(model.parameters(), lr=lr)
+    else:
+        raise ValueError(f"Unknown optimizer: {optimizer_name}")
 
     curves = {
         "epoch": [],
@@ -65,6 +72,12 @@ def train_one(
         "total_loss": [],
         "train_acc": [],
         "test_acc": [],
+        "test_ce_loss": [],
+        "test_reg_loss": [],
+        "dead_units": [],
+        "min_variance": [],
+        "redundancy": [],
+        "resp_entropy": [],
     }
 
     for epoch in range(epochs):
@@ -97,9 +110,16 @@ def train_one(
                 total_samples += labels.shape[0]
 
         train_acc = correct / total_samples
+
+        # Per-epoch test-set evaluation
         model.eval()
         with torch.no_grad():
-            test_acc = (model(test_x).argmax(dim=1) == test_y).float().mean().item()
+            test_h = model(test_x)
+            test_d = model.distances
+            test_acc = (test_h.argmax(dim=1) == test_y).float().mean().item()
+            test_ce = F.cross_entropy(test_h, test_y).item()
+            test_reg = model.regularization_loss()["total"].item()
+            r = torch.softmax(-test_d, dim=1)
         model.train()
 
         curves["epoch"].append(epoch + 1)
@@ -108,6 +128,12 @@ def train_one(
         curves["total_loss"].append(epoch_total / n_batches)
         curves["train_acc"].append(train_acc)
         curves["test_acc"].append(test_acc)
+        curves["test_ce_loss"].append(test_ce)
+        curves["test_reg_loss"].append(test_reg)
+        curves["dead_units"].append(dead_unit_count(test_d))
+        curves["min_variance"].append(min_variance(test_d))
+        curves["redundancy"].append(redundancy_score(test_d))
+        curves["resp_entropy"].append(responsibility_entropy(r))
 
         if (epoch + 1) % log_interval == 0 or epoch == 0:
             print(
