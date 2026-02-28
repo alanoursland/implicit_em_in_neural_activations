@@ -58,18 +58,20 @@ Adam at lr=0.001 achieves the best balance: 96.38% accuracy, sensible min_var (7
 
 ## Interpretation
 
-Paper 2's well-conditioned landscape was specific to purely EM objectives. When the entire loss is LSE + InfoMax, every gradient is responsibility-weighted, naturally normalizing across components. SGD suffices because the loss geometry does the work that Adam's adaptive scaling normally provides.
+Paper 2's well-conditioned landscape was a property of single-layer EM objectives. In Paper 2, a single linear layer was optimized with LSE + InfoMax. The loss gradient with respect to the parameters was directly responsibility-weighted — the gradients *were* the responsibilities. No chain rule through another layer. The landscape was well-conditioned because the EM math normalizes everything.
 
-Adding a supervised CE loss breaks this property. The CE gradient flows through W₂ and the diagonal ReLU Jacobian without responsibility weighting. It introduces the standard ill-conditioning of supervised training — different parameters at different scales, different layers with different gradient magnitudes. Adam's per-parameter moment tracking is genuinely helpful for this component.
+This model has two layers, each with EM structure. The output layer has EM via cross-entropy with softmax. The intermediate layer has EM via NegLogSoftmin + volume control. But the composition of two EM layers is not itself EM. The gradients that reach W₁ pass through the chain rule — through W₂'s linear transform, the ReLU Jacobian, and the intermediate EM Jacobian. That product is not responsibility-weighted. It is a standard deep network gradient that happens to pass through EM-structured components.
 
-The implication is that the optimization anomalies from Paper 2 are a signature of pure EM dynamics, not of volume control in general. When EM is one component of a mixed objective (CE + VC), standard optimization considerations apply. The VC terms alone do not dominate the landscape enough to condition it.
+EM conditioning is a single-layer property. It holds when the loss gradient directly reaches the parameters through one EM-structured computation. It breaks under composition, because the chain rule across layers destroys the responsibility-weighted structure. Depth breaks the conditioning, not because something non-EM was added, but because composing EM layers through a linear transform and activation is not an EM operation.
+
+This clarifies the Paper 2 result. The SGD insensitivity and Adam redundancy that Paper 2 observed were consequences of single-layer EM structure, not of volume control in general. The volume control terms contribute a well-conditioned component to the gradient, but once that gradient is composed with other layers, standard optimization considerations dominate. Adam is needed not because the EM structure is absent, but because composition destroys the property that made it sufficient.
 
 ## Summary
 
 | Paper 2 Finding | Replicated? | Explanation |
 |---|---|---|
-| SGD learning-rate insensitive | No | CE gradient introduces ill-conditioning |
-| Adam offers no advantage | No | Adam clearly helps with CE component |
+| SGD learning-rate insensitive | No | Composition across layers destroys EM conditioning |
+| Adam offers no advantage | No | Chain rule through W₂ produces standard ill-conditioned gradients |
 | Lower loss ≠ better features | Partially | Only at high Adam lr; VC loss has orthogonal degrees of freedom |
 
-The supervised setting requires standard optimization practices. The pure EM landscape properties do not transfer when EM is embedded within a supervised objective.
+The well-conditioned landscape is a single-layer EM property. Depth breaks it, even when each layer individually has EM structure.
