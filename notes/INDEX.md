@@ -55,6 +55,9 @@ Explains the role of temperature (or scale) in implicit EM and how it controls s
 **`why_relu_breaks_em.md`**
 Shows why ReLU is inference-breaking under the implicit EM framework, due to hard assignment and zero responsibility. Clarifies where EM structure exists in typical ReLU networks and where it does not.
 
+**`why_composition_breaks_em.md`**
+Explains why implicit EM's optimization conditioning does not survive composition through deep networks. Identifies the invariant (the gradient is a conditional expectation on the simplex with universally bounded curvature), classifies operations as simplex-compatible (private parameters, monotone per-coordinate maps, stochastic maps) or structure-destroying (shared sign-indefinite linear maps, objective mixing, hard gates), and maps each failure onto known failure classes of classical EM. Composition is parameter sharing in disguise. Written in response to the supervised study's optimizer findings.
+
 ---
 
 ## Architectural Boundaries and Extensions
