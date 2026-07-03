@@ -44,7 +44,7 @@ Linear probe accuracy on frozen distances (mean ± std over 3 seeds):
 | Arm | lr=0.0001 | lr=0.001 | lr=0.01 | lr=0.1 | spread |
 |---|---|---|---|---|---|
 | joint, λ=0.001 | 85.32% ± 3.13% | 92.93% ± 0.22% | 95.09% ± 0.14% | 96.21% ± 0.18% | **10.9 pts** |
-| joint, λ=0.03 | TBD | TBD | TBD | TBD | TBD |
+| joint, λ=0.03 | 86.37% ± 0.29% | 90.57% ± 0.11% | 91.83% ± 0.16% | 92.24% ± 0.38% | **5.9 pts** |
 | joint, λ=1 | 88.39% ± 0.05% | 88.35% ± 0.08% | 88.59% ± 0.35% | 87.41% ± 0.23% | **1.2 pts** |
 | stop-gradient | 88.35% ± 0.06% | 88.29% ± 0.17% | 88.18% ± 0.25% | 87.03% ± 0.30% | **1.3 pts** |
 
@@ -92,7 +92,7 @@ The stop-gradient arm is a supervised network: same data, same labels, same CE l
 
 ### 2. Conditioning is graded by gradient dominance
 
-λ=1 with full connectivity is indistinguishable from stop-gradient. The dichotomy of the lemma (bounded vs unbounded curvature) sets the two regimes; *which* regime a real network occupies is decided by the ratio of the two gradient streams. This upgrades experiment 3's λ-scaling speculation to a measured mechanism, and replaces "composition destroys EM" with the more precise statement: **composition exposes W₁ to a foreign, ill-conditioned landscape in proportion to that landscape's gradient share.**
+λ=1 with full connectivity is indistinguishable from stop-gradient, and the λ=0.03 arm — chosen to sit near the measured gradient-ratio crossover — lands almost exactly halfway between the regimes on every axis: lr-spread 5.9 points (vs 10.9 and 1.2), probe accuracy between the two plateaus at every learning rate. The transition is continuous, not a phase change. The dichotomy of the lemma (bounded vs unbounded curvature) sets the two regimes; *which* regime a real network occupies is decided by the ratio of the two gradient streams. This upgrades experiment 3's λ-scaling speculation to a measured mechanism, and replaces "composition destroys EM" with the more precise statement: **composition exposes W₁ to a foreign, ill-conditioned landscape in proportion to that landscape's gradient share.**
 
 ### 3. The measured dominance ratio corrects report 3
 
@@ -120,7 +120,7 @@ Together with experiments 1–3, the Paper 3 story becomes:
 
 - The sweep uses SGD only; the Adam-advantage half of the Paper 2 signature was established for the joint arm in experiment 3 and is not re-tested under stop-gradient here.
 - Single width (K=25), MNIST, 3 seeds, 40 epochs.
-- The λ=0.03 arm sits near the predicted crossover but a fuller λ-resolution curve (conditioning spread vs measured gradient ratio) would trace the transition properly.
+- The λ ladder has three rungs (0.001, 0.03, 1); a fuller λ-resolution curve plotting conditioning spread against the *measured* gradient ratio would trace the transition properly.
 - LayerNorm is present in the model but omitted from the lemma's constants; the measured h_ce absorbs it.
 
 ## Summary
