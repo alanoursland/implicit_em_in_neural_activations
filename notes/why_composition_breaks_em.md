@@ -70,7 +70,7 @@ The total intermediate gradient is
 ∇_total = W₂ᵀ(p − y) + λ · r_aux
 ```
 
-A convex-combination vector plus an arbitrary vector is an arbitrary vector. A sum of gradients is "a posterior of something" only if the total objective is itself the marginal likelihood of a single latent-variable model. CE + λ·LSE is not: it is two mixture models disagreeing about what the intermediate code means, with the disagreement settled 1000:1 at λ = 0.001. This is why NLS contributed nothing measurable in the ablation — its EM-structured signal was a rounding error on the CE signal.
+A convex-combination vector plus an arbitrary vector is an arbitrary vector. A sum of gradients is "a posterior of something" only if the total objective is itself the marginal likelihood of a single latent-variable model. CE + λ·LSE is not: it is two mixture models disagreeing about what the intermediate code means. Experiment 4 measured the disagreement at λ = 0.001: the CE path outweighs the EM path 30–70× (not the ~1000× report 3 inferred from λ alone), and the two gradients are near-orthogonal (cos ≈ 0). The EM signal is not opposed — it is drowned, a small orthogonal perturbation on a dominant signal. This is why NLS contributed nothing measurable in the ablation.
 
 ### 3. Hard gates (ReLU)
 
@@ -126,10 +126,10 @@ Composition is in the second class. This explains why λ-tuning in Paper 3 felt 
 
 **A provable lemma.** The contrast between ∇²L ⪯ ½·E[xxᵀ] (private linear energies, parameter-independent) and the W₂ᵀ(diag(p) − ppᵀ)W₂ term (composition, spectrum-dependent) is short and self-contained. It converts Paper 3's empirical non-replication into a theorem about when replication is impossible.
 
-**Each condition is separately testable.**
-- *Parameter privacy:* train W₁ with a stop-gradient so only the auxiliary EM loss reaches it (CE trains only the head). Prediction: Paper 2's anomalies reappear at W₁ — SGD lr-insensitive, Adam no advantage. This is the causal test.
-- *Objective mixing:* sweep λ until the VC and CE gradient norms match (log both norms per epoch — the 1000:1 ratio is currently asserted, not measured). Prediction: conditioning metrics transition continuously with the ratio.
-- *Hard gates:* ReLU vs. Softplus, already run.
-- *Stochastic maps:* replace W₂ with a normalized non-negative map (or an attention read-out) and test whether partial conditioning survives. Speculative, high upside.
+**Each condition is separately testable.** (Status: experiment 4, supervised_study/reports/4_composition_report.md.)
+- *Parameter privacy:* train W₁ with a stop-gradient so only the auxiliary EM loss reaches it (CE trains only the head). Prediction: Paper 2's anomalies reappear at W₁. **Confirmed** — probe-accuracy spread across a 1000× SGD lr range drops from 10.9 points (joint, λ=0.001) to 1.3 points (stop-gradient), and convergence-time invariance returns.
+- *Objective mixing:* measure both gradient norms and vary λ. **Confirmed, with a refinement** — at λ=1 full connectivity behaves identically to stop-gradient: conditioning follows gradient *dominance*, not connectivity. The regime is graded by the CE/EM gradient ratio (measured 30–70× at λ=0.001, 0.02–0.05× at λ=1).
+- *Hard gates:* ReLU vs. Softplus, already run (experiments 1–3).
+- *Stochastic maps:* replace W₂ with a normalized non-negative map (or an attention read-out) and test whether partial conditioning survives. Speculative, high upside — still open.
 
 **Implication for depth.** EM structure cannot be *inherited* through learned dense maps; it can only be *created locally* at each layer, with its own LSE objective and its own volume control, or transported through the narrow class of simplex-compatible maps. This is the theoretical justification for layer-wise implicit EM (layer_wise_implicit_em.md) — and a candidate explanation for why attention-based architectures behave differently from MLPs under the framework.
