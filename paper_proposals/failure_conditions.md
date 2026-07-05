@@ -1,6 +1,6 @@
 # Scope: The Conditions Under Which Implicit EM Fails
 
-This document describes the paper that the supervised study has become, and what remains to complete it. It supersedes the confirmation-framed scope.md (which predates experiments 3–4).
+This document describes the paper that the supervised study has become, and what remains to complete it. It supersedes the confirmation-framed supervised_study/draft/scope.md (which predates experiments 3–4).
 
 ## Pattern
 
