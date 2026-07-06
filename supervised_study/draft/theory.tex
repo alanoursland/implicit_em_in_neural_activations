@@ -118,9 +118,11 @@ The Hessian has blocks
     \left(rr^\top-\operatorname{diag}(r)\right)_{jk}
     \tilde{x}\tilde{x}^\top,
 \]
-or, up to sign, $C(r)\otimes \tilde{x}\tilde{x}^\top$. The spectral norm of a
-Kronecker product is the product of spectral norms, and Lemma~\ref{lem:simplex}
-gives the factor $1/2$.
+or equivalently $-C(r)\otimes \tilde{x}\tilde{x}^\top$. The minus sign follows
+from the distance convention: $C(r)$ is the negative Hessian of
+$L_{\mathrm{LSE}}$ in $d$-coordinates. The spectral norm of a Kronecker product
+is the product of spectral norms, and Lemma~\ref{lem:simplex} gives the factor
+$1/2$.
 \end{proof}
 
 Proposition~\ref{prop:private-affine} is the formal version of the
@@ -170,9 +172,10 @@ biases.
 
 Softplus is the main smooth case in this paper. ReLU should be read separately:
 its curvature bounds hold almost everywhere, but it introduces a zeroth-order
-absorbing-state pathology. When a unit is gated off, its gradient can become
-exactly zero, and the unit may not recover. That failure is not a violation of
-the curvature bound; it is the neural version of hard-assignment cluster death.
+absorbing-state pathology. When a unit is gated off for the whole batch, the
+parameter-gradient block through that unit is exactly zero, and the unit may not
+recover. That failure is not a violation of the curvature bound; it is the
+neural version of hard-assignment cluster death.
 
 \subsection{Composition Forfeits the Uniform Bound}
 
