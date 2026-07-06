@@ -1,44 +1,42 @@
-\section{Background: Where EM Lives}
+\section{Background: The Locality of Implicit EM}
 \label{sec:background}
-
 This section fixes the conceptual object studied in the rest of the paper. An
-implicit-EM site is not any hidden layer with a softmax nearby, and it is not an
-entire deep network. It is a local exponentiation-and-normalization interface at
-which an objective sees distances, energies, or logits and therefore produces a
-responsibility-shaped gradient. The theory section asks when this local
-structure survives the pullback to parameters.
+implicit-EM site is not any hidden layer with a softmax nearby, and it is not
+an entire deep network. It is a local exponentiation-and-normalization
+interface at which an objective sees distances, energies, or logits and
+therefore produces a responsibility-shaped gradient. The theory section asks
+when this local structure survives the pullback to parameters.
 
 \subsection{Responsibilities as Gradients}
-
 The starting point (Section~\ref{sec:introduction}) is the algebraic identity
-$\partial L_{\mathrm{LSE}}/\partial d_j = r_j$: the gradient of an LSE distance
-objective is a posterior responsibility vector---nonnegative, summing to one,
-assigning each component a fractional share of the update. Gradient descent on
-such an objective performs an implicit E-step, with responsibilities appearing
-as the gradient rather than as auxiliary variables.
+$\partial L_{\mathrm{LSE}}/\partial d_j = r_j$: the gradient of an LSE
+distance objective is a posterior responsibility vector---nonnegative, summing
+to one, assigning each component a fractional share of the update. Gradient
+descent on such an objective performs an implicit E-step, with
+responsibilities appearing as the gradient rather than as auxiliary variables.
 
 The identity is purely algebraic; it assumes no particular parameterization,
 architecture, or optimizer. Everything in this paper turns on what happens
-\emph{next}: the responsibility vector may reach private component parameters
+next: the responsibility vector may reach private component parameters
 directly, or it may be mixed with other gradients and pulled through learned
 maps before it updates earlier weights.
 
-\subsection{Cross-Entropy Is a Label-Clamped Responsibility Interface}
-
+\subsection{Cross-Entropy as a Label-Clamped Responsibility Interface}
 Supervised cross-entropy has the same exponentiation-and-normalization
 interface, with the label clamping one component: its logit gradient is
-$p_c-\mathbb{1}\{c=y\}$ (Section~\ref{sec:notation}), removing probability mass
-from the true class and redistributing it according to the model posterior.
+$p_c-\mathbb{1}\{c=y\}$ (Section~\ref{sec:notation}), removing probability
+mass from the true class and redistributing it according to the model
+posterior.
 
-This observation is useful but also dangerous. It is correct that the output
-loss supplies responsibility-shaped geometry at the output logits. It is
-\emph{not} correct to conclude that every earlier hidden layer is itself doing
-EM. The gradient reaching an earlier layer has already passed through the head
-Jacobian and any intervening nonlinearities; it need not be nonnegative, sum to
-one, or remain aligned with hidden components.
+This observation supports a limited conclusion and invites an incorrect one.
+It is correct that the output loss supplies responsibility-shaped geometry at
+the output logits. It is not correct to conclude that every earlier hidden
+layer is itself performing EM. The gradient reaching an earlier layer has
+already passed through the head Jacobian and any intervening nonlinearities;
+it need not be nonnegative, sum to one, or remain aligned with hidden
+components.
 
 \subsection{Local EM Sites Inside a Network}
-
 The supervised architecture studied here deliberately creates an intermediate
 site. The first map produces component distances $d_1,\ldots,d_K$, and the
 NegLogSoftmin transform (Section~\ref{sec:notation}) calibrates them so that
@@ -46,62 +44,62 @@ $\exp(-\operatorname{NLS}(d)_j)=r_j$, giving the hidden layer an explicit
 distance-to-responsibility interface rather than relying on the output loss to
 impose structure indirectly.
 
-The distinction between an output interface and an intermediate site is central.
-At the output, the supervised objective owns the softmax. At the hidden layer,
-the local site exists only because we add a local auxiliary objective. Without
-such an objective, the hidden coordinates may be useful features, but there is
-no reason for their updates to be posterior responsibilities over hidden
-components.
+The distinction between an output interface and an intermediate site is
+central. At the output, the supervised objective owns the softmax. At the
+hidden layer, the local site exists only because we add a local auxiliary
+objective. Without such an objective, the hidden coordinates may be useful
+features, but there is no reason for their updates to be posterior
+responsibilities over hidden components.
 
 \subsection{Volume Control}
-
-An LSE competition term by itself does not prevent the standard degeneracies of
-mixture models. Components can collapse, become redundant, or receive
+An LSE competition term by itself does not prevent the standard degeneracies
+of mixture models. Components can collapse, become redundant, or receive
 essentially no responsibility \citep{redner1984mixture,mclachlan2000finite}.
-The decoder-free encoder study addressed these
-failures with volume control: a variance term prevents dead or collapsed
-components, and a decorrelation term prevents all components from moving
-together. In the local auxiliary objective $L_{\mathrm{aux}}=L_{\mathrm{LSE}}
-+L_{\mathrm{var}}+L_{\mathrm{tc}}$ (Section~\ref{sec:notation}), the variance
-term is the anti-collapse part and the decorrelation term the anti-redundancy
-part. This variance-plus-decorrelation pairing is structurally close to
-redundancy-reduction regularizers such as VICReg and Barlow Twins, although here
-it serves a mixture-geometry role at an EM site rather than a self-supervised
-invariance objective \citep{bardes2022vicreg,zbontar2021barlow}. Together the
-terms act as a volume barrier, encouraging components to occupy distinct
-directions rather than concentrate in the same small region. This is analogous
-in role to volume terms in Gaussian mixture likelihoods, not a literal
-identification with the Gaussian log-determinant.
+The decoder-free encoder study addressed these failures with volume control: a
+variance term prevents dead or collapsed components, and a decorrelation term
+prevents all components from moving together. In the local auxiliary objective
+$L_{\mathrm{aux}}=L_{\mathrm{LSE}}+L_{\mathrm{var}}+L_{\mathrm{tc}}$
+(Section~\ref{sec:notation}), the variance term is the anti-collapse part and
+the decorrelation term the anti-redundancy part. This variance-plus-decorrelation
+pairing is structurally close to redundancy-reduction regularizers such as
+VICReg and Barlow Twins, although here it serves a mixture-geometry role at an
+EM site rather than a self-supervised invariance objective
+\citep{bardes2022vicreg,zbontar2021barlow}. Together the terms act as a volume
+barrier, encouraging components to occupy distinct directions rather than
+concentrate in the same small region. The role is analogous to that of volume
+terms in Gaussian mixture likelihoods; we do not claim an identification with
+the Gaussian log-determinant.
 
-The first empirical question is whether these local repairs still work inside a
-supervised network. They do: Section~\ref{sec:results-volume} shows that volume
-control eliminates dead units and reduces redundancy at the intermediate site.
-The second question is harder: whether the optimizer conditioning observed in the
-single-layer implicit-EM model transfers through the supervised head.
-Sections~\ref{sec:results-conditioning} and~\ref{sec:mechanism} show that it does
-not, except when the local EM path is isolated or made dominant.
+The first empirical question is whether these local repairs still work inside
+a supervised network. They do: Section~\ref{sec:results-volume} shows that
+volume control eliminates dead units and reduces redundancy at the
+intermediate site. The second question is whether the optimizer conditioning
+observed in the single-layer implicit-EM model transfers through the
+supervised head. Sections~\ref{sec:results-conditioning}
+and~\ref{sec:mechanism} show that it does not, except when the local EM path
+is isolated or made dominant.
 
 \subsection{Locality Versus Inheritance}
-
 The main conceptual error this paper rules out is inheritance. The
-gradient-responsibility identity guarantees a local structure at the coordinates
-seen by an LSE or softmax objective. It does not guarantee that the whole
-network inherits EM's conditioning. Backpropagation can transport the gradient,
-but transport is not preservation. Dense learned maps can mix signs and
-components; objective sums can add unrelated gradients; gates can turn small
-responsibilities into exactly zero updates.
-These are the failure operations formalized in the next section: sign-indefinite
-mixing, foreign objective sums, and hard gates break the private component
-structure that makes the local responsibility update well conditioned.
+gradient-responsibility identity guarantees a local structure at the
+coordinates seen by an LSE or softmax objective. It does not guarantee that
+the whole network inherits EM's conditioning. Backpropagation transports the
+gradient, but transport does not preserve its structure. Dense learned maps
+can mix signs and components; objective sums can add unrelated gradients;
+gates can turn small responsibilities into exactly zero updates.
 
-Thus there are two different claims one might make about a hidden layer. A
-weak, correct claim is that loss geometry at downstream softmax sites shapes
-hidden representations through backpropagation. A strong, generally false claim
-is that the hidden layer itself receives a posterior responsibility update. The
+These are the failure operations formalized in the next section:
+sign-indefinite mixing, foreign objective sums, and hard gates break the
+private component structure that makes the local responsibility update well
+conditioned.
+
+There are accordingly two claims one might make about a hidden layer. A weak,
+correct claim is that loss geometry at downstream softmax sites shapes hidden
+representations through backpropagation. A strong, generally false claim is
+that the hidden layer itself receives a posterior responsibility update. The
 rest of the paper draws the boundary between these claims.
 
 \subsection{Two Failure Classes}
-
 The experiments are organized around two failure classes. At-site failures
 occur at a local EM interface: dead components, collapsed variance, redundant
 features, and diffuse or poorly calibrated responsibilities. Volume control is
@@ -111,15 +109,16 @@ measure introduced in Lemma~\ref{lem:simplex}: low curvature relative to the
 $1/2$ bound indicates weak local competition rather than sharp two-way
 component assignment.
 
-Structural failures occur when a responsibility gradient must travel through a
+Structural failures occur when a responsibility gradient passes through a
 shared learned corridor before reaching the parameters it is supposed to
-condition. In the supervised model, this corridor is the component-to-class map
-$W_2$. The CE gradient reaching $W_1$ is pulled through $W_2$ and combined with
-the local auxiliary gradient. When this foreign path dominates, the update at
-$W_1$ no longer has the private, per-component structure of an EM M-step.
+condition. In the supervised model, this corridor is the component-to-class
+map $W_2$. The CE gradient reaching $W_1$ is pulled through $W_2$ and combined
+with the local auxiliary gradient. When this foreign path dominates, the
+update at $W_1$ no longer has the private, per-component structure of an EM
+M-step.
 
 This split sets up the theory. The next section proves that private LSE sites
 inherit a parameter-independent curvature bound, while composition through a
-learned dense map forfeits that guarantee. The experiments then show the same
+learned dense map loses that guarantee. The experiments then show the same
 boundary from both sides: local volume control transfers, but optimizer
 conditioning does not survive ordinary composition.

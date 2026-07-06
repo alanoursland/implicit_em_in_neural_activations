@@ -1,23 +1,21 @@
 \section{Limitations and Threats to Validity}
 \label{sec:limitations}
-
 The paper makes a narrow claim about where implicit-EM conditioning is
-preserved and where it is lost. The evidence is intentionally controlled rather
-than broad. This section separates threats to the internal interpretation of
-the experiments from limitations on external scope.
+preserved and where it is lost. The evidence is intentionally controlled
+rather than broad. This section separates threats to the internal
+interpretation of the experiments from limitations on external scope.
 
 \subsection{Threats to Internal Validity}
-
 \paragraph{Feature quality is measured primarily by a linear probe.}
-The main accuracy trade-off compares frozen intermediate representations with a
-fixed-protocol linear probe. This is the right first probe because it measures
-linearly accessible class information without allowing the downstream evaluator
-to repair the representation. It is not the only possible measure of feature
-quality. A kNN probe and a small MLP probe on the same frozen distances would
-test whether the $88\%$ versus $96\%$ ordering is a property of the
-representation or a property of the probe. If the ordering survives these
-checks, the interpretation strengthens: EM-dominated features are genuinely
-less task-aligned, not merely less linearly separable.
+The main accuracy trade-off compares frozen intermediate representations with
+a fixed-protocol linear probe. This is the right first probe because it
+measures linearly accessible class information without allowing the downstream
+evaluator to repair the representation. It is not the only possible measure of
+feature quality. A kNN probe and a small MLP probe on the same frozen
+distances would test whether the $88\%$ versus $96\%$ ordering is a property
+of the representation or a property of the probe. If the ordering survives
+these checks, the interpretation strengthens: EM-dominated features are
+genuinely less task-aligned, not only less linearly separable.
 
 \paragraph{The curvature measurements depend on numerical estimation.}
 The curvature claims use spectral norms estimated by power iteration on fixed
@@ -34,55 +32,56 @@ The paper uses proximity to the LSE curvature bound as a diagnostic of mixture
 sharpness. In this study, the diagnostic behaves as predicted: EM-dominated
 training approaches the $1/2$ bound, while CE-dominated training leaves the
 local site diffuse. That supports the diagnostic locally, but not its general
-use across architectures. Claims about $1/2$-saturation should therefore remain
-modest until the same measurement is repeated across depths, datasets, or
-different EM-site parameterizations.
+use across architectures. Claims about $1/2$-saturation should therefore
+remain modest until the same measurement is repeated across depths, datasets,
+or different EM-site parameterizations.
 
 \paragraph{The data-constant learning-rate scale is only a sanity check.}
-Proposition~\ref{prop:private-affine} gives a clean LSE-only scale in terms of
+Proposition~\ref{prop:private-affine} gives an LSE-only scale in terms of
 $\mathbb{E}\|\tilde{x}\|^2$. Results~III reports this constant for MNIST and
 compares the implied descent-lemma scale to the stop-gradient learning-rate
-sweep. The agreement is only order-of-magnitude evidence. The trained model uses
-ReLU distances and the full auxiliary objective, not the pure private-affine
-LSE objective, so this comparison should not be read as a formal prediction of
-the largest stable learning rate.
+sweep. The agreement is only order-of-magnitude evidence. The trained model
+uses ReLU distances and the full auxiliary objective, not the pure
+private-affine LSE objective, so this comparison should not be read as a
+formal prediction of the largest stable learning rate.
 
-\paragraph{Stop-gradient is a clean but strong intervention.}
+\paragraph{Stop-gradient is a precise but strong intervention.}
 The stop-gradient arm blocks the CE gradient from reaching $W_1$ while keeping
 the data, labels, architecture, CE loss, and supervised head in place. This
-makes it a strong causal test of the corridor-gradient hypothesis. It is also a
-large intervention: it changes the optimization problem for $W_1$ from joint
+makes it a strong causal test of the corridor-gradient hypothesis. It is also
+a large intervention: it changes the optimization problem for $W_1$ from joint
 supervised training to protected local training. The interpretation rests on
-the fact that the intervention changes exactly the corridor under dispute. It does
-not show that stop-gradient is the best practical method; it shows that the CE
-corridor is sufficient to destroy the conditioning signature when it dominates.
+the fact that the intervention changes exactly the corridor under dispute. It
+does not show that stop-gradient is the best practical method; it shows that
+the CE corridor is sufficient to destroy the conditioning signature when it
+dominates.
 
 \paragraph{Gradient dominance should be measured under the matched optimizer.}
-The gradient-competition measurements are taken during Adam training at learning
-rate $10^{-3}$, while the conditioning sweep in the causal experiment uses SGD.
-The dominance ratio is expected to reflect the loss geometry at the distance
-interface rather than an Adam-specific artifact, but the cleanest version of the
-result would measure the same CE/EM ratio under the same optimizer and
-learning-rate sweep used for the conditioning result. Until then, the optimizer
-mismatch should be stated explicitly.
+The gradient-competition measurements are taken during Adam training at
+learning rate $10^{-3}$, while the conditioning sweep in the causal experiment
+uses SGD. The dominance ratio is expected to reflect the loss geometry at the
+distance interface rather than an Adam-specific artifact, but the stronger
+version of the result would measure the same CE/EM ratio under the same
+optimizer and learning-rate sweep used for the conditioning result. Until
+then, the optimizer mismatch should be stated explicitly.
 
 \paragraph{The optimizer-signature restoration is incomplete.}
-The stop-gradient arm restores SGD learning-rate insensitivity at $W_1$, and the
-ordinary composed arm shows a renewed advantage for Adam. The complementary Adam
-stop-gradient arm has not yet been reported. That run would test the remaining
-half of the optimizer-signature claim: whether Adam loses its advantage when the
-local EM objective owns the $W_1$ update.
+The stop-gradient arm restores SGD learning-rate insensitivity at $W_1$, and
+the ordinary composed arm shows a renewed advantage for Adam. The
+complementary Adam stop-gradient arm has not yet been reported. That run would
+test the remaining half of the optimizer-signature claim: whether Adam loses
+its advantage when the local EM objective owns the $W_1$ update.
 
 \paragraph{Cosine near zero is a weak alignment claim.}
 The measured CE and EM gradients have cosine near zero. In $K=25$ dimensions,
-random directions also have cosine standard deviation about $1/\sqrt{25}=0.2$.
-Therefore the correct conclusion is not strong geometric orthogonality. The
-conservative conclusion is that there is no detectable alignment or opposition
-at the measured scale. This still supports the mechanism: the EM signal is
-drowned by a larger foreign signal, not cancelled by a directly opposing one.
-The observed values are smaller than this crude random-direction scale, but
-batch averaging and the shared NLS interface change the relevant null; we do not
-interpret that undershoot further.
+random directions also have cosine standard deviation of about
+$1/\sqrt{25}=0.2$. The correct conclusion is therefore not strong geometric
+orthogonality. The conservative conclusion is that there is no detectable
+alignment or opposition at the measured scale. This still supports the
+mechanism: the EM signal is diluted by a larger foreign signal, not cancelled
+by a directly opposing one. The observed values are smaller than this coarse
+random-direction scale, but batch averaging and the shared NLS interface
+change the relevant null; we do not interpret that undershoot further.
 
 \paragraph{The graded claim is currently supported by few points.}
 The causal experiment includes $\lambda=0.001$, $\lambda=0.03$, $\lambda=1$,
@@ -94,46 +93,47 @@ would make the graded claim much stronger and is the natural next analysis for
 this result.
 
 \paragraph{The learning-rate sweeps mainly show low-rate slowness.}
-The reported sweeps show large final-accuracy spreads across learning rates, but
-the SGD arms mostly improve monotonically over the tested range. Thus the current
-spread metric primarily captures undertraining at small learning rates, not an
-observed upper instability edge. A larger learning-rate rung or time-to-threshold
-analysis would make the smoothness interpretation sharper.
+The reported sweeps show large final-accuracy spreads across learning rates,
+but the SGD arms mostly improve monotonically over the tested range. The
+current spread metric therefore primarily captures undertraining at small
+learning rates, not an observed upper instability edge. A larger
+learning-rate rung or a time-to-threshold analysis would sharpen the
+smoothness interpretation.
 
 \paragraph{Some structural metrics are close to their training losses.}
 Dead-unit and redundancy measurements are related to the variance and
-decorrelation penalties used in the auxiliary objective. This does not make the
-repair trivial: the cross-metrics matter, for example the variance-only arm
-removes dead units while making redundancy much worse. Still, the overlap
-between objective terms and reported health metrics should be read as a targeted
-repair test rather than as an independent representation-quality measure.
+decorrelation penalties used in the auxiliary objective. This does not make
+the repair trivial: the cross-metrics matter, for example the variance-only
+arm removes dead units while making redundancy much worse. Still, the overlap
+between objective terms and reported health metrics should be read as a
+targeted repair test rather than as an independent representation-quality
+measure.
 
 \paragraph{The auxiliary objective has escape directions.}
-The clean curvature propositions apply to the LSE contribution at the local
+The curvature propositions apply to the LSE contribution at the local
 responsibility site. The full auxiliary objective also includes variance and
-decorrelation terms, and high-learning-rate Adam can drive the variance term to
-very large values without improving task accuracy. The reported operating point
-is chosen below this runaway regime; the theory should not be read as a global
-smoothness proof for the full auxiliary objective.
+decorrelation terms, and high-learning-rate Adam can drive the variance term
+to very large values without improving task accuracy. The reported operating
+point is chosen below this runaway regime; the theory should not be read as a
+global smoothness proof for the full auxiliary objective.
 
 \paragraph{The basin interpretation remains incomplete.}
 The discussion interprets discriminative fine-tuning as a dominant foreign
 gradient that can move the model away from local EM structure. The present
-evidence supports this as a mechanism-level interpretation, but it does not yet
-prove that EM-dominated and CE-dominated solutions occupy different basins. A
-linear-mode-connectivity analysis with hidden-unit alignment is needed before
-making a stronger basin claim. Without alignment, apparent barriers could be
-artifacts of component permutation.
+evidence supports this as a mechanism-level interpretation, but it does not
+establish that EM-dominated and CE-dominated solutions occupy different
+basins. A linear-mode-connectivity analysis with hidden-unit alignment is
+needed before making a stronger basin claim. Without alignment, apparent
+barriers could be artifacts of component permutation.
 
 \subsection{Limitations of Scope}
-
 \paragraph{Dataset and scale.}
 The experiments use MNIST and small supervised networks. This is appropriate
 for isolating the mechanism, but it limits external validity. We do not claim
 state-of-the-art performance, broad deep-learning optimization coverage, or
 automatic transfer to modern large-scale architectures. The claim is that the
-controlled setting exposes a locality boundary that larger systems must respect
-when the same structural conditions are present.
+controlled setting exposes a locality boundary that larger systems must
+respect when the same structural conditions are present.
 
 \paragraph{Single main architecture.}
 The experimental architecture has one intermediate EM site followed by a dense
@@ -143,51 +143,52 @@ paths, attention-style stochastic maps, convolutional sharing, or multiple
 local sites. The theory predicts which operations should preserve or destroy
 the simplex structure, but those variants require separate experiments.
 
-\paragraph{The formal results are sufficient conditions, not an if-and-only-if.}
+\paragraph{The formal results are sufficient conditions, not a
+characterization.}
 The private-parameter propositions show that local LSE sites can inherit a
-parameter-independent curvature bound. The composition proposition shows that a
-learned dense map forfeits that guarantee. These are not universal necessity
-claims. Some composed systems may remain well conditioned for unrelated
-reasons, and some private systems may fail because of effects outside the clean
-theory, such as hard gates or bad data geometry.
+parameter-independent curvature bound. The composition proposition shows that
+a learned dense map does not preserve that guarantee. These are not universal
+necessity claims. Some composed systems may remain well conditioned for
+unrelated reasons, and some private systems may fail because of effects
+outside the propositions, such as hard gates or degenerate data geometry.
 
 \paragraph{The theory does not prove composed curvature is always large.}
-Proposition~\ref{prop:composition} is a guarantee-forfeiture statement. It
-shows that the clean $1/2$ LSE bound no longer controls the composed CE corridor
-because the bound can depend on the learned spectrum of $W_2$. The empirical
-measurements show that the composed curvature is large in the studied network.
-The theorem alone does not imply that every dense composition has large
-curvature at every point.
+Proposition~\ref{prop:composition} states a loss of guarantee. It shows that
+the $1/2$ LSE bound no longer controls the composed CE corridor because the
+bound can depend on the learned spectrum of $W_2$. The empirical measurements
+show that the composed curvature is large in the studied network. The theorem
+alone does not imply that every dense composition has large curvature at every
+point.
 
-\paragraph{LayerNorm is handled empirically but not fully in the clean proof.}
+\paragraph{LayerNorm is handled empirically, not in the propositions.}
 The measured models include LayerNorm where specified, so the reported
-conditioning and curvature results include its effect. The clean propositions
-omit LayerNorm to isolate the LSE and dense-corridor geometry. A fully expanded
-proof would insert the LayerNorm Jacobian and additional input-dependent terms.
-This would complicate the constants but would not restore the
+conditioning and curvature results include its effect. The propositions omit
+LayerNorm to isolate the LSE and dense-corridor geometry. A fully expanded
+proof would insert the LayerNorm Jacobian and additional input-dependent
+terms. This would complicate the constants but would not restore the
 parameter-independent LSE guarantee through a learned dense corridor.
 
 \paragraph{No convergence theorem is provided for the composed system.}
-The paper analyzes local curvature and measures optimization signatures, but it
-does not prove convergence of the full supervised system. The results should be
-read as a conditioning and mechanism study, not as a global optimization theory
-for neural networks.
+The paper analyzes local curvature and measures optimization signatures, but
+it does not prove convergence of the full supervised system. The results
+should be read as a conditioning and mechanism study, not as a global
+optimization theory for neural networks.
 
 \paragraph{Future strengthening analyses.}
-A denser $\lambda$-resolution curve, plotted against the measured CE/EM gradient
-ratio, would strengthen the graded claim. A basin or linear-mode-connectivity
-analysis with hidden-unit alignment would test whether EM-dominated and
-CE-dominated checkpoints occupy distinct basins. A nonnegative row-normalized
-corridor would test the simplex-compatible preservation class separately from
-the dense-corridor arms. These analyses are useful extensions, but they are not
-load-bearing for the current volume-control, stop-gradient, dominance, and
-curvature results.
+A denser $\lambda$-resolution curve, plotted against the measured CE/EM
+gradient ratio, would strengthen the graded claim. A basin or
+linear-mode-connectivity analysis with hidden-unit alignment would test
+whether EM-dominated and CE-dominated checkpoints occupy distinct basins. A
+nonnegative row-normalized corridor would test the simplex-compatible
+preservation class separately from the dense-corridor arms. These analyses are
+useful extensions; the current volume-control, stop-gradient, dominance, and
+curvature results do not depend on them.
 
-\paragraph{The stochastic-map bridge is not load-bearing.}
+\paragraph{The stochastic-map bridge does not carry the main claims.}
 A row-normalized nonnegative corridor is an important preservation-class test
-and a useful bridge to attention, but it should not carry the main claims. If
-the stochastic-map arm is clean, it strengthens the operation taxonomy. If it is
-confounded by reduced task accuracy or head capacity, it should remain an
-appendix-style result. The core claims are already tested by the volume-control
-ablations, optimizer sweep, stop-gradient intervention, gradient dominance, and
-curvature measurements.
+and a useful bridge to attention, but the main claims do not rest on it. If
+the stochastic-map arm is unconfounded, it strengthens the operation taxonomy.
+If it is confounded by reduced task accuracy or head capacity, it should
+remain an appendix-level result. The core claims are already tested by the
+volume-control ablations, optimizer sweep, stop-gradient intervention,
+gradient dominance, and curvature measurements.

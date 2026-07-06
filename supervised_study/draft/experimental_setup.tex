@@ -1,13 +1,11 @@
 \section{Experimental Setup}
 \label{sec:setup}
-
 The experiments use deliberately small supervised networks. The goal is not to
-improve MNIST accuracy, but to make the location and failure mode of implicit EM
-measurable. The architecture is kept fixed across experiments except for the
+improve MNIST accuracy but to make the location and failure mode of implicit
+EM measurable. The architecture is fixed across experiments except for the
 controlled ablations described below.
 
 \subsection{Model Family}
-
 The base model is a two-layer MNIST classifier with an intermediate component
 site:
 \[
@@ -28,33 +26,32 @@ site:
     L_{\mathrm{CE}}.
 \]
 Here $K$ is the number of intermediate components, $d$ is the vector of
-intermediate energies, and $\mathcal{A}$ is the ablated intermediate transform.
-Depending on the experiment, $\mathcal{A}$ is either the identity map or
-NegLogSoftmin:
+intermediate energies, and $\mathcal{A}$ is the ablated intermediate
+transform. Depending on the experiment, $\mathcal{A}$ is either the identity
+map or NegLogSoftmin:
 \[
     \operatorname{NLS}(d)_j
     =
     d_j+\log\sum_k\exp(-d_k).
 \]
-When NLS is present, the site has the LSE partition function and the competitive
-Jacobian needed for a local implicit-EM interpretation. When NLS is absent, the
-same downstream classifier receives the raw ReLU-produced coordinates.
-Experiment~1 includes a volume-control arm without NLS to separate the effect of
-the calibrated NegLogSoftmin activation format from generic variance and
-decorrelation regularization.
+When NLS is present, the site has the LSE partition function and the
+competitive Jacobian needed for a local implicit-EM interpretation. When NLS
+is absent, the same downstream classifier receives the raw ReLU-produced
+coordinates. Experiment~1 includes a volume-control arm without NLS to
+separate the effect of the calibrated NegLogSoftmin activation format from
+generic variance and decorrelation regularization.
 
 The second linear map, $W_2$, is the learned dense corridor from intermediate
-components to class logits. It is the map whose pullback destroys the uniform
+components to class logits. It is the map whose pullback removes the uniform
 conditioning guarantee in Proposition~\ref{prop:composition}. Because $d$ is
-produced by a ReLU after the first affine map, the trained model falls under the
-smooth/ReLU kernel caveat following Proposition~\ref{prop:smooth-kernel}, not
-the clean private-affine case alone. The dead-unit metric below is therefore
-also a ReLU absorbing-state diagnostic. LayerNorm is kept because it stabilizes
-the logits seen by CE in the supervised baseline; the clean theory omits it, and
-the curvature measurements include its effect.
+produced by a ReLU after the first affine map, the trained model falls under
+the smooth/ReLU kernel caveat following Proposition~\ref{prop:smooth-kernel},
+not the private-affine case alone. The dead-unit metric below is therefore
+also a ReLU absorbing-state diagnostic. LayerNorm is kept because it
+stabilizes the logits seen by CE in the supervised baseline; the theory omits
+it, and the curvature measurements include its effect.
 
 \subsection{Local Auxiliary Objective}
-
 The local EM objective is applied to the intermediate distances $d$. In the
 causal experiment it is
 \[
@@ -80,20 +77,18 @@ The supervised objective is
     + \lambda L_{\mathrm{aux}},
 \]
 with $\lambda=0.001$ in the initial ablation and capacity experiments unless
-otherwise stated. In Experiments 1--3, the auxiliary loss
-uses the NLS and volume-control terms specified by each ablation. In
-Experiment 4, the LSE term is included explicitly so that the stop-gradient arm
-trains $W_1$ by the same local EM objective as the single-layer model.
+otherwise stated. In Experiments~1--3, the auxiliary loss uses the NLS and
+volume-control terms specified by each ablation. In Experiment~4, the LSE term
+is included explicitly so that the stop-gradient arm trains $W_1$ by the same
+local EM objective as the single-layer model.
 
 \subsection{Experiment 1: Volume-Control Ablation}
-
-Experiment 1 tests which pieces of the intermediate EM site are needed. The
+Experiment~1 tests which pieces of the intermediate EM site are needed. The
 architecture uses $K=25$ components, MNIST, 50 training epochs, Adam with
-learning rate $10^{-3}$, $\lambda=0.001$, and 10 seeds
-$(42,\ldots,51)$. Seeds control random initialization, minibatch order, and any
-probe-training randomness in experiments that use probes. Metrics are averaged
-over the final 10 epochs and evaluated on the test set unless otherwise stated.
-
+learning rate $10^{-3}$, $\lambda=0.001$, and 10 seeds $(42,\ldots,51)$. Seeds
+control random initialization, minibatch order, and any probe-training
+randomness in experiments that use probes. Metrics are averaged over the final
+10 epochs and evaluated on the test set unless otherwise stated.
 The five configurations are:
 \[
 \begin{array}{lccc}
@@ -109,31 +104,27 @@ The five configurations are:
 \end{array}
 \]
 This ablation separates three questions: whether supervision alone prevents
-intermediate collapse, whether competition without volume control is enough,
-and whether volume control is merely regularization or specifically stabilizes
-an EM site.
+intermediate collapse, whether competition without volume control suffices,
+and whether volume control acts as generic regularization or specifically
+stabilizes an EM site.
 
 \subsection{Experiment 2: Capacity Sweep}
-
-Experiment 2 tests whether the at-site repair persists across width. It compares
-the baseline against NLS plus full volume control at
+Experiment~2 tests whether the at-site repair persists across width. It
+compares the baseline against NLS plus full volume control at
 \[
     K \in \{16,25,36,49,64\}.
 \]
 Each model is trained on MNIST for 50 epochs with Adam at learning rate
-$10^{-3}$, $\lambda=0.001$, and 5 seeds $(42,\ldots,46)$. Metrics
-are again evaluated on the test set and averaged over the final 10 epochs. This
-experiment is used to
-distinguish structural health from benchmark accuracy: volume control can
-eliminate dead units and reduce redundancy even when the fixed regularization
-weight is not accuracy-optimal at larger widths.
+$10^{-3}$, $\lambda=0.001$, and 5 seeds $(42,\ldots,46)$. Metrics are again
+evaluated on the test set and averaged over the final 10 epochs. This
+experiment distinguishes structural health from benchmark accuracy: volume
+control can eliminate dead units and reduce redundancy even when the fixed
+regularization weight is not accuracy-optimal at larger widths.
 
 \subsection{Experiment 3: Optimizer Sweep}
-
-Experiment 3 asks whether the single-site optimization signature survives
+Experiment~3 asks whether the single-site optimization signature survives
 ordinary supervised composition. It fixes the NLS + full-volume-control model
-with $K=25$ and $\lambda=0.001$, and sweeps optimizer and learning
-rate:
+with $K=25$ and $\lambda=0.001$, and sweeps optimizer and learning rate:
 \[
     \text{optimizer} \in \{\mathrm{SGD},\mathrm{Adam}\},
     \qquad
@@ -141,14 +132,12 @@ rate:
 \]
 Each setting is trained for 50 epochs on MNIST with 3 seeds $(42,43,44)$.
 Reported metrics are evaluated on the test set and averaged over the final 10
-epochs.
-The comparison is deliberately aligned with the single-layer implicit-EM
-signature: learning-rate sensitivity, Adam advantage, and whether lower
-auxiliary loss corresponds to better features.
+epochs. The comparison is aligned with the single-layer implicit-EM signature:
+learning-rate sensitivity, Adam advantage, and whether lower auxiliary loss
+corresponds to better features.
 
 \subsection{Experiment 4: Mechanism and Causal Test}
-
-Experiment 4 measures the mechanism behind the optimizer result. The model is
+Experiment~4 measures the mechanism behind the optimizer result. The model is
 \[
     x \rightarrow \operatorname{Linear}(784,25)
     \rightarrow \operatorname{ReLU}
@@ -178,9 +167,9 @@ Four arms differ only in how the supervised and local objectives reach $W_1$:
 \bottomrule
 \end{array}
 \]
-The stop-gradient arm keeps the same data, labels, architecture, and supervised
-head training, but prevents the CE gradient from reaching $W_1$. This makes it
-the causal control for the corridor.
+The stop-gradient arm keeps the same data, labels, architecture, and
+supervised head training, but prevents the CE gradient from reaching $W_1$.
+This makes it the causal control for the corridor.
 
 For the conditioning sweep, each arm is trained with SGD at
 \[
@@ -190,8 +179,8 @@ for 40 epochs and 3 seeds. Feature quality is measured after training by a
 fixed-protocol linear probe trained on the frozen intermediate distances $d$.
 The probe is a single linear classifier trained with Adam at learning rate
 $10^{-3}$ for 15 epochs, batch size 256, with its own fixed random seed. This
-decouples the measured representation from how well the supervised head trained
-at a particular learning rate \citep{alain2016understanding}.
+decouples the measured representation from how well the supervised head
+trained at a particular learning rate \citep{alain2016understanding}.
 
 For gradient competition, the training loop measures
 \[
@@ -201,30 +190,30 @@ For gradient competition, the training loop measures
     \qquad
     \cos(\nabla_d L_{\mathrm{CE}},\nabla_d L_{\mathrm{aux}}).
 \]
-These measurements are taken during Adam training at learning rate
-$10^{-3}$, while the conditioning sweep uses SGD. We therefore report these
-ratios as a site-level gradient diagnostic rather than as a matched-optimizer
-measurement; the matched-SGD version is not reported here.
+These measurements are taken during Adam training at learning rate $10^{-3}$,
+while the conditioning sweep uses SGD. We therefore report these ratios as a
+site-level gradient diagnostic rather than as a matched-optimizer measurement;
+the matched-SGD version is not reported here.
 
 For curvature tracking, power iteration with exact Hessian-vector products
-estimates the spectral norm of the Hessian with respect to $d$ for both the LSE
-term and the CE corridor through NLS and the head. Measurements use a fixed
-512-example batch every 2 epochs, and $\sigma_{\max}(W_2)$ is recorded
+estimates the spectral norm of the Hessian with respect to $d$ for both the
+LSE term and the CE corridor through NLS and the head. Measurements use a
+fixed 512-example batch every 2 epochs, and $\sigma_{\max}(W_2)$ is recorded
 alongside the curvature estimates \citep{pearlmutter1994fast}.
 
-For the private-affine scale check in Proposition~\ref{prop:private-affine}, we
-also compute the data constant $\mathbb{E}\|\tilde{x}\|^2$ using the raw
-$[0,1]$ MNIST pixels with a bias coordinate. Results~III compares the implied
-clean-LSE descent scale to the stop-gradient learning-rate sweep.
+For the private-affine scale check in Proposition~\ref{prop:private-affine},
+we also compute the data constant $\mathbb{E}\|\tilde{x}\|^2$ using the raw
+$[0,1]$ MNIST pixels with a bias coordinate.
+Section~\ref{sec:results-conditioning} compares the implied LSE descent scale
+to the stop-gradient learning-rate sweep.
 
 \subsection{Metrics}
-
-Representation health is measured by four quantities. A dead unit is a component
-whose activation variance is below $0.01$ over the evaluation batch. Minimum
-variance records the weakest component variance. Redundancy is
-$\|\operatorname{Corr}(d)-I\|_{F,\mathrm{off}}^2$, the squared Frobenius norm of
-the off-diagonal correlation matrix among component responses. Responsibility
-entropy is the mean sample entropy
+Representation health is measured by four quantities. A dead unit is a
+component whose activation variance is below $0.01$ over the evaluation
+batch. Minimum variance records the weakest component variance. Redundancy is
+$\|\operatorname{Corr}(d)-I\|_{F,\mathrm{off}}^2$, the squared Frobenius norm
+of the off-diagonal correlation matrix among component responses.
+Responsibility entropy is the mean sample entropy
 \[
     \frac{1}{N}\sum_{i=1}^N
     \left[-\sum_{j=1}^K r_{ij}\log(r_{ij}+10^{-8})\right],
@@ -232,22 +221,23 @@ entropy is the mean sample entropy
 \]
 and measures how sharp the local component assignments are.
 
-Optimization conditioning is measured by learning-rate spread, convergence-time
-stability, Adam versus SGD gaps, gradient dominance ratios, cosine similarity
-between CE and auxiliary gradients, and Hessian spectral norms with respect to
-the intermediate distances. For cosine measurements, we compare the observed
-values to the random-vector scale $1/\sqrt{K}$, not merely to zero.
-For convergence time, the reported LSE-stabilization metric is interpreted as an
-EM-site stability measure; in CE-dominated arms the classifier may train well
-even if the local LSE site does not stabilize.
+Optimization conditioning is measured by learning-rate spread,
+convergence-time stability, Adam versus SGD gaps, gradient dominance ratios,
+cosine similarity between CE and auxiliary gradients, and Hessian spectral
+norms with respect to the intermediate distances. For cosine measurements, we
+compare the observed values to the random-vector scale $1/\sqrt{K}$, not to
+zero alone.
+
+For convergence time, the reported LSE-stabilization metric is interpreted as
+an EM-site stability measure; in CE-dominated arms the classifier may train
+well even if the local LSE site does not stabilize.
 
 \subsection{Experimental Logic}
-
-The experiments follow the paper's taxonomy. Experiments 1--2 test at-site
-failures: collapse, dead units, and redundancy. Their question is whether local
-volume control repairs these failures inside a supervised network. Experiment 3
-tests whether the single-site conditioning signature survives ordinary
-supervised composition. Experiment 4 separates structure from dominance: the
-dense corridor creates an ill-conditioned CE-corridor contribution, while the
-measured CE/EM gradient ratio determines whether that contribution controls the
-effective landscape.
+The experiments follow the paper's taxonomy. Experiments~1--2 test at-site
+failures: collapse, dead units, and redundancy. Their question is whether
+local volume control repairs these failures inside a supervised network.
+Experiment~3 tests whether the single-site conditioning signature survives
+ordinary supervised composition. Experiment~4 separates structure from
+dominance: the dense corridor creates an ill-conditioned CE-corridor
+contribution, while the measured CE/EM gradient ratio determines whether that
+contribution controls the effective landscape.

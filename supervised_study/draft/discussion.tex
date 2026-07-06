@@ -1,14 +1,13 @@
 \section{Discussion}
 \label{sec:discussion}
-
 The results draw a boundary around the implicit-EM interpretation of neural
 training. The gradient-responsibility identity is real, and it has observable
 consequences inside a supervised network. But those consequences are local. A
-network can contain an EM site, benefit from local volume control at that site,
-and still fail to inherit the optimizer conditioning of an isolated EM model.
+network can contain an EM site, benefit from local volume control at that
+site, and still fail to inherit the optimizer conditioning of an isolated EM
+model.
 
 \subsection{Local, Graded, and Structural}
-
 The three adjectives in the main claim refer to different parts of the
 evidence.
 
@@ -17,23 +16,23 @@ softmax site and extends to parameters only when the path preserves component
 identity---it does not automatically penetrate a learned dense map. The theory
 is the formal version of this. When the responsibility vector updates private
 component parameters directly, Proposition~\ref{prop:private-affine} gives a
-parameter-independent curvature bound; when it is pulled through a learned dense
-map, Proposition~\ref{prop:composition} shows the same bound no longer controls
-the composed corridor. Sections~\ref{sec:results-conditioning}
+parameter-independent curvature bound; when it is pulled through a learned
+dense map, Proposition~\ref{prop:composition} shows the same bound no longer
+controls the composed corridor. Sections~\ref{sec:results-conditioning}
 and~\ref{sec:mechanism} show the empirical consequence: ordinary supervised
 composition restores learning-rate sensitivity and an Adam advantage.
 
 Implicit EM is \emph{graded}. The decisive variable is not whether the
 computation graph contains the CE corridor to $W_1$. The $\lambda=1$ joint arm
-keeps that corridor intact and nevertheless behaves like the stop-gradient arm on
-the conditioning metric. Conversely, the $\lambda=0.001$ joint arm is
+keeps that corridor intact and nevertheless behaves like the stop-gradient arm
+on the conditioning metric. Conversely, the $\lambda=0.001$ joint arm is
 CE-dominated and behaves like an ordinary supervised network. The reported
-CE/EM gradient-ratio diagnostic identifies the causal variable as dominance, not
-graph connectivity alone, although the matched-SGD version of that diagnostic
-remains an open strengthening check.
+CE/EM gradient-ratio diagnostic identifies the causal variable as dominance,
+not graph connectivity alone, although the matched-SGD version of that
+diagnostic remains an open strengthening check.
 
-Implicit EM is \emph{structural}. Volume control repairs failures at a local EM
-interface: dead units, collapsed variance, and redundancy. Dense learned
+Implicit EM is \emph{structural}. Volume control repairs failures at a local
+EM interface: dead units, collapsed variance, and redundancy. Dense learned
 composition creates a different failure: the foreign CE contribution reaching
 $W_1$ is not a private per-component responsibility update. The two failure
 classes require different repairs. At-site degeneracy is repaired by local
@@ -41,48 +40,46 @@ volume control; structural loss of conditioning is repaired only by isolation,
 dominance, or compatible transport.
 
 \subsection{What Transfers}
+The part that transfers is the local mixture geometry. As Results~I
+established, supervised learning does not by itself supply volume control to
+an intermediate site, and only full volume control (not competition alone, and
+not the anti-collapse term alone) eliminates dead units and redundancy across
+widths. The local EM site changes the structural health of the representation
+in the same direction observed in the decoder-free encoder study; Results~I
+replicates that volume-control pattern inside a supervised network.
 
-The part that transfers is the local mixture geometry. As Results~I established,
-supervised learning does not by itself supply volume control to an intermediate
-site, and only full volume control (not competition alone, and not the
-anti-collapse term alone) eliminates dead units and redundancy across widths.
-The local EM site changes the structural health of the representation in the
-same direction observed in the decoder-free encoder study; Results~I replicates
-that volume-control pattern inside a supervised network.
-
-The Var+Decorr control---which also performs well---is useful rather than
-damaging. It separates ordinary regularization from the narrower EM-specific
-claim: volume control is good regularization on its own, and when attached to an
-NLS site it additionally stabilizes the calibrated
-distance-to-responsibility geometry.
+The Var+Decorr control, which also performs well, strengthens rather than
+weakens the interpretation. It separates ordinary regularization from the
+narrower EM-specific claim: volume control is useful regularization on its
+own, and when attached to an NLS site it additionally stabilizes the
+calibrated distance-to-responsibility geometry.
 
 \subsection{What Does Not Transfer}
-
 The single-site optimizer signature does not transfer through ordinary dense
 supervised composition. In the isolated implicit-EM model, SGD was unusually
 learning-rate insensitive and Adam had little to correct. In the supervised
-network, SGD spans a wide accuracy range across learning rates and Adam becomes
-useful for adaptive scaling. The local objective remains present, but it no
-longer controls the training dynamics at $W_1$ when the supervised corridor
+network, SGD spans a wide accuracy range across learning rates and adaptive
+scaling becomes useful. The local objective remains present, but it no longer
+controls the training dynamics at $W_1$ when the supervised corridor
 dominates.
 
 The causal experiment explains why. Cutting the CE-to-$W_1$ corridor restores
-the learning-rate-insensitive signature. Increasing $\lambda$ until the EM path
-dominates restores the same signature even without cutting the graph. The
-failure is therefore not supervision per se and not the mere existence of a
-second layer. It is the dominance of a composed, non-EM gradient at the
-parameters whose conditioning we hoped the local EM site would control.
+the learning-rate-insensitive signature. Increasing $\lambda$ until the EM
+path dominates restores the same signature without cutting the graph. The
+failure is therefore not supervision itself and not the existence of a second
+layer. It is the dominance of a composed, non-EM gradient at the parameters
+the local EM site was intended to condition.
 
 \subsection{Dominance Resolves the Apparent Tension}
-
 There is an apparent tension between two statements: dense backpropagation is
-parameter sharing in disguise, but the fully connected $\lambda=1$ arm behaves
+a form of parameter sharing, yet the fully connected $\lambda=1$ arm behaves
 like stop-gradient. The resolution is to separate structure from dominance.
 
-The structural statement explains the form of the foreign contribution. Once CE
-is pulled back through $W_2$, the gradient at $W_1$ is not a posterior over
-private hidden components, and its curvature can depend on the learned spectrum
-of the corridor. This is the neural version of a non-separable M-step.
+The structural statement explains the form of the foreign contribution. Once
+CE is pulled back through $W_2$, the gradient at $W_1$ is not a posterior over
+private hidden components, and its curvature can depend on the learned
+spectrum of the corridor. This is the neural version of a non-separable
+M-step.
 
 The dominance statement explains whether that contribution matters. The update
 at $W_1$ is a sum:
@@ -96,33 +93,34 @@ at $W_1$ is a sum:
 When the first term dominates, the effective landscape is the composed
 supervised landscape. When the second term dominates, the local EM geometry
 sets the behavior even though the CE corridor still exists. A denser
-$\lambda$-resolution curve is therefore the natural next strengthening analysis:
-the causal variable is the measured gradient ratio, not the nominal value of
-$\lambda$ and not the binary presence of an edge.
+$\lambda$-resolution curve is therefore the natural next strengthening
+analysis: the causal variable is the measured gradient ratio, not the nominal
+value of $\lambda$ and not the binary presence of an edge.
 
-The private-affine scale check points in the same direction without carrying the
-main claim. The MNIST data constant gives a clean-LSE descent scale of roughly
+The private-affine scale check points in the same direction without carrying
+the main claim. The MNIST data constant gives an LSE descent scale of roughly
 $0.045$, and the stop-gradient arm is stable through learning rate $0.1$. This
 is only an order-of-magnitude sanity check because the experiment uses ReLU
-distances and the full auxiliary objective, but it connects the local curvature
-bound to the observed robust learning-rate range.
+distances and the full auxiliary objective, but it connects the local
+curvature bound to the observed robust learning-rate range.
 
-\subsection{Generative Versus Discriminative Is the Phenomenon, Not the Mechanism}
-
-One deflationary reading is that the paper only rediscovers a familiar
+\subsection{Generative Versus Discriminative Is the Phenomenon, Not the
+Mechanism}
+One deflationary reading is that the paper rediscovers the familiar
 generative-versus-discriminative distinction. The experiments are compatible
-with that high-level framing, but they are more specific. The same architecture
-is trained with the same data and the same local site while the route by which
-CE reaches $W_1$ is changed. The mechanistic measurements are specific: the LSE
-curvature obeys the $1/2$ bound, the CE-corridor curvature is larger and changing,
-the reported gradient diagnostic shows CE dominance at small $\lambda$, and
-removing that corridor restores the conditioning signature.
+with that high-level framing, but they are more specific. The same
+architecture is trained with the same data and the same local site while the
+route by which CE reaches $W_1$ is changed. The mechanistic measurements are
+specific: the LSE curvature obeys the $1/2$ bound, the CE-corridor curvature
+is larger and changing, the reported gradient diagnostic shows CE dominance at
+small $\lambda$, and removing that corridor restores the conditioning
+signature.
 
-The result is therefore not just that two objectives differ. It identifies how
-the discriminative objective reaches into a local EM site and when that
-gradient controls the update. This is the useful level of explanation for model
-design: it tells us which corridor must be blocked, weakened, or made compatible if
-we want local EM conditioning to survive.
+The result is therefore not only that two objectives differ. It identifies the
+route by which the discriminative objective reaches a local EM site and the
+condition under which that gradient controls the update. This is the useful
+level of explanation for model design: it identifies which corridor must be
+blocked, weakened, or made compatible if local EM conditioning is to survive.
 
 The main remaining qualifications are collected in
 Section~\ref{sec:limitations}: the matched-optimizer gradient ratio is not yet
@@ -130,73 +128,73 @@ reported, the learning-rate sweeps do not find an upper instability edge, and
 the high-learning-rate Adam runs expose an auxiliary escape direction.
 
 \subsection{The Accuracy Trade-Off}
-
 The EM-dominated features probe around $88\%$, while the CE-dominated features
 probe around $96\%$. That gap should be stated plainly. Well-conditioned
 optimization of a less task-aligned local objective does not beat direct
 supervised optimization of the task objective.
 
 This does not make the conditioning result unimportant. It clarifies what the
-property is for. EM conditioning buys robustness to learning-rate choice,
+property is for. EM conditioning provides robustness to learning-rate choice,
 lower seed-to-seed variability, stable local convergence, and reliable use of
 all components. Those benefits matter most when the local objective is not
 being asked to replace the supervised head at the output: for layer-local
 representation learning, protected intermediate objectives, or architectures
 where local mixture structure is itself the desired object. In an ordinary
-end-to-end classifier, the task head can trade away that structure for accuracy.
+end-to-end classifier, the task head can trade away that structure for
+accuracy.
 
 \subsection{Pretraining and Fine-Tuning}
-
-The results suggest a concrete interpretation of discriminative fine-tuning. If
-a representation is first shaped by a local EM objective and then exposed to a
-dominant supervised corridor, fine-tuning may not simply refine the EM solution.
-It may move the model into a different regime whose features are more
-task-aligned but less locally EM-conditioned \citep{kumar2022fine}.
+The results suggest a concrete interpretation of discriminative fine-tuning.
+If a representation is first shaped by a local EM objective and then exposed
+to a dominant supervised corridor, fine-tuning may not simply refine the EM
+solution. It may move the model into a different regime whose features are
+more task-aligned but less locally EM-conditioned \citep{kumar2022fine}.
 
 The current evidence is suggestive rather than complete. The EM-dominated and
-CE-dominated arms occupy different accuracy and conditioning regimes, but local
-gradient directions are not basin evidence. A basin or linear-mode-connectivity
-analysis, with hidden units aligned before interpolation, would test the
-stronger claim: whether the two regimes are connected by a low-loss path or
-separated by a barrier after accounting for permutation symmetry.
+CE-dominated arms occupy different accuracy and conditioning regimes, but
+local gradient directions are not basin evidence. A basin or
+linear-mode-connectivity analysis, with hidden units aligned before
+interpolation, would test the stronger claim: whether the two regimes are
+connected by a low-loss path or separated by a barrier after accounting for
+permutation symmetry.
 
 \subsection{Design Implications}
-
 The practical rule is simple: create EM sites locally, and do not expect
 ordinary dense backpropagation to preserve their conditioning. If the goal is
 local mixture structure, the objective should reach the relevant parameters
-directly. If a supervised or foreign objective must share those parameters, its
-gradient must either be blocked, balanced so the EM path dominates when desired,
-or transported through operations that preserve the simplex structure.
+directly. If a supervised or foreign objective must share those parameters,
+its gradient must either be blocked, balanced so the EM path dominates when
+desired, or transported through operations that preserve the simplex
+structure.
 
-This rule also explains why stop-gradient is not merely a training trick in
-this setting. It is a structural intervention: it turns a shared, non-separable
-update back into a local one. Conversely, increasing $\lambda$ is not just
-``more regularization.'' It changes the effective optimization regime by
-changing which gradient controls $W_1$.
+This rule also clarifies the status of the two interventions. Stop-gradient is
+not only a training convenience in this setting; it is a structural
+intervention that turns a shared, non-separable update back into a local one.
+Conversely, increasing $\lambda$ does not simply add regularization strength;
+it changes the effective optimization regime by changing which gradient
+controls $W_1$.
 
 The stochastic-map case is the natural remaining taxonomy cell. A nonnegative
 row-normalized corridor can preserve nonnegativity and total mass at first
 order, unlike an arbitrary dense signed matrix. This variant should be
-interpreted as a test of partial preservation, not as a load-bearing headline
-result. If row normalization damages task accuracy enough to confound the probe,
-the result belongs as a caveated appendix experiment.
+interpreted as a test of partial preservation, not as a headline result. If
+row normalization damages task accuracy enough to confound the probe, the
+result belongs as a caveated appendix experiment.
 
 \subsection{Relation to Attention}
-
-Companion work in preparation asks whether EM-like structure propagates through
-transformer depth. The locality result here gives the controlled answer that
-such propagation should not be assumed. Attention has known connections to
-associative-memory and softmax retrieval views \citep{ramsauer2021hopfield}, but
-a standard transformer has an output CE site that owns an objective;
-intermediate attention softmaxes are computation inside a larger objective, not
-automatically owned EM sites. Their gradients are shaped by foreign downstream
-losses and learned linear maps.
+Companion work in preparation asks whether EM-like structure propagates
+through transformer depth. The locality result here gives the controlled
+answer that such propagation should not be assumed. Attention has known
+connections to associative-memory and softmax retrieval views
+\citep{ramsauer2021hopfield}, but a standard transformer has an output CE site
+that owns an objective; intermediate attention softmaxes are computation
+inside a larger objective, not automatically owned EM sites. Their gradients
+are shaped by foreign downstream losses and learned linear maps.
 
 The connection should remain narrow in this paper. The supervised study is the
 controlled test of the locality principle. Transformer experiments would be a
-less controlled test of the same design rule. The stochastic-map variant is the
-bridge: attention transports values through a row-stochastic map at first order,
-which may preserve some responsibility-like structure while still failing to
-preserve full optimizer conditioning through the surrounding learned projections
-and downstream losses.
+less controlled test of the same design rule. The stochastic-map variant is
+the bridge: attention transports values through a row-stochastic map at first
+order, which may preserve some responsibility-like structure while still
+failing to preserve full optimizer conditioning through the surrounding
+learned projections and downstream losses.

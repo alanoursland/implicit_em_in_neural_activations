@@ -1,6 +1,5 @@
 \section{Conclusion}
 \label{sec:conclusion}
-
 Log-sum-exp objectives make responsibilities appear as gradients. This gives
 standard neural objectives a precise implicit-EM interpretation, but the
 interpretation has a boundary. It is a statement about the coordinates seen by
@@ -8,28 +7,30 @@ an LSE or softmax objective, not a guarantee that a whole composed network
 inherits EM's optimizer geometry.
 
 The theory identifies that boundary. In distance coordinates, the local LSE
-Hessian is uniformly bounded by $1/2$. When component parameters are private and
-affine, this yields a parameter-independent curvature bound and explains the
-single-site optimizer signature observed in earlier work. When the same site is
-trained through a learned dense corridor, the leading term of the composed CE
-Hessian is a conjugated softmax Hessian whose scale depends on the learned map.
-The local guarantee is therefore forfeited.
+Hessian is uniformly bounded by $1/2$. When component parameters are private
+and affine, this yields a parameter-independent curvature bound and explains
+the single-site optimizer signature observed in earlier work. When the same
+site is trained through a learned dense corridor, the leading term of the
+composed CE Hessian is a conjugated softmax Hessian whose scale depends on the
+learned map. The local guarantee is therefore lost.
 
-The supervised experiments bear out the split in this controlled setting: volume
-control transfers to an intermediate EM site, but the single-site optimizer
-conditioning does not survive ordinary composition---and is restored, causally,
-by cutting the corridor or letting the EM path dominate.
+The supervised experiments bear out the split in this controlled setting:
+volume control transfers to an intermediate EM site, but the single-site
+optimizer conditioning does not survive ordinary composition---and is
+restored, causally, by cutting the corridor or letting the EM path dominate.
 
-The resulting rule is local, graded, and structural. EM conditioning is visible
-when the responsibility-gradient path directly controls the relevant parameters
-or when the EM path dominates the effective update; ordinary dense
+The resulting rule is local, graded, and structural. EM conditioning is
+visible when the responsibility-gradient path directly controls the relevant
+parameters or when the EM path dominates the effective update; ordinary dense
 backpropagation should not be expected to preserve it. Simplex-compatible
-transport remains a theoretical first-order preservation class rather than a
-load-bearing empirical claim here.
-Two consequences point beyond this paper. For architecture, the result motivates
-building depth as protected local EM sites rather than expecting a single owned
-objective to condition every layer. For interpretation, it says the intermediate
-softmax sites of standard attention architectures, owning no objective of their
-own, should not be read as automatically inheriting EM's optimization structure.
-Knowing which properties transfer, which fail, and which interventions make them
-survive is the boundary the implicit-EM framework now provides.
+transport remains a theoretical first-order preservation class, not yet an
+empirically tested one.
+
+Two consequences point beyond this paper. For architecture, the result
+motivates building depth as protected local EM sites rather than expecting a
+single owned objective to condition every layer. For interpretation, it says
+the intermediate softmax sites of standard attention architectures, owning no
+objective of their own, should not be read as automatically inheriting EM's
+optimization structure. Knowing which properties transfer, which fail, and
+which interventions make them survive is the boundary the implicit-EM
+framework now provides.

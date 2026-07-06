@@ -1,6 +1,5 @@
 \section{Related Work and Positioning}
 \label{sec:related-work}
-
 This paper connects several literatures that are usually treated separately:
 EM as an optimization algorithm, classical EM failure modes, local learning in
 neural networks, auxiliary-loss interference, and discriminative versus
@@ -10,7 +9,6 @@ gradients, and the usefulness of those gradients depends on whether the
 responsibility structure reaches the parameters intact.
 
 \subsection{EM as an Optimization Object}
-
 The expectation-maximization algorithm was introduced as a method for maximum
 likelihood estimation with incomplete data \citep{dempster1977maximum}. Its
 classical form alternates between computing posterior responsibilities and
@@ -22,133 +20,125 @@ only as a probabilistic modeling procedure.
 The closest optimization precedent for this paper is the analysis of EM as a
 preconditioned gradient method \citep{xu1996convergence}. That line of work
 already treats EM's behavior as a consequence of the geometry of the
-responsibilities and the missing information in the model. Our contribution is
-different in two ways. First, we show that standard neural objectives instantiate
-the responsibility gradient algebraically at log-sum-exp sites. Second, we draw
-the boundary of the resulting conditioning guarantee: it survives private local
-parameterizations, but ordinary learned composition forfeits the
-parameter-independent bound.
+responsibilities and the missing information in the model. Our contribution
+differs in two ways. First, we show that standard neural objectives
+instantiate the responsibility gradient algebraically at log-sum-exp sites.
+Second, we draw the boundary of the resulting conditioning guarantee: it
+survives private local parameterizations, but ordinary learned composition
+loses the parameter-independent bound.
 
 The uniform curvature constant used in our theory is not itself new. It is the
-same multinomial-logistic Hessian geometry bounded by \citet{bohning1992multinomial},
-and it can also be read through the elementary variance bound used in the proof
-of Lemma~\ref{lem:simplex}. The novelty is not the $1/2$ bound in isolation.
-The novelty is its address: in an implicit-EM neural objective, the bound lives
-at the local distance interface, and the question is whether backpropagation
-preserves or destroys it.
+multinomial-logistic Hessian bound of \citet{bohning1992multinomial}, and it
+can also be obtained from the elementary variance bound used in the proof of
+Lemma~\ref{lem:simplex}. What is new is where the bound applies: in an
+implicit-EM neural objective, it holds at the local distance interface, and
+the question is whether backpropagation preserves or destroys it.
 
 \subsection{Classical EM Failure Modes}
-
-Classical EM is cleanest when the expected complete-data objective separates
-over component-private parameters. Responsibilities assign data to components,
-and each component receives its own M-step. This separation is what makes the
-algorithm interpretable and often well behaved.
+Classical EM admits independent per-component M-steps when the expected
+complete-data objective separates over component-private parameters.
+Responsibilities assign data to components, and each component receives its
+own update. This separation is what makes the algorithm interpretable and
+often well behaved.
 
 The classical weaknesses of EM appear when this separation is lost or when the
 component geometry degenerates. Shared parameters produce coupled M-steps.
 Generalized or non-separable M-steps no longer give independent component
-updates. Mixture likelihoods can develop singular components, and hard or nearly
-hard assignments can leave components with little chance of recovery. Diffuse
-responsibilities, conversely, produce weak specialization and slow progress
-\citep{redner1984mixture,mclachlan2000finite}.
+updates. Mixture likelihoods can develop singular components, and hard or
+nearly hard assignments can leave components with little chance of recovery.
+Diffuse responsibilities, conversely, produce weak specialization and slow
+progress \citep{redner1984mixture,mclachlan2000finite}.
 
 This paper uses these classical failure modes as a structural analogy: at-site
-volume-control failures are the local analogue of mixture degeneracy, and dense
-backpropagation failures are the analogue of the coupled, non-separable M-step
-that arises when components share parameters. Section~\ref{sec:theory} makes
-this structural parallel explicit and testable, without claiming that supervised
-cross-entropy is literally an EM complete-data objective.
+volume-control failures are the local analogue of mixture degeneracy, and
+dense backpropagation failures are the analogue of the coupled,
+non-separable M-step that arises when components share parameters.
+Section~\ref{sec:theory} makes this parallel explicit and testable, without
+claiming that supervised cross-entropy is an EM complete-data objective.
 
 \subsection{Generative and Discriminative Training}
-
 The generative--discriminative distinction \citep{ng2002discriminative} is the
-high-level contrast a skeptic will invoke: local EM-like objectives are
-generative, cross-entropy is discriminative, so of course they differ. Our
-result is more specific. Within one architecture, holding data and the local
-site fixed and varying only how CE reaches $W_1$, we measure the mechanism---the
-bounded LSE curvature, the larger parameter-dependent CE-corridor curvature, the
-gradient dominance, and its causal reversal under stop-gradient. The
-contribution is not that two objectives differ but the identification of the
-corridor through which the discriminative objective destroys local EM
-conditioning.
+natural high-level objection: local EM-like objectives are generative,
+cross-entropy is discriminative, so a difference in behavior is unsurprising.
+Our result is more specific. Within one architecture, holding data and the
+local site fixed and varying only how CE reaches $W_1$, we measure the
+mechanism: the bounded LSE curvature, the larger parameter-dependent
+CE-corridor curvature, the gradient dominance, and its causal reversal under
+stop-gradient. The contribution is not that two objectives differ but the
+identification of the corridor through which the discriminative objective
+destroys local EM conditioning.
 
 Mixtures of experts are the closest classical supervised architecture with
 softmax responsibilities and EM training \citep{jordan1994hierarchical}. Our
-intermediate site is different: it is not a learned gating distribution over
-expert heads, but a local distance-to-responsibility interface embedded inside a
-classifier. The question here is therefore not whether an MoE can be trained by
-EM, but whether an EM-conditioned site keeps its optimizer geometry when a
+intermediate site differs: it is not a learned gating distribution over expert
+heads but a local distance-to-responsibility interface embedded inside a
+classifier. The question here is therefore not whether an MoE can be trained
+by EM, but whether an EM-conditioned site keeps its optimizer geometry when a
 supervised head pulls gradients back through it.
 
 \subsection{Local and Decoupled Learning}
-
-The design implication of our theory is local: if an EM site is meant to keep
-its optimization structure, it needs an objective that reaches its parameters
+The design implication of our theory is local: if an EM site is to keep its
+optimization structure, it needs an objective that reaches its parameters
 directly, or a mechanism that prevents a foreign gradient from dominating it.
 This places the work near layer-wise and decoupled learning methods.
 
-Deep belief networks and greedy layer-wise pretraining demonstrated that useful
-representations can be learned by protected local objectives
+Deep belief networks and greedy layer-wise pretraining demonstrated that
+useful representations can be learned by protected local objectives
 \citep{hinton2006fast}. Later work on greedy layer-wise learning
 \citep{belilovsky2019greedy}, decoupled neural interfaces and synthetic
 gradients \citep{jaderberg2017decoupled}, and Forward-Forward
 \citep{hinton2022forward} also explores alternatives to fully end-to-end
-credit assignment. Auxiliary classifiers and deeply supervised networks provide
-a related supervised route for injecting intermediate losses into deep models
-\citep{szegedy2015going,lee2015deeply}.
+credit assignment. Auxiliary classifiers and deeply supervised networks
+provide a related supervised route for injecting intermediate losses into deep
+models \citep{szegedy2015going,lee2015deeply}.
 
 Our contribution is not a new layer-wise training algorithm. It is a mechanism
 for why protected local objectives can preserve structure that ordinary
 backpropagation may not. In the implicit-EM setting, the protected object is a
 responsibility gradient at a local LSE site. If that gradient reaches private
 component parameters, the site inherits a parameter-independent curvature
-bound. If the same site is trained primarily by a dense foreign corridor, that
-bound no longer governs the update.
+bound. If the same site is trained primarily through a dense foreign corridor,
+that bound no longer governs the update.
 
 \subsection{Auxiliary Losses, Gradient Dominance, and Interference}
-
-Training with both a main CE loss and a local auxiliary EM loss places the work
-near auxiliary-loss and multi-task learning with gradient-interference methods:
-PCGrad
-\citep{yu2020pcgrad} modifies conflicting task gradients, GradNorm
-\citep{chen2018gradnorm} balances task weights, and gradient starvation
-\citep{pezeshki2021gradient} studies one signal dominating another. We do not
-propose a balancing method; the gradient ratio is instead our causal variable
-for whether EM conditioning is visible at $W_1$. Notably, the measured cosines
-are near zero rather than strongly negative: the EM signal is \emph{drowned},
-not opposed. This distinguishes the observed regime from the
-conflicting-gradient setting that gradient surgery targets, while leaving the
-near-zero cosine itself as a diagnostic rather than a separate claim of special
-orthogonality.
+Training with both a main CE loss and a local auxiliary EM loss places the
+work near auxiliary-loss and multi-task learning with gradient-interference
+methods: PCGrad \citep{yu2020pcgrad} modifies conflicting task gradients,
+GradNorm \citep{chen2018gradnorm} balances task weights, and gradient
+starvation \citep{pezeshki2021gradient} studies one signal dominating another.
+We do not propose a balancing method; the gradient ratio is instead our causal
+variable for whether EM conditioning is visible at $W_1$. The measured cosines
+are near zero rather than strongly negative: the EM signal is diluted, not
+opposed. This distinguishes the observed regime from the conflicting-gradient
+setting that gradient surgery targets. The near-zero cosine itself is a
+diagnostic, not a separate claim of orthogonality.
 
 \subsection{Loss Landscapes and Basin Structure}
+The loss-landscape literature suggests a future diagnostic for this setting.
+Linear mode connectivity shows that networks trained in apparently different
+basins can often be connected by low-loss paths \citep{frankle2020linear}.
+Permutation invariance is a central complication in such analyses: component
+or neuron relabeling can create artificial barriers if models are interpolated
+without alignment \citep{entezari2022role,ainsworth2023git}.
 
-The loss-landscape literature suggests a useful future diagnostic for this
-setting. Linear mode connectivity shows that networks trained in apparently
-different basins can often be connected by low-loss paths
-\citep{frankle2020linear}. Permutation invariance is a central complication in
-such analyses: component or neuron relabeling can create artificial barriers if
-models are interpolated without alignment
-\citep{entezari2022role,ainsworth2023git}.
-
-Those tools are useful here because the EM-dominated and CE-dominated regimes
-can produce representations with different task alignment and different local
+These tools are relevant because the EM-dominated and CE-dominated regimes can
+produce representations with different task alignment and different local
 geometry. Linear probes are the first diagnostic for that task alignment
-\citep{alain2016understanding}. A basin analysis asks whether discriminative
-fine-tuning refines the EM solution or moves to a distinct region after
-hidden-unit alignment. That analysis is not part of the present evidence; the
-central causal evidence is the stop-gradient and dominance experiment.
+\citep{alain2016understanding}. A basin analysis would ask whether
+discriminative fine-tuning refines the EM solution or moves to a distinct
+region after hidden-unit alignment. That analysis is not part of the present
+evidence; the central causal evidence is the stop-gradient and dominance
+experiment.
 
 \subsection{The Framework's Own Lineage}
-
 This paper builds directly on the implicit-EM identity and the decoder-free
 volume-control model. The first established that log-sum-exp distance
 objectives produce responsibility gradients \citep{oursland2025implicitem}.
-The second showed that LSE plus volume control learns structured
+The second showed that LSE with volume control learns structured
 prototype-like features in a single-layer unsupervised setting
 \citep{oursland2026decoderfree}. The present paper asks the next boundary
-question: which of those properties survive when the EM site is inserted into a
-supervised neural network?
+question: which of those properties survive when the EM site is inserted into
+a supervised neural network?
 
 The answer is split. Volume control transfers to the intermediate site and
 repairs dead or redundant components. The single-site optimizer conditioning
@@ -157,11 +147,10 @@ is isolated or made dominant. This distinction is the paper's contribution to
 the broader implicit-EM program.
 
 \subsection{Scope}
-
 This is not a general theory of deep-network optimization, Hessian spectra, or
 generalization. The claims are narrower. They concern log-sum-exp or softmax
 sites, the responsibility gradients those sites create, and the corridors
 through which those gradients reach parameters. Within that scope, the paper
 gives formal sufficient conditions for preserving EM conditioning in
-private/unmixed settings and an empirical account of how ordinary supervised
-composition forfeits those conditions through a learned dense corridor.
+private, unmixed settings and an empirical account of how ordinary supervised
+composition loses those conditions through a learned dense corridor.

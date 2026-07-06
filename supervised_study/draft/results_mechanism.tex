@@ -1,18 +1,15 @@
 \section{Results III: The Mechanism and Causal Test (Experiment 4)}
 \label{sec:mechanism}
-
-Experiment 3 established the boundary observationally; Experiment 4 asks why. It
-tests three mechanism predictions---CE-corridor dominance at small $\lambda$, the
-curvature dichotomy, and causal restoration under stop-gradient---summarized
-against outcomes in the ledger below.
+Experiment~3 established the boundary observationally; Experiment~4 asks why.
+It tests three mechanism predictions---CE-corridor dominance at small
+$\lambda$, the curvature dichotomy, and causal restoration under
+stop-gradient---summarized against outcomes in the ledger below.
 
 \subsection{Predictions Ledger}
-
 Table~\ref{tab:predictions-ledger} summarizes the predictions tested in the
-supervised study and the strengthening checks still open. Because the claims are
-causal, the ledger separates predictions, measurements, status, and the one
-interpretation corrected after measurement.
-
+supervised study and the strengthening checks still open. Because the claims
+are causal, the ledger separates predictions, measurements, status, and the
+one interpretation corrected after measurement.
 \begin{table}[h]
 \centering
 \begin{tabular}{p{0.11\linewidth}p{0.36\linewidth}p{0.28\linewidth}p{0.13\linewidth}}
@@ -41,17 +38,17 @@ Exp4 & Adam stop-gradient should lose the ordinary Adam advantage &
 Stop-gradient sweep currently reported for SGD & Open \\
 Theory/Exp4 & Curvature scale should be compared to the
 $\mathbb{E}\|\tilde{x}\|^2$ prediction &
-For MNIST, $\mathbb{E}\|\tilde{x}\|^2=88.8$, giving clean-LSE scale
+For MNIST, $\mathbb{E}\|\tilde{x}\|^2=88.8$, giving an LSE descent scale of
 $2/L\approx0.045$; stop-gradient is stable through $\eta=0.1$ & Reported with
 caveat \\
 \bottomrule
 \end{tabular}
 \caption{Prediction ledger for the supervised study. The table separates
 mechanism predictions, measurements, status, and post-measurement
-interpretation. ``Supported'' means supported by the reported measurements, not
-mathematically closed under every strengthening check. ``Reported with caveat''
-marks a quantitative scale check whose order of magnitude is reported but whose
-clean-theory assumptions do not exactly match the experimental arm. One
+interpretation. ``Supported'' means supported by the reported measurements,
+not mathematically closed under every strengthening check. ``Reported with
+caveat'' marks a quantitative scale check whose order of magnitude is reported
+but whose idealized assumptions do not exactly match the experimental arm. One
 interpretation was corrected after measurement: the early heuristic claim that
 $\lambda=0.001$ implied a $1000\times$ gradient ratio was wrong; the measured
 late-training ratio is $67$--$95\times$ (Section~\ref{sec:mechanism}, gradient
@@ -61,11 +58,9 @@ mechanism is unchanged; the magnitude was corrected.}
 \end{table}
 
 \subsection{Experimental Arms}
-
 The causal experiment uses the model and auxiliary objective from
-Section~\ref{sec:setup} with $K=25$. Four arms differ only in how the supervised
-and local objectives reach $W_1$:
-
+Section~\ref{sec:setup} with $K=25$. Four arms differ only in how the
+supervised and local objectives reach $W_1$:
 \begin{table}[h]
 \centering
 \begin{tabular}{lll}
@@ -88,20 +83,17 @@ supervised head, labels, data, and architecture in place, but blocks the CE
 gradient from updating $W_1$.}
 \label{tab:exp4-arms}
 \end{table}
-
-The conditioning sweep trains each arm with SGD over a $1000\times$ learning-rate
-range, $\eta\in\{10^{-4},10^{-3},10^{-2},10^{-1}\}$, using 3 seeds. Feature
-quality is measured by a fixed-protocol linear probe trained on frozen
-intermediate distances. This separates representation quality from the training
-success of the supervised head at a particular learning rate.
+The conditioning sweep trains each arm with SGD over a $1000\times$
+learning-rate range, $\eta\in\{10^{-4},10^{-3},10^{-2},10^{-1}\}$, using 3
+seeds. Feature quality is measured by a fixed-protocol linear probe trained on
+frozen intermediate distances. This separates representation quality from the
+training success of the supervised head at a particular learning rate.
 
 \subsection{Cutting the Corridor Restores Learning-Rate Insensitivity}
-
 The stop-gradient arm restores the most visible optimizer signature from the
 single-layer implicit-EM study \citep{oursland2025implicitem}: feature quality
 becomes nearly insensitive to learning rate. Table~\ref{tab:exp4-probe} shows
 linear-probe accuracy across the $1000\times$ SGD sweep.
-
 \begin{table}[h]
 \centering
 \begin{tabular}{lccccc}
@@ -126,49 +118,47 @@ $1.6$ \\
 mean $\pm$ standard deviation over 3 seeds, in percent.}
 \label{tab:exp4-probe}
 \end{table}
-
 With ordinary joint training at $\lambda=0.001$, probe accuracy varies by
-$10.9$ points across the learning-rate range. When the CE gradient is prevented
-from reaching $W_1$, the spread falls to $1.6$ points. The network is still
-supervised: the same labels, CE loss, architecture, and head training remain.
-Only the corridor gradient is removed. Supervision itself therefore does not
-destroy the conditioning signature; the pullback through the corridor does.
-As in Experiment 3, this spread is a convergence-speed and final-probe-accuracy
-diagnostic over the tested grid, not evidence that any arm has reached a
-high-learning-rate instability edge.
+$10.9$ points across the learning-rate range. When the CE gradient is
+prevented from reaching $W_1$, the spread falls to $1.6$ points. The network
+is still supervised: the same labels, CE loss, architecture, and head training
+remain. Only the corridor gradient is removed. Supervision itself therefore
+does not destroy the conditioning signature; the pullback through the corridor
+does. As in Experiment~3, this spread is a convergence-speed and
+final-probe-accuracy diagnostic over the tested grid, not evidence that any
+arm has reached an instability edge at high learning rates.
 
 The $\lambda=1$ joint arm is equally important. It is fully connected: the CE
-gradient still reaches $W_1$. Yet it is indistinguishable from stop-gradient on
-the conditioning metric. This shows that connectivity is not the decisive
-variable. The corridor manufactures a foreign, non-EM contribution, but that
+gradient still reaches $W_1$. Yet it is indistinguishable from stop-gradient
+on the conditioning metric. Connectivity is therefore not the decisive
+variable. The corridor creates a foreign, non-EM contribution, but that
 contribution controls the effective landscape only when it dominates the local
-EM contribution. The same point appears in the feature quality: even with label
-gradients still flowing, the $\lambda=1$ arm probes at the stop-gradient level,
-not at the CE-dominated level.
+EM contribution. The same point appears in the feature quality: even with
+label gradients still flowing, the $\lambda=1$ arm probes at the stop-gradient
+level, not at the CE-dominated level.
 
-The private-affine theory also gives a crude parameter-space scale check. With
-the MNIST preprocessing used here, raw pixels lie in $[0,1]$ and the augmented
-input satisfies $\mathbb{E}\|\tilde{x}\|^2=88.8$ on the training set. The clean
-LSE bound from Proposition~\ref{prop:private-affine} is therefore
-$L\le \tfrac12\mathbb{E}\|\tilde{x}\|^2=44.4$, corresponding to a descent-lemma
-scale $2/L\approx0.045$. The stop-gradient arm remains stable through
-$\eta=0.1$, which is the same order of magnitude. This should be read only as a
-sanity check: the experiment uses ReLU distances and the full
-$L_{\mathrm{aux}}$ objective, so it is not a formal test of the clean LSE-only
+The private-affine theory also gives a coarse parameter-space scale check.
+With the MNIST preprocessing used here, raw pixels lie in $[0,1]$ and the
+augmented input satisfies $\mathbb{E}\|\tilde{x}\|^2=88.8$ on the training
+set. The LSE bound from Proposition~\ref{prop:private-affine} is therefore
+$L\le \tfrac12\mathbb{E}\|\tilde{x}\|^2=44.4$, corresponding to a
+descent-lemma scale $2/L\approx0.045$. The stop-gradient arm remains stable
+through $\eta=0.1$, which is the same order of magnitude. This should be read
+only as a sanity check: the experiment uses ReLU distances and the full
+$L_{\mathrm{aux}}$ objective, so it is not a formal test of the LSE-only
 private-affine bound.
 
-The intermediate value $\lambda=0.03$ lies between the two regimes. Its spread is
-$5.8$ points, roughly halfway between the CE-dominated and EM-dominated arms.
-This is the first evidence for the graded claim: the transition is not a phase
-change at the presence or absence of a graph edge. It follows dominance.
+The intermediate value $\lambda=0.03$ lies between the two regimes. Its spread
+is $5.8$ points, roughly halfway between the CE-dominated and EM-dominated
+arms. This is the first evidence for the graded claim: the transition is not a
+phase change at the presence or absence of a graph edge. It follows dominance.
 
 \subsection{The EM Site Stabilizes Only When the EM Path Is Live}
-
 We also track the epoch at which test $L_{\mathrm{LSE}}$ reaches 95\% of its
 final value. This is a stability metric for the local EM site, not a general
 classifier-training metric. In the CE-dominated arm, the classifier can train
-successfully while the local LSE objective is mostly along for the ride.
-
+successfully while the local LSE objective receives little effective training
+of its own.
 \begin{table}[h]
 \centering
 \begin{tabular}{lcccc}
@@ -181,15 +171,14 @@ Joint, $\lambda=0.001$ & $32.3$ & $15.0$ & $40.0$ & $37.7$ \\
 \end{tabular}
 \caption{Epoch when test $L_{\mathrm{LSE}}$ reaches 95\% of its final value.
 The two extreme arms (CE-blocked local EM path vs.\ strongly CE-dominated) are
-shown because they bound the contrast; this metric was not recorded for the intermediate
-$\lambda=0.03$ and $\lambda=1$ arms. The CE-dominated arm should be read as an
-EM-site stability contrast, not as a classifier failure metric. Because the
-threshold is normalized to each run's own final value, the table is a
-self-normalized timing diagnostic rather than an absolute convergence
+shown because they bound the contrast; this metric was not recorded for the
+intermediate $\lambda=0.03$ and $\lambda=1$ arms. The CE-dominated arm should
+be read as an EM-site stability contrast, not as a classifier failure metric.
+Because the threshold is normalized to each run's own final value, the table
+is a self-normalized timing diagnostic rather than an absolute convergence
 threshold.}
 \label{tab:exp4-lse-time}
 \end{table}
-
 Under stop-gradient, the local site stabilizes in a narrow band, roughly
 22--32 epochs across a $1000\times$ learning-rate range. Under CE-dominated
 joint training, the same metric is erratic and sometimes reaches the training
@@ -201,19 +190,17 @@ safe interpretation is the contrast in stability across learning rates, not a
 claim about a shared absolute LSE threshold.
 
 \subsection{Gradient Dominance, Not Gradient Opposition}
-
 The mechanism is visible directly at the distance interface. In the reported
 diagnostic, the CE and auxiliary gradients with respect to $d$ are measured on
-the same batch during Adam training at learning rate $10^{-3}$. The conditioning
-sweep uses SGD, so the table should be read as a site-level gradient diagnostic
-rather than a matched-optimizer measurement. Table~\ref{tab:gradient-competition}
-reports the ratio
+the same batch during Adam training at learning rate $10^{-3}$. The
+conditioning sweep uses SGD, so the table should be read as a site-level
+gradient diagnostic rather than a matched-optimizer measurement.
+Table~\ref{tab:gradient-competition} reports the ratio
 \[
     \frac{\|\nabla_d L_{\mathrm{CE}}\|}
          {\lambda\|\nabla_d L_{\mathrm{aux}}\|}
 \]
 and the cosine between the two gradient directions.
-
 \begin{table}[h]
 \centering
 \begin{tabular}{lccc}
@@ -232,46 +219,44 @@ $\lambda\|\nabla_d L_{\mathrm{aux}}\|$. Early values are the first recorded
 measurement for each seed; late values are the final recorded measurement.}
 \label{tab:gradient-competition}
 \end{table}
-
 This measurement corrects an earlier heuristic interpretation. Since
 $\lambda=0.001$, one might expect a $1000\times$ ratio. The measured ratio is
-$67$--$95\times$ late in training, because the raw auxiliary gradient is larger
-than the raw CE gradient. The full trajectory is wider, with early transients
-before the CE corridor takes over. The conclusion is unchanged: CE dominates at the
-operating point, but the causal variable is the measured gradient ratio, not
-$\lambda$ itself.
+$67$--$95\times$ late in training, because the raw auxiliary gradient is
+larger than the raw CE gradient. The full trajectory is wider, with early
+transients before the CE corridor takes over. The conclusion is unchanged: CE
+dominates at the operating point, but the causal variable is the measured
+gradient ratio, not $\lambda$ itself.
 
 The cosine measurement shows no detectable alignment between the two paths. In
-$K=25$ dimensions, random directions have cosine standard deviation
-approximately $1/\sqrt{25}=0.2$, so a cosine near zero should not be oversold as
-special high-dimensional orthogonality. The conservative statement is enough:
-the EM and CE gradients are not detectably aligned or opposed. The EM signal is
-drowned by a larger foreign signal, not cancelled by an antagonistic one.
-The observed ranges are smaller than this crude random-direction scale; batch
-averaging and the shared NLS interface likely change the relevant null, so we do
-not interpret that undershoot further.
+$K=25$ dimensions, random directions have cosine standard deviation of
+approximately $1/\sqrt{25}=0.2$, so a cosine near zero should not be
+interpreted as special high-dimensional orthogonality. The conservative
+statement suffices: the EM and CE gradients are not detectably aligned or
+opposed. The EM signal is diluted by a larger foreign signal, not cancelled by
+an antagonistic one. The observed ranges are smaller than this coarse
+random-direction scale; batch averaging and the shared NLS interface likely
+change the relevant null, so we do not interpret that undershoot further.
 
-The prediction is that the dominance ratio is a property of the loss geometry at
-the site, not an Adam-specific artifact. That remains substantively open until
-the same CE/EM ratio is measured under the matched SGD sweep used for the
-conditioning result. The current Adam measurement supports the mechanism, but it
-does not close the matched-optimizer question.
+The prediction is that the dominance ratio is a property of the loss geometry
+at the site, not an Adam-specific artifact. That remains open until the same
+CE/EM ratio is measured under the matched SGD sweep used for the conditioning
+result. The current Adam measurement supports the mechanism, but it does not
+close the matched-optimizer question.
 
 \subsection{Curvature: The LSE Bound Holds, the CE Corridor Is Large}
+Proposition~\ref{prop:composition} says that composition removes the uniform
+LSE guarantee; it does not prove that the composed curvature is necessarily
+large. The curvature measurements answer that empirical question. Power
+iteration on exact Hessian-vector products estimates the spectral norm of the
+Hessian with respect to the intermediate distances $d$ for both the local LSE
+term and the CE corridor through NLS and the head \citep{pearlmutter1994fast}.
 
-Proposition~\ref{prop:composition} says that composition forfeits the uniform
-LSE bound; it does not prove that the composed curvature is necessarily large.
-The curvature measurements answer that empirical question. Power iteration on
-exact Hessian-vector products estimates the spectral norm of the Hessian with
-respect to the intermediate distances $d$ for both the local LSE term and the CE
-corridor through NLS and the head \citep{pearlmutter1994fast}.
-
-The local LSE curvature obeys the theory at every measured point: it stays below
-$1/2$ in every arm and seed. In the stop-gradient arm, it converges to
-$0.4992$--$0.4997$, essentially saturating the bound. The bound is achieved when
-responsibility mass concentrates equally on two components. Under protected
-local-EM training, the mixture sharpens until cluster boundaries become two-way
-ties, and the Hessian detects exactly this geometry.
+The local LSE curvature obeys the theory at every measured point: it stays
+below $1/2$ in every arm and seed. In the stop-gradient arm, it converges to
+$0.4992$--$0.4997$, essentially saturating the bound. The bound is achieved
+when responsibility mass concentrates equally on two components. Under
+protected local-EM training, the mixture sharpens until cluster boundaries
+become two-way ties, and the Hessian detects exactly this geometry.
 
 By contrast, the CE-corridor curvature in a representative joint
 $\lambda=0.001$ trajectory takes values including $6.5$, $17.2$, and $7.8$
@@ -279,26 +264,26 @@ across training. At the same coordinates, this is roughly $13$--$100\times$
 larger than the LSE curvature, non-monotone, and consistent with dependence on
 the learned spectrum of $W_2$. This is the empirical half of the theory:
 composition removes the parameter-independent guarantee, and in the trained
-network the resulting curvature is actually large and changing.
+network the resulting curvature is in fact large and changing.
 
 The $1/2$ bound is therefore more than a worst-case constant. Distance from
 $1/2$ acts as a site-level diagnostic of mixture sharpness. Under EM-dominated
-training it saturates; under CE-dominated training, the LSE curvature stagnates
-well below the bound, ending between $0.158$ and $0.236$ across seeds. This
-indicates diffuse responsibilities and an under-formed local mixture.
+training it saturates; under CE-dominated training, the LSE curvature
+stagnates well below the bound, ending between $0.158$ and $0.236$ across
+seeds. This indicates diffuse responsibilities and an under-formed local
+mixture.
 
-\subsection{Conditioning Is Restored at a Price}
-
-The EM-dominated arms are better conditioned but less task-aligned. Their frozen
-features probe at about $88\%$, while the CE-dominated arm reaches about $96\%$.
-This is not surprising in the stop-gradient arm: $W_1$ does not receive label
-information. The point is not that unsupervised local features beat supervised
-features. They do not.
+\subsection{Conditioning Is Restored at a Cost}
+The EM-dominated arms are better conditioned but less task-aligned. Their
+frozen features probe at about $88\%$, while the CE-dominated arm reaches
+about $96\%$. This is expected in the stop-gradient arm: $W_1$ does not
+receive label information. The point is not that unsupervised local features
+beat supervised features; they do not.
 
 The point is that conditioning is a real property with a real cost. The EM
-regime buys learning-rate robustness, seed-to-seed reproducibility, stable local
-convergence, and zero dead units; it does not buy output accuracy for free. This
-is why a denser $\lambda$-resolution curve would be the natural strengthening
+regime provides learning-rate robustness, seed-to-seed reproducibility, stable
+local convergence, and zero dead units; it does not provide output accuracy.
+This is why a denser $\lambda$-resolution curve is the natural strengthening
 analysis: the trade-off should ultimately be shown as a continuum along the
-measured CE/EM gradient ratio, not as a binary comparison between supervised and
-unsupervised training.
+measured CE/EM gradient ratio, not as a binary comparison between supervised
+and unsupervised training.
