@@ -1,1 +1,10 @@
+# Ignore everything under results/ by default...
 results/**
+
+# ...but keep the JSON result files used in the paper
+!results/**/
+!results/**/*.json
+
+# Exclude training checkpoints (model weights + per-checkpoint history)
+results/**/checkpoints/
+results/**/*.pt
