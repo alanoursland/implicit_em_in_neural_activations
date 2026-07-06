@@ -1,103 +1,85 @@
 \section{Introduction}
 \label{sec:introduction}
 
-Prior work established that log-sum-exp distance objectives produce
-responsibility gradients and used that identity to derive a decoder-free
-single-layer encoder \citep{oursland2025implicitem,oursland2026decoderfree}.
-That model did not merely learn structured prototype-like features. Its
-training dynamics were unusually EM-like: removing volume control produced
-the expected mixture failures, SGD was insensitive to learning rate over a
-wide range, Adam offered little representational advantage, and convergence
-time was roughly fixed.
+Prior work showed that gradient descent on log-sum-exp distance objectives
+implements implicit expectation-maximization in a precise local sense: the
+gradient with respect to each component distance is the component
+responsibility \citep{oursland2025implicitem}. A decoder-free single-layer
+encoder tested the unsupervised consequences of that identity and confirmed
+the predicted local behavior \citep{oursland2026decoderfree}.
 
-Those results invite a natural next test. If the implicit-EM account explains
-the single-site behavior, then a supervised network containing the same kind
-of intermediate distance-to-responsibility site might inherit the same
-properties. Supervised cross-entropy has log-sum-exp structure, and the hidden
-site can be given the same local volume-control terms that stabilized the
-decoder-free model. The formal ingredients appear to be present.
+That study also exposed a more restrictive property. The single-layer model
+had optimizer dynamics that ordinary neural networks do not generally exhibit:
+SGD was insensitive to learning rate over a wide range, Adam offered little
+representational advantage, lower loss did not necessarily imply better
+features, and convergence time was roughly fixed. These behaviors are
+EM-like in a stronger sense than the gradient identity alone. They suggest
+that the local responsibility structure can condition the effective parameter
+update.
 
-The prediction fails in a specific way. Volume control transfers: applied at
-an intermediate supervised EM site, it eliminates dead units and reduces
-redundancy. The optimizer signature does not transfer under ordinary
-supervised composition: SGD becomes learning-rate sensitive again, and
-adaptive methods recover their advantage.
+Those optimizer dynamics do not hold for neural networks in general, even
+though many standard objectives contain log-sum-exp or softmax structure.
+Cross-entropy classifiers, attention layers, contrastive objectives, and
+energy-based models all contain exponentiation-and-normalization interfaces,
+but they do not usually train with the learning-rate insensitivity of the
+single-site implicit-EM model. The question is therefore not whether
+responsibility gradients exist. The question is where, under composition, the
+optimizer consequences of those gradients are lost.
 
-This paper asks why. How can a network contain a valid
-responsibility-gradient site and still fail to exhibit the EM-like optimizer
-dynamics of the single-site model? What additional condition, beyond the local
-gradient-responsibility identity, is needed for those dynamics to reach the
-parameters?
+This paper studies that question in the supervised regime. The testbed is a
+minimal supervised network with an explicit intermediate
+distance-to-responsibility site. The first layer produces component distances,
+a NegLogSoftmin transform creates a calibrated EM interface, and a learned
+dense map $W_2$ sends those component coordinates to class logits. A local
+auxiliary objective gives the intermediate site the same volume-control
+machinery used in the decoder-free model, while the supervised
+cross-entropy objective pulls gradients back through the dense head.
 
-\subsection{The Boundary Question}
-Neural objectives do contain EM-like interfaces. The question is at which
-sites the EM property holds and under what compositions it is preserved.
+The outcome separates two EM properties. Volume control transfers: when
+applied at the intermediate site, it eliminates dead units and reduces
+redundancy across widths. The optimizer signature does not transfer under
+ordinary supervised composition: SGD becomes learning-rate sensitive again,
+and adaptive methods recover their advantage. The network contains a valid
+responsibility-gradient site, but the deeper supervised model no longer
+behaves like the isolated implicit-EM model.
 
-Two distinct properties are at stake. The first is local mixture geometry. A
-hidden EM site can suffer the same degeneracies as a mixture model: components
-can die, collapse, or duplicate one another. Volume control is meant to repair
-these at-site failures by keeping components alive and distinct.
+The mechanism is ownership of the update. The local identity creates an
+EM-structured path at the intermediate site, but the optimizer behavior at
+$W_1$ depends on whether that path controls the effective update. In the
+supervised model, the cross-entropy gradient reaching $W_1$ is pulled back
+through $W_2$ and added to the local EM gradient. When that supervised
+corridor dominates, the update at $W_1$ is governed by a composed, non-EM
+contribution even though the local responsibility site still exists.
 
-The second property is optimizer conditioning. In an isolated LSE site with
-private affine component parameters, the responsibility gradient reaches each
-component directly. The Hessian in distance coordinates is uniformly bounded by
-$1/2$, and the corresponding parameter-space curvature is bounded by a data
-constant. This explains why the single-layer model behaved differently from a
-typical neural network optimization problem.
+The resulting boundary has three parts. Implicit EM is \emph{local}: the
+responsibility structure exists at LSE and softmax sites, and it extends to
+parameters only along paths that preserve component identity. It is
+\emph{graded}: the relevant variable is the measured share of EM-structured
+gradient in the effective update, not merely whether the computation graph is
+connected. It is \emph{structural}: at-site failures such as dead or redundant
+components are different from corridor failures caused by learned dense
+composition.
 
-The central issue is whether the second property survives when the same site is
-embedded inside a supervised network. In the model studied here, the first
-layer creates component distances, a NegLogSoftmin (NLS) transform creates an
-intermediate EM site, and a learned dense map $W_2$ sends those component
-coordinates to supervised class logits. The cross-entropy gradient reaching the
-first layer is therefore pulled back through $W_2$ and added to the local EM
-gradient. This is the minimal setting in which to ask why EM-like optimizer
-dynamics disappear in supervised composition.
+The theory formalizes this boundary. In distance coordinates, the LSE Hessian
+has spectral norm at most $1/2$. With private affine component parameters,
+this gives a parameter-independent curvature bound. When the same site is
+trained through a learned dense supervised corridor, the leading
+Gauss--Newton term of the cross-entropy Hessian is a conjugated softmax
+Hessian whose scale depends on the learned map. The local LSE guarantee no
+longer controls the composed update.
 
-\subsection{Main Claim}
-The answer is that implicit EM is local, graded, and structural.
+The experiments show the same split. Volume-control ablations confirm that
+local mixture failures can be repaired inside a supervised model. Optimizer
+sweeps show that the single-site signature disappears under ordinary
+supervised composition. A causal intervention identifies the mechanism:
+blocking the CE corridor to $W_1$ with stop-gradient restores learning-rate
+insensitivity, and increasing the EM weight until the local path dominates
+restores the same behavior without cutting the graph. Gradient diagnostics
+match the intervention. At the standard auxiliary weight, the CE corridor
+dominates the weighted local EM path by roughly $67$--$95\times$ late in
+training, with no detectable alignment or opposition between the two
+directions.
 
-It is \emph{local}: responsibility structure exists at LSE and softmax sites,
-and it extends to parameters only when the path preserves component identity,
-as with private component blocks, per-component monotone maps, or first-order
-simplex-compatible transports such as stochastic maps. It does not
-automatically penetrate learned dense maps.
-
-It is \emph{graded}: the relevant variable is the measured share of
-EM-structured gradient reaching the parameters. A fully connected supervised
-graph can behave like an isolated EM site when the local EM gradient dominates,
-and a visible EM site can behave like an ordinary supervised network when the
-cross-entropy corridor dominates.
-
-It is \emph{structural}: failures divide into at-site failures and corridor
-failures. At-site failures are repaired by local volume control. Corridor
-failures arise when a responsibility gradient is mixed through shared learned
-maps before reaching the parameters it is supposed to condition.
-
-\subsection{Results in Brief}
-The theory gives the local boundary. Private affine LSE sites inherit a
-parameter-independent curvature bound from the local responsibility interface.
-The same guarantee is lost when the site is composed behind a learned dense
-map, because the cross-entropy corridor contributes a composed Hessian term
-whose scale depends on the learned map.
-
-The experiments support the split in this controlled setting. Volume control
-transfers to an intermediate supervised site: it eliminates dead units,
-prevents collapse, and reduces redundancy across widths. Optimizer
-conditioning does not transfer through ordinary supervised composition: in the
-full supervised model, SGD recovers learning-rate sensitivity and the
-advantage of adaptive methods reappears.
-
-The causal experiment identifies the mechanism. At the standard auxiliary
-weight, the CE corridor dominates the weighted local EM path by roughly
-$67$--$95\times$ late in training, while the cosine between the CE and
-weighted local-EM gradients at the intermediate distance interface shows no
-detectable alignment. Cutting the CE corridor to $W_1$ with stop-gradient
-restores learning-rate insensitivity. Increasing the EM weight until the EM
-path dominates restores the same behavior without cutting the graph.
-Conditioning follows dominance, not connectivity.
-
-\subsection{Contributions}
 This paper makes the following contributions.
 \begin{enumerate}
     \item It identifies the missing condition for EM-like optimizer dynamics
@@ -105,15 +87,15 @@ This paper makes the following contributions.
     dominantly control the relevant parameter update.
     \item It proves a conditioning contrast between private-affine LSE
     objectives and LSE sites composed behind learned dense maps, and
-    identifies sufficient operations that preserve or destroy the
-    responsibility-gradient invariant.
+    identifies operations that preserve or destroy the responsibility-gradient
+    invariant.
     \item It separates at-site failures from structural corridor failures in
     supervised networks with intermediate EM sites.
     \item It shows that volume control transfers to intermediate supervised EM
     sites, repairing dead or redundant components, while the single-site
     optimizer signature does not survive ordinary dense supervised
     composition.
-    \item It causally restores the conditioning signature by stop-gradient and
-    by EM dominance, and uses the $1/2$-saturation diagnostic to measure local
+    \item It restores the conditioning signature by stop-gradient and by EM
+    dominance, and uses the $1/2$-saturation diagnostic to measure local
     mixture sharpness at the EM site.
 \end{enumerate}

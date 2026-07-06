@@ -43,7 +43,7 @@ gradients and pulled through learned maps before it updates earlier weights.
 \subsection{Cross-Entropy as a Label-Clamped Responsibility Interface}
 Supervised cross-entropy has the same exponentiation-and-normalization
 interface, with the label clamping one component: its logit gradient is
-$p_c-\mathbb{1}\{c=y\}$ (Section~\ref{sec:notation}), removing probability
+$p_c-\mathbb{1}\{c=y\}$ (Appendix~\ref{sec:notation}), removing probability
 mass from the true class and redistributing it according to the model
 posterior.
 
@@ -58,7 +58,7 @@ components.
 \subsection{Local EM Sites Inside a Network}
 The supervised architecture studied here deliberately creates an intermediate
 site. The first map produces component distances $d_1,\ldots,d_K$, and the
-NegLogSoftmin transform (Section~\ref{sec:notation}) calibrates them so that
+NegLogSoftmin transform (Appendix~\ref{sec:notation}) calibrates them so that
 $\exp(-\operatorname{NLS}(d)_j)=r_j$, giving the hidden layer an explicit
 distance-to-responsibility interface rather than relying on the output loss to
 impose structure indirectly.
@@ -78,7 +78,7 @@ The decoder-free encoder study addressed these failures with volume control: a
 variance term prevents dead or collapsed components, and a decorrelation term
 prevents all components from moving together. In the local auxiliary objective
 $L_{\mathrm{aux}}=L_{\mathrm{LSE}}+L_{\mathrm{var}}+L_{\mathrm{tc}}$
-(Section~\ref{sec:notation}), the variance term is the anti-collapse part and
+(Appendix~\ref{sec:notation}), the variance term is the anti-collapse part and
 the decorrelation term the anti-redundancy part. This variance-plus-decorrelation
 pairing is structurally close to redundancy-reduction regularizers such as
 VICReg and Barlow Twins, although here it serves a mixture-geometry role at an
