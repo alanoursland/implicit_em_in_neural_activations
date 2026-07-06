@@ -45,6 +45,13 @@ standard deviation over seeds.}
 \label{tab:volume-ablation}
 \end{table}
 
+The structural metrics are intentionally close to the auxiliary objectives:
+minimum variance tracks the anti-collapse term, and redundancy tracks the
+decorrelation term. We therefore read them here as targeted repair diagnostics,
+not as independent measures of representation quality. The cross-arm pattern is
+the important check: variance-only eliminates dead units while worsening
+redundancy, and the full objective repairs both failures together.
+
 The baseline has minimum variance zero across all seeds and an average of
 $1.4$ dead units out of 25. Supervised cross-entropy trains the output layer,
 but the gradient reaching the hidden layer through $W_2$ does not prevent
@@ -139,7 +146,9 @@ $K$ & Config & Dead & Dead Frac. & Min Var & Redundancy & Accuracy \\
 \bottomrule
 \end{tabular}
 \caption{Capacity sweep. Accuracy is reported in percent. Full VC denotes NLS
-plus variance and decorrelation penalties.}
+plus variance and decorrelation penalties. These are separate 5-seed capacity
+runs, so the $K=25$ rows need not exactly match the 10-seed $K=25$ ablation in
+Table~\ref{tab:volume-ablation}.}
 \label{tab:capacity}
 \end{table}
 
@@ -161,9 +170,10 @@ The accuracy pattern is more nuanced. With the fixed $\lambda$
 used in the sweep, volume control improves accuracy at $K=16$ and $K=25$, is
 neutral around $K=36$, and slightly hurts at $K=49$ and $K=64$. This is not a
 failure of the structural claim. The fixed regularization weight is not
-calibrated per width, and the larger models can use correlated extra units as
-boundary refiners. A decorrelation penalty treats this cooperation as
-redundancy, even when it helps the task.
+calibrated per width, and one plausible interpretation is that the larger models
+can use some correlated extra units as supervised boundary refiners. Under that
+interpretation, a decorrelation penalty treats useful cooperation as redundancy,
+even when it helps the task.
 
 Thus the result should be read as two regimes. In the capacity-constrained
 regime, dead and redundant units are expensive; volume control improves both
