@@ -185,8 +185,9 @@ result belongs as a caveated appendix experiment.
 Companion work in preparation asks whether EM-like structure propagates
 through transformer depth. The locality result here gives the controlled
 answer that such propagation should not be assumed. Attention has known
-connections to associative-memory and softmax retrieval views
-\citep{ramsauer2021hopfield}, but a standard transformer has an output CE site
+connections to associative-memory, softmax retrieval, and EM-like
+gradient-dynamics views \citep{ramsauer2021hopfield,agarwal2025gradient}, but
+a standard transformer has an output CE site
 that owns an objective; intermediate attention softmaxes are computation
 inside a larger objective, not automatically owned EM sites. Their gradients
 are shaped by foreign downstream losses and learned linear maps.

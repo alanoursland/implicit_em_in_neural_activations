@@ -68,13 +68,23 @@ stop-gradient. The contribution is not that two objectives differ but the
 identification of the corridor through which the discriminative objective
 destroys local EM conditioning.
 
-Mixtures of experts are the closest classical supervised architecture with
-softmax responsibilities and EM training \citep{jordan1994hierarchical}. Our
-intermediate site differs: it is not a learned gating distribution over expert
-heads but a local distance-to-responsibility interface embedded inside a
-classifier. The question here is therefore not whether an MoE can be trained
-by EM, but whether an EM-conditioned site keeps its optimizer geometry when a
-supervised head pulls gradients back through it.
+Supervised networks already contain responsibility-like mechanisms in several
+forms. Mixtures of experts use learned soft gates over expert heads and admit
+EM-style training \citep{jordan1994hierarchical}. More recently, first-order
+analyses of transformer attention have shown that cross-entropy induces
+attention-score updates with an advantage form and value updates weighted by
+attention responsibilities \citep{agarwal2025gradient}. These results are
+important precedents for the claim that ordinary neural training can contain
+EM-like interfaces.
+
+The present question is different. We do not ask whether a supervised
+architecture can contain soft responsibilities, or whether those
+responsibilities can guide local specialization. We ask whether the optimizer
+conditioning of an EM-conditioned distance site survives after a supervised
+head pulls gradients back through a learned dense corridor. The answer depends
+on locality and dominance: responsibility-shaped gradients may exist at a
+site, while the effective update at earlier parameters is governed by a
+foreign composed gradient.
 
 \subsection{Local and Decoupled Learning}
 The design implication of our theory is local: if an EM site is to keep its
