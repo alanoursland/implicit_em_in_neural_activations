@@ -1,0 +1,263 @@
+[
+  {
+    "condition": 0,
+    "seed": 1,
+    "distance_init_final": 75.83972930908203,
+    "cosine_init_final": 0.17181673645973206,
+    "metrics": {
+      "reconstruction_mse": 0.016672554225484026,
+      "l0_sparsity": 31.37689971923828,
+      "l0_density": 0.49026405811309814
+    }
+  },
+  {
+    "condition": 1,
+    "seed": 1,
+    "distance_init_pretrained": 767.2816162109375,
+    "distance_pretrained_final": 463.6656799316406,
+    "distance_init_final": 550.7433471679688,
+    "cosine_init_pretrained": 0.051790766417980194,
+    "cosine_pretrained_final": 0.801606297492981,
+    "cosine_init_final": 0.02658773586153984,
+    "metrics": {
+      "reconstruction_mse": 0.0444654677581938,
+      "l0_sparsity": 1.7095999717712402,
+      "l0_density": 0.02671249955892563
+    }
+  },
+  {
+    "condition": 2,
+    "seed": 1,
+    "distance_init_final": 1484.0570068359375,
+    "cosine_init_final": 0.029026970267295837,
+    "metrics": {
+      "reconstruction_mse": 0.059945591312797766,
+      "l0_sparsity": 16.78769874572754,
+      "l0_density": 0.2623077929019928
+    }
+  },
+  {
+    "condition": 3,
+    "seed": 1,
+    "phases": [
+      {
+        "phase": "sae_1",
+        "epochs": 50,
+        "metrics": {
+          "reconstruction_mse": 0.01659823794955317,
+          "l0_sparsity": 31.398799896240234,
+          "l0_density": 0.49060624837875366
+        },
+        "distance_from_init": 58.35979461669922,
+        "cosine_with_init": 0.2052532136440277
+      },
+      {
+        "phase": "unsupervised",
+        "epochs": 50,
+        "metrics": {
+          "reconstruction_mse": 28182.769803204115,
+          "l0_sparsity": 11.275300025939941,
+          "l0_density": 0.17617656290531158
+        },
+        "distance_from_init": 641.3507690429688,
+        "distance_from_prev": 638.3985595703125,
+        "cosine_with_init": 0.02070513553917408,
+        "cosine_with_prev": 0.09801802039146423
+      },
+      {
+        "phase": "sae_2",
+        "epochs": 50,
+        "metrics": {
+          "reconstruction_mse": 0.046777813542115534,
+          "l0_sparsity": 2.0685999393463135,
+          "l0_density": 0.03232187405228615
+        },
+        "distance_from_init": 641.5385131835938,
+        "distance_from_prev": 176.45506286621094,
+        "cosine_with_init": 0.014385528862476349,
+        "cosine_with_prev": 0.9621714949607849
+      }
+    ],
+    "distance_init_final": 641.5385131835938,
+    "cosine_init_final": 0.014385528862476349,
+    "final_metrics": {
+      "reconstruction_mse": 0.046777813542115534,
+      "l0_sparsity": 2.0685999393463135,
+      "l0_density": 0.03232187405228615
+    }
+  },
+  {
+    "condition": 0,
+    "seed": 2,
+    "distance_init_final": 77.4432373046875,
+    "cosine_init_final": 0.16949215531349182,
+    "metrics": {
+      "reconstruction_mse": 0.015904519376875478,
+      "l0_sparsity": 33.267799377441406,
+      "l0_density": 0.519809365272522
+    }
+  },
+  {
+    "condition": 1,
+    "seed": 2,
+    "distance_init_pretrained": 764.4390258789062,
+    "distance_pretrained_final": 463.8528137207031,
+    "distance_init_final": 547.3837890625,
+    "cosine_init_pretrained": 0.052276503294706345,
+    "cosine_pretrained_final": 0.7997177243232727,
+    "cosine_init_final": 0.02587195113301277,
+    "metrics": {
+      "reconstruction_mse": 0.04402728109985967,
+      "l0_sparsity": 1.7554999589920044,
+      "l0_density": 0.02742968685925007
+    }
+  },
+  {
+    "condition": 2,
+    "seed": 2,
+    "distance_init_final": 1482.384521484375,
+    "cosine_init_final": 0.02991451695561409,
+    "metrics": {
+      "reconstruction_mse": 0.06438702542947818,
+      "l0_sparsity": 16.407798767089844,
+      "l0_density": 0.2563718557357788
+    }
+  },
+  {
+    "condition": 3,
+    "seed": 2,
+    "phases": [
+      {
+        "phase": "sae_1",
+        "epochs": 50,
+        "metrics": {
+          "reconstruction_mse": 0.016395293883507765,
+          "l0_sparsity": 33.249298095703125,
+          "l0_density": 0.5195202827453613
+        },
+        "distance_from_init": 59.6182975769043,
+        "cosine_with_init": 0.20041464269161224
+      },
+      {
+        "phase": "unsupervised",
+        "epochs": 50,
+        "metrics": {
+          "reconstruction_mse": 28441.301943235758,
+          "l0_sparsity": 10.711400032043457,
+          "l0_density": 0.16736562550067902
+        },
+        "distance_from_init": 657.8272705078125,
+        "distance_from_prev": 654.8395385742188,
+        "cosine_with_init": 0.019352849572896957,
+        "cosine_with_prev": 0.09704382717609406
+      },
+      {
+        "phase": "sae_2",
+        "epochs": 50,
+        "metrics": {
+          "reconstruction_mse": 0.04640440317460253,
+          "l0_sparsity": 2.010499954223633,
+          "l0_density": 0.03141406178474426
+        },
+        "distance_from_init": 657.7335815429688,
+        "distance_from_prev": 176.9640655517578,
+        "cosine_with_init": 0.01217152550816536,
+        "cosine_with_prev": 0.9638162851333618
+      }
+    ],
+    "distance_init_final": 657.7335815429688,
+    "cosine_init_final": 0.01217152550816536,
+    "final_metrics": {
+      "reconstruction_mse": 0.04640440317460253,
+      "l0_sparsity": 2.010499954223633,
+      "l0_density": 0.03141406178474426
+    }
+  },
+  {
+    "condition": 0,
+    "seed": 3,
+    "distance_init_final": 78.77445983886719,
+    "cosine_init_final": 0.15559713542461395,
+    "metrics": {
+      "reconstruction_mse": 0.015577346062924288,
+      "l0_sparsity": 34.22589874267578,
+      "l0_density": 0.5347796678543091
+    }
+  },
+  {
+    "condition": 1,
+    "seed": 3,
+    "distance_init_pretrained": 762.3903198242188,
+    "distance_pretrained_final": 459.4196472167969,
+    "distance_init_final": 553.2501831054688,
+    "cosine_init_pretrained": 0.05359460413455963,
+    "cosine_pretrained_final": 0.8021626472473145,
+    "cosine_init_final": 0.027783982455730438,
+    "metrics": {
+      "reconstruction_mse": 0.04336396373714073,
+      "l0_sparsity": 2.173099994659424,
+      "l0_density": 0.0339546874165535
+    }
+  },
+  {
+    "condition": 2,
+    "seed": 3,
+    "distance_init_final": 1484.2034912109375,
+    "cosine_init_final": 0.03030988946557045,
+    "metrics": {
+      "reconstruction_mse": 0.06064395837580101,
+      "l0_sparsity": 16.410999298095703,
+      "l0_density": 0.25642186403274536
+    }
+  },
+  {
+    "condition": 3,
+    "seed": 3,
+    "phases": [
+      {
+        "phase": "sae_1",
+        "epochs": 50,
+        "metrics": {
+          "reconstruction_mse": 0.015631810950610458,
+          "l0_sparsity": 34.19820022583008,
+          "l0_density": 0.534346878528595
+        },
+        "distance_from_init": 60.713321685791016,
+        "cosine_with_init": 0.18465925753116608
+      },
+      {
+        "phase": "unsupervised",
+        "epochs": 50,
+        "metrics": {
+          "reconstruction_mse": 28977.019630142404,
+          "l0_sparsity": 11.159599304199219,
+          "l0_density": 0.1743687391281128
+        },
+        "distance_from_init": 668.0084838867188,
+        "distance_from_prev": 664.9708862304688,
+        "cosine_with_init": 0.02106773480772972,
+        "cosine_with_prev": 0.0976027250289917
+      },
+      {
+        "phase": "sae_2",
+        "epochs": 50,
+        "metrics": {
+          "reconstruction_mse": 0.04626636032628108,
+          "l0_sparsity": 2.0408999919891357,
+          "l0_density": 0.031889062374830246
+        },
+        "distance_from_init": 671.3939819335938,
+        "distance_from_prev": 176.67100524902344,
+        "cosine_with_init": 0.014721062034368515,
+        "cosine_with_prev": 0.9652243256568909
+      }
+    ],
+    "distance_init_final": 671.3939819335938,
+    "cosine_init_final": 0.014721062034368515,
+    "final_metrics": {
+      "reconstruction_mse": 0.04626636032628108,
+      "l0_sparsity": 2.0408999919891357,
+      "l0_density": 0.031889062374830246
+    }
+  }
+]

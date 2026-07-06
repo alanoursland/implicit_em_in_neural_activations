@@ -1,0 +1,176 @@
+{
+  "ours": {
+    "linear_probe_accuracy": {
+      "mean": 0.93434,
+      "std": 0.0037505199639516927
+    },
+    "l0_sparsity": {
+      "mean": 17.1797794342041,
+      "std": 0.26218964382491505
+    },
+    "l0_density": {
+      "mean": 0.26843405365943906,
+      "std": 0.004096713184764298
+    },
+    "hidden_dim": 64,
+    "parameters": 50240,
+    "reconstruction_mse": {
+      "mean": 48544614.4,
+      "std": 1919420.5665078824
+    },
+    "normalized_reconstruction_mse": {
+      "mean": 0.14286347329616547,
+      "std": 0.00048374705178156317
+    }
+  },
+  "standard_sae": {
+    "linear_probe_accuracy": {
+      "mean": 0.9026,
+      "std": 0.0032286219970755516
+    },
+    "l0_sparsity": {
+      "mean": 32.16337928771973,
+      "std": 2.017815361431002
+    },
+    "l0_density": {
+      "mean": 0.5025528013706207,
+      "std": 0.03152836502235941
+    },
+    "hidden_dim": 64,
+    "parameters": 101200,
+    "reconstruction_mse": {
+      "mean": 0.016413055919110776,
+      "std": 0.0008290405818133914
+    },
+    "normalized_reconstruction_mse": {
+      "mean": 0.026354989781975747,
+      "std": 0.0009401508213209145
+    }
+  },
+  "per_seed": {
+    "ours": [
+      {
+        "linear_probe_accuracy": 0.9361,
+        "l0_sparsity": 17.21609878540039,
+        "l0_density": 0.2690015435218811,
+        "hidden_dim": 64,
+        "parameters": 50240,
+        "reconstruction_mse": 51281516.0,
+        "normalized_reconstruction_mse": 0.14337757229804993,
+        "seed": 1
+      },
+      {
+        "linear_probe_accuracy": 0.9386,
+        "l0_sparsity": 16.836999893188477,
+        "l0_density": 0.26307812333106995,
+        "hidden_dim": 64,
+        "parameters": 50240,
+        "reconstruction_mse": 45328360.0,
+        "normalized_reconstruction_mse": 0.1433214396238327,
+        "seed": 2
+      },
+      {
+        "linear_probe_accuracy": 0.9298,
+        "l0_sparsity": 17.00429916381836,
+        "l0_density": 0.26569217443466187,
+        "hidden_dim": 64,
+        "parameters": 50240,
+        "reconstruction_mse": 48218168.0,
+        "normalized_reconstruction_mse": 0.14301684498786926,
+        "seed": 3
+      },
+      {
+        "linear_probe_accuracy": 0.9373,
+        "l0_sparsity": 17.223299026489258,
+        "l0_density": 0.26911404728889465,
+        "hidden_dim": 64,
+        "parameters": 50240,
+        "reconstruction_mse": 48669368.0,
+        "normalized_reconstruction_mse": 0.14216075837612152,
+        "seed": 4
+      },
+      {
+        "linear_probe_accuracy": 0.9299,
+        "l0_sparsity": 17.618200302124023,
+        "l0_density": 0.27528437972068787,
+        "hidden_dim": 64,
+        "parameters": 50240,
+        "reconstruction_mse": 49225660.0,
+        "normalized_reconstruction_mse": 0.14244075119495392,
+        "seed": 5
+      }
+    ],
+    "standard_sae": [
+      {
+        "linear_probe_accuracy": 0.9039,
+        "l0_sparsity": 31.37689971923828,
+        "l0_density": 0.49026405811309814,
+        "hidden_dim": 64,
+        "parameters": 101200,
+        "reconstruction_mse": 0.016698503866791725,
+        "normalized_reconstruction_mse": 0.02739495225250721,
+        "seed": 1
+      },
+      {
+        "linear_probe_accuracy": 0.903,
+        "l0_sparsity": 33.267799377441406,
+        "l0_density": 0.519809365272522,
+        "hidden_dim": 64,
+        "parameters": 101200,
+        "reconstruction_mse": 0.01592756249010563,
+        "normalized_reconstruction_mse": 0.02625158056616783,
+        "seed": 2
+      },
+      {
+        "linear_probe_accuracy": 0.9061,
+        "l0_sparsity": 34.22589874267578,
+        "l0_density": 0.5347796678543091,
+        "hidden_dim": 64,
+        "parameters": 101200,
+        "reconstruction_mse": 0.01560163963586092,
+        "normalized_reconstruction_mse": 0.02462652139365673,
+        "seed": 3
+      },
+      {
+        "linear_probe_accuracy": 0.9035,
+        "l0_sparsity": 33.36399841308594,
+        "l0_density": 0.5213124752044678,
+        "hidden_dim": 64,
+        "parameters": 101200,
+        "reconstruction_mse": 0.01593150943517685,
+        "normalized_reconstruction_mse": 0.02663685381412506,
+        "seed": 4
+      },
+      {
+        "linear_probe_accuracy": 0.8965,
+        "l0_sparsity": 28.582300186157227,
+        "l0_density": 0.44659844040870667,
+        "hidden_dim": 64,
+        "parameters": 101200,
+        "reconstruction_mse": 0.01790606416761875,
+        "normalized_reconstruction_mse": 0.026865040883421898,
+        "seed": 5
+      }
+    ]
+  },
+  "config": {
+    "model": {
+      "input_dim": 784,
+      "hidden_dim": 64,
+      "activation": "relu"
+    },
+    "training": {
+      "epochs": 100,
+      "batch_size": 128,
+      "lr": 0.001,
+      "optimizer": "adam"
+    },
+    "seeds": [
+      1,
+      2,
+      3,
+      4,
+      5
+    ]
+  }
+}

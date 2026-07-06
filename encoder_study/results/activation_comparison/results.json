@@ -1,0 +1,46 @@
+{
+  "encoder_relu": {
+    "final_loss": -998.1989897054904,
+    "l0_sparsity": 17.18429946899414,
+    "l0_density": 0.26850467920303345,
+    "mean_activation": 33.962398529052734,
+    "std_activation": 98.8023681640625,
+    "frac_positive": 0.26853594183921814,
+    "frac_negative": 0.0,
+    "frac_zero": 0.7314640283584595
+  },
+  "encoder_neg_relu": {
+    "final_loss": -612936.3400852878,
+    "l0_sparsity": 55.11159896850586,
+    "l0_density": 0.861118733882904,
+    "mean_activation": -354.2279968261719,
+    "std_activation": 712.8502197265625,
+    "frac_positive": 0.0,
+    "frac_negative": 0.861132800579071,
+    "frac_zero": 0.13886718451976776
+  },
+  "sae_relu": {
+    "final_loss": 0.0169819883966465,
+    "final_mse": 0.016342534943779647,
+    "l0_sparsity": 33.35070037841797,
+    "l0_density": 0.5211046934127808,
+    "mean_activation": 0.06454670429229736,
+    "std_activation": 0.08467013388872147,
+    "frac_positive": 0.5325484275817871,
+    "frac_negative": 0.0,
+    "frac_zero": 0.4674515426158905,
+    "reconstruction_mse": 0.015994232077198692
+  },
+  "sae_neg_relu": {
+    "final_loss": 0.017004959724112742,
+    "final_mse": 0.01637132488079925,
+    "l0_sparsity": 33.30849838256836,
+    "l0_density": 0.5204452872276306,
+    "mean_activation": -0.06365101784467697,
+    "std_activation": 0.08407643437385559,
+    "frac_positive": 0.0,
+    "frac_negative": 0.531906247138977,
+    "frac_zero": 0.46809375286102295,
+    "reconstruction_mse": 0.015905176984924305
+  }
+}
