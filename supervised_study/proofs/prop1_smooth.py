@@ -79,11 +79,21 @@ def check_relu_ae_bound():
     (absorbing state). We confirm both the a.e. Hessian bound and the zero-gradient
     pathology on the inactive side."""
     ok = True
+    worst_ratio = 0.0
+    dead_grad_norm = 0.0
     # a.e.: away from kinks, ReLU has phi'=1, phi''=0, so bound reduces to Prop 1's 0.5||xt||^2
     for K, n in [(5, 5)]:
         x = RNG.standard_normal(n)
         xt = np.append(x, 1.0)
-        theta = RNG.standard_normal(K * (n + 1)) * 2.0
+        kink_margin = 1e-2
+        for _ in range(100):
+            theta = RNG.standard_normal(K * (n + 1)) * 2.0
+            th = theta.reshape(K, n + 1)
+            z = th[:, :n] @ x + th[:, n]
+            if np.min(np.abs(z)) > kink_margin:
+                break
+        else:
+            raise RuntimeError("Could not sample ReLU preactivations away from kinks")
         m = len(theta)
 
         def relu(z):
@@ -110,12 +120,37 @@ def check_relu_ae_bound():
         Hn = (Hn + Hn.T) / 2
         num = np.linalg.norm(Hn, 2)
         bound = 0.5 * (xt @ xt)
+        worst_ratio = max(worst_ratio, num / bound)
         ok &= num <= bound + 1e-3  # a.e. reduces to Prop 1 (B1=1,B2=0)
-    # absorbing state: a unit with w.x+b < 0 for all data has exactly zero grad
-    z = -5.0
-    grad_through_relu = 1.0 if z > 0 else 0.0
-    ok &= grad_through_relu == 0.0
-    return ok
+
+    # absorbing state: a component inactive for every sample has zero numerical
+    # gradient for its parameter block, not just zero derivative of a standalone if.
+    K, n, batch = 4, 3, 6
+    X = RNG.normal(size=(batch, n))
+    theta = RNG.normal(size=(K, n + 1))
+    theta[0, :n] = 0.0
+    theta[0, n] = -5.0
+
+    def relu(z):
+        return np.maximum(z, 0.0)
+
+    def L_batch(th_flat):
+        th = th_flat.reshape(K, n + 1)
+        z = X @ th[:, :n].T + th[:, n]
+        dd = relu(z)
+        return np.mean([-np.log(np.exp(-row).sum()) for row in dd])
+
+    th0 = theta.reshape(-1)
+    eps = 1e-6
+    dead_indices = np.arange(n + 1)
+    dead_grad = np.array([
+        (L_batch(th0 + eps * np.eye(K * (n + 1))[i])
+         - L_batch(th0 - eps * np.eye(K * (n + 1))[i])) / (2 * eps)
+        for i in dead_indices
+    ])
+    dead_grad_norm = np.linalg.norm(dead_grad)
+    ok &= dead_grad_norm < 1e-10
+    return ok, worst_ratio, dead_grad_norm
 
 
 def main():
@@ -134,11 +169,13 @@ def main():
         f"worst numeric/bound ratio `{ratio:.3f}` (bound valid, and loose). "
         f"**{'PASS' if ok_sp else 'FAIL'}**")
 
-    ok_relu = check_relu_ae_bound()
+    ok_relu, relu_ratio, dead_grad_norm = check_relu_ae_bound()
     log(f"- **ReLU (a.e. + absorbing state)**: away from kinks the bound reduces "
-        f"to Prop 1's `0.5||xt||^2` (B1=1, B2=0); an inactive unit has exactly "
-        f"zero gradient (the documented absorbing-state pathology, not a bound "
-        f"violation). **{'PASS' if ok_relu else 'FAIL'}**")
+        f"to Prop 1's `0.5||xt||^2` (B1=1, B2=0), worst numeric/bound ratio "
+        f"`{relu_ratio:.3f}`; a component inactive on the whole batch has "
+        f"finite-difference gradient-block norm `{dead_grad_norm:.2e}` "
+        f"(the documented absorbing-state pathology, not a bound violation). "
+        f"**{'PASS' if ok_relu else 'FAIL'}**")
 
     log()
     all_ok = ok_sp and ok_relu

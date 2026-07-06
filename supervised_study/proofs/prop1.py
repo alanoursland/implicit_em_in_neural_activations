@@ -9,7 +9,8 @@ CLAIM (Proposition 1)
     Private affine energies d_j = w_j^T x + b_j, xt = (x, 1), d_j = theta_j^T xt.
     Gradient block for component j is r_j * xt, hence
         ||grad_theta L_LSE||_2 = sqrt(sum_j r_j^2) * ||xt|| <= ||xt||.
-    Hessian = C(r) (x) (xt xt^T)  (Kronecker), up to sign, so
+    Hessian = -C(r) (x) (xt xt^T)  (Kronecker), because
+    d^2[-logsumexp(-d)]/dd^2 = rr^T - diag(r) = -C(r), so
         ||Hessian_theta L_LSE||_2 = ||C(r)||_2 * ||xt||^2 <= (1/2) ||xt||^2,
     a constant fixed by the data, independent of theta.
 
@@ -83,7 +84,9 @@ def check_hessian():
         x, xt, W, b, theta, d, K, n = setup(K, n)
         r = softmax_neg(d)
         C = np.diag(r) - np.outer(r, r)
-        H_kron = np.kron(C, np.outer(xt, xt))      # claimed, up to sign
+        # L = -logsumexp(-d) has Hessian rr^T - diag(r) = -C(r) in d.
+        # The parameter Hessian therefore has the determinate signed form below.
+        H_kron = -np.kron(C, np.outer(xt, xt))
         L = L_factory(x, K, n)
         m = len(theta)
         eps = 1e-4
@@ -99,7 +102,7 @@ def check_hessian():
              for i in range(m)]
         )
         Hn = (Hn + Hn.T) / 2
-        err = min(np.abs(H_kron - Hn).max(), np.abs(-H_kron - Hn).max())
+        err = np.abs(H_kron - Hn).max()
         num_norm = np.linalg.norm(Hn, 2)
         bound = 0.5 * (xt @ xt)
         worst_err = max(worst_err, err)
@@ -121,7 +124,7 @@ def main():
         f"`{rg:.3f}` (<= 1). **{'PASS' if ok_g else 'FAIL'}**")
 
     ok_h, eh, rh = check_hessian()
-    log(f"- **Hessian = C(r) (x) xt xt^T (Kronecker)**, "
+    log(f"- **Hessian = -C(r) (x) xt xt^T (Kronecker)**, "
         f"`||H|| <= (1/2)||xt||^2`: form matches numeric Hessian to `{eh:.2e}`; "
         f"worst norm/bound ratio `{rh:.3f}` (<= 1). **{'PASS' if ok_h else 'FAIL'}**")
 
