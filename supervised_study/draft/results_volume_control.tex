@@ -1,0 +1,42 @@
+\section{Results I: At-Site Failures Are Repaired Locally}
+
+\subsection{Volume-Control Ablation}
+
+The first experiment asks whether supervision supplies enough intermediate
+volume control. It compares a baseline MLP, NLS alone, partial volume control,
+full volume control, and volume control without NLS on MNIST with $K=25$.
+
+\begin{table}[h]
+\centering
+\begin{tabular}{lrrrrr}
+\toprule
+Config & Dead & Min Var & Redundancy & Entropy & Accuracy \\
+\midrule
+Baseline & 1.40 & 0.000 & 20.5 & 3.08 & 96.09 \\
+NLS only & 1.20 & 0.264 & 24.9 & 2.93 & 96.14 \\
+NLS + Var & 0.00 & 11.74 & 187.0 & 2.09 & 95.75 \\
+NLS + Var + Decorr & 0.00 & 7.84 & 13.9 & 2.46 & 96.34 \\
+Var + Decorr only & 0.10 & 3.55 & 13.3 & 2.65 & 96.40 \\
+\bottomrule
+\end{tabular}
+\caption{Volume-control ablation summary. Accuracy is reported in percent.}
+\label{tab:volume-ablation}
+\end{table}
+
+Supervised gradients do not provide intermediate volume control: the baseline
+has dead ReLU units in every seed. NLS without volume control is insufficient.
+Variance alone is pathological, producing alive but highly redundant units.
+Full volume control repairs the site. Volume control without NLS is useful
+regularization, but it does not produce the same calibrated EM structure.
+
+\subsection{Capacity Sweep}
+
+The capacity sweep compares the baseline with NLS plus full volume control for
+$K \in \{16,25,36,49,64\}$. The baseline has dead units at every width, with a
+stable dead fraction around five to seven percent. Volume control eliminates
+dead units at every width. Redundancy grows with width, and volume control
+reduces the slope and tightens seed variability.
+
+The accuracy effect is capacity- and $\lambda$-dependent. This paper therefore
+uses the capacity experiment as evidence for structural health rather than as a
+benchmark claim.

@@ -1,0 +1,26 @@
+\section{Results II: Conditioning Does Not Survive Composition}
+
+\subsection{Optimizer Sweep}
+
+The optimizer experiment tests whether the single-layer implicit-EM optimization
+signature survives when the EM site is placed inside a supervised network. The
+model uses NLS plus full volume control, $K=25$, $\lambda=0.001$, SGD and Adam,
+and learning rates in $\{10^{-4},10^{-3},10^{-2},10^{-1}\}$.
+
+SGD is strongly learning-rate sensitive, spanning $83.83\%$ to $96.23\%$
+accuracy. Adam clearly helps: Adam at learning rate $10^{-4}$ reaches
+$95.34\%$, and Adam at $10^{-3}$ reaches $96.38\%$. This differs from the
+single-layer unsupervised setting, where Adam offered little advantage.
+
+\subsection{Loss-Feature Decoupling}
+
+At high Adam learning rates, the regularization loss decreases and minimum
+variance explodes without meaningful accuracy gains. This partially echoes the
+decoder-free encoder result: the auxiliary geometry has degrees of freedom that
+are orthogonal to task accuracy.
+
+\subsection{Transition to Mechanism}
+
+The optimizer sweep shows that the local EM site is not enough. Experiment 4
+measures why: the composed cross-entropy path dominates the local EM path, and
+the two gradients are nearly orthogonal.

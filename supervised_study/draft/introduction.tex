@@ -1,0 +1,62 @@
+\section{Introduction}
+
+\subsection{Starting Point}
+
+Prior work established that objectives with log-sum-exp structure over
+distances or energies produce responsibility gradients. In the convention of
+this paper,
+\[
+    \frac{\partial L_{\mathrm{LSE}}}{\partial d_j} = r_j.
+\]
+Responsibilities therefore arise as gradients, and standard neural objectives
+can instantiate implicit generalized EM at the objective interface.
+
+The decoder-free encoder study showed that this identity is prescriptive in a
+single-layer unsupervised model. An objective built from LSE and volume control
+learned structured prototype-like features, and removing components of volume
+control produced the predicted collapse and redundancy failures. It also
+exhibited a distinctive optimization signature: SGD was insensitive to learning
+rate over a wide range, Adam offered little advantage, and convergence time was
+roughly fixed.
+
+\subsection{The Temptation}
+
+Two tempting inferences follow from the identity, and both require a boundary.
+First, one might infer that whole neural networks inherit EM conditioning
+because responsibility gradients flow through backpropagation. Second, one might
+infer that stacking LSE or softmax sites creates a distributed EM mechanism in
+which depth itself acts like an annealing schedule. Both claims require the EM
+property to survive learned composition.
+
+This paper asks when the implicit-EM optimization property holds and what
+destroys it.
+
+\subsection{Main Claim}
+
+Implicit EM is local, graded, and structural. It is local because the property
+exists at exponentiation-and-normalization sites and does not automatically
+extend through learned dense maps. It is graded because real networks interpolate
+between EM-conditioned and ordinary deep-network behavior according to the
+measured share of EM-structured gradient reaching the parameters. It is
+structural because the failures split into at-site failures, which local volume
+control can repair, and structural failures, which require isolation, dominance,
+or simplex-compatible transport.
+
+The central mechanism is that backpropagation composition is parameter sharing
+in disguise. Classical EM loses its clean M-step when components no longer own
+private parameters and the expected complete-data objective stops separating.
+The same failure reappears inside neural networks when responsibility gradients
+are pulled through shared learned maps.
+
+\subsection{Contributions}
+
+This paper makes seven contributions. First, it proves the conditioning contrast
+between private-parameter LSE objectives and composed dense maps. Second, it
+classifies operations that preserve or destroy the responsibility-gradient
+invariant. Third, it introduces the at-site versus structural failure taxonomy.
+Fourth, it shows experimentally that volume control transfers to intermediate
+supervised layers and repairs dead or redundant units. Fifth, it shows that
+optimization conditioning does not survive ordinary composition. Sixth, it
+establishes causally that conditioning is restored by stop-gradient or EM
+dominance. Seventh, it introduces the $1/2$-saturation diagnostic for mixture
+sharpness.

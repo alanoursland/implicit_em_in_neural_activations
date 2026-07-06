@@ -1,0 +1,40 @@
+\section{Notation and Conventions}
+
+We use energy and distance interchangeably: lower values indicate better
+matches. For an input and $K$ components, $d_j$ denotes the energy of component
+$j$, and
+\[
+    r = \operatorname{softmax}(-d)
+\]
+denotes the responsibility vector. Thus $r_j \ge 0$ and $\sum_j r_j = 1$.
+
+The log-sum-exp objective is
+\[
+    L_{\mathrm{LSE}}(d) = -\log \sum_j \exp(-d_j),
+\]
+so that
+\[
+    \frac{\partial L_{\mathrm{LSE}}}{\partial d_j} = r_j.
+\]
+This sign convention is fixed throughout the paper.
+
+For supervised classification, $h$ denotes logits and
+$p=\operatorname{softmax}(h)$ denotes the output class posterior. We write
+$W_1$ for the input-to-component map and $W_2$ for the learned dense
+component-to-class map. The latter is the composition corridor whose effect on
+conditioning is the focus of the paper.
+
+The NegLogSoftmin calibration is
+\[
+    \operatorname{NLS}(d)_j
+    = d_j + \log \sum_k \exp(-d_k),
+\]
+which preserves relative distances and satisfies
+\[
+    \exp(-\operatorname{NLS}(d)_j) = r_j.
+\]
+
+Volume control consists of an anti-collapse variance penalty $L_{\mathrm{var}}$
+and an anti-redundancy decorrelation or total-correlation penalty
+$L_{\mathrm{tc}}$. Unless otherwise stated, $\lambda$ denotes the total
+auxiliary weight applied to the local EM objective.

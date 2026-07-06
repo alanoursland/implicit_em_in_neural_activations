@@ -1,0 +1,38 @@
+\section{Background: Where EM Lives}
+
+\subsection{Gradient-Responsibility Identity}
+
+For an LSE objective over distances,
+\[
+    L_{\mathrm{LSE}}(d) = -\log \sum_j \exp(-d_j),
+    \qquad r = \operatorname{softmax}(-d),
+\]
+the gradient with respect to the distance coordinate is
+\[
+    \frac{\partial L_{\mathrm{LSE}}}{\partial d_j} = r_j.
+\]
+For cross-entropy classification,
+\[
+    L = -h_y + \log \sum_k \exp(h_k),
+    \qquad
+    \frac{\partial L}{\partial h_j}
+    = \operatorname{softmax}(h)_j - \mathbf{1}[j=y].
+\]
+The output softmax is therefore a label-clamped responsibility interface.
+
+\subsection{Locality}
+
+The identity applies where the loss sees distances or energies. It does not
+make all earlier hidden layers into mixture models. The output loss geometry
+imposes EM structure at the output interface, and gradients from that structure
+flow backward to shape internal representations. But by the time the gradient
+has passed through intervening Jacobians, it is no longer a posterior over the
+earlier layer's units.
+
+\subsection{Volume Control}
+
+The decoder-free encoder study used volume control to prevent the standard
+degeneracies of mixture models. The LSE term creates competition and
+responsibility structure. The variance term prevents collapsed or dead
+components. The decorrelation term prevents redundant components. Together they
+play the neural role of a log-determinant barrier.

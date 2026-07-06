@@ -1,0 +1,23 @@
+\section{Limitations and Threats to Validity}
+
+\subsection{Threats to Internal Validity}
+
+The representation-quality trade-off currently rests on a fixed-protocol linear
+probe. Additional probes, such as kNN or a small MLP, should test whether the
+ordering is probe-dependent. The curvature measurements use power iteration on
+fixed batches, so sensitivity to batch identity, batch size, and iteration count
+should be reported. The $1/2$-saturation diagnostic is demonstrated at one site;
+claims about generality should remain cautious until measured across multiple
+sites.
+
+The stop-gradient intervention changes the gradient path from CE to $W_1$ while
+holding data, labels, architecture, and CE training fixed. This makes it a clean
+causal knob, but the argument should be stated explicitly.
+
+\subsection{Limitations of Scope}
+
+The experiments use MNIST and small networks. The paper makes no SOTA claims and
+does not offer a general theory of deep-network conditioning. The formal theory
+gives sufficient conditions, not a universal if-and-only-if. LayerNorm is
+included empirically but omitted from the clean proposition unless folded into
+the constants. No convergence proof is provided for the composed system.

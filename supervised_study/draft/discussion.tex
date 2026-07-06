@@ -1,0 +1,45 @@
+\section{Discussion}
+
+\subsection{Local, Graded, Structural}
+
+The results support the main claim. Implicit EM is local: it lives at
+LSE/softmax sites and does not automatically propagate through learned dense
+maps. It is graded: the transition between CE-dominated and EM-dominated
+behavior follows the measured gradient ratio. It is structural: volume control
+fixes at-site failures, but conditioning requires private parameters or
+simplex-compatible transport.
+
+\subsection{What Transfers and What Does Not}
+
+Collapse prevention, dead-unit prevention, redundancy control, and local mixture
+calibration transfer to intermediate sites. Learning-rate insensitivity, absence
+of Adam advantage, fixed convergence time, and parameter-independent curvature
+do not transfer through ordinary dense backpropagation.
+
+\subsection{Generative versus Discriminative Training}
+
+This paper is not merely another observation that generative and discriminative
+objectives differ. It gives a mechanism inside one architecture: a curvature
+dichotomy, orthogonal gradients, measured dominance, and causal restoration by
+stop-gradient or EM dominance.
+
+\subsection{Pretraining and Fine-Tuning}
+
+Discriminative fine-tuning can be viewed as a dominant foreign gradient that
+overwrites local EM structure. The basin analysis will test whether
+EM-dominated and CE-dominated solutions are separated by a loss barrier after
+permutation alignment.
+
+\subsection{Design Implications}
+
+To build deep models with EM structure, one must create local EM sites, protect
+them with stop-gradients or dominance-balanced objectives, or transport them
+through simplex-compatible maps. Ordinary learned dense maps should not be
+expected to preserve the property.
+
+\subsection{Relation to the Attention Project}
+
+The companion attention work tests the locality principle in transformers. This
+paper provides the controlled proof: EM conditioning does not penetrate learned
+linear corridors. Attention's value path is row-stochastic, so the stochastic-map
+arm is the controlled bridge between this study and that setting.

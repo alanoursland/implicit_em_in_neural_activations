@@ -1,0 +1,15 @@
+\section{Conclusion}
+
+Implicit EM is not a property of whole networks. It is a local structure created
+by LSE or softmax objectives over distances and energies. When responsibility
+gradients reach private parameters directly, the resulting landscape has
+parameter-independent curvature and exhibits the optimizer signatures observed
+in the single-layer model. When those gradients pass through ordinary learned
+dense maps, the simplex invariant is destroyed and curvature becomes learned,
+anisotropic, and optimizer-sensitive.
+
+The supervised study draws the boundary from both sides. Volume control repairs
+local collapse and redundancy at intermediate EM sites. But conditioning
+survives only under isolation, dominance, or simplex-compatible structure.
+Knowing which properties transfer and which do not is the design rule the
+implicit-EM framework provides.

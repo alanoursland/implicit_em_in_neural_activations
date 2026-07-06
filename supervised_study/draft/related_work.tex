@@ -1,0 +1,42 @@
+\section{Related Work and Positioning}
+
+\paragraph{EM as an optimization object.}
+The expectation-maximization algorithm and the missing-information principle
+provide the classical reference point for this work \citep{dempster1977maximum}.
+The free-energy view of EM makes the coordinate-ascent structure explicit
+\citep{neal1998view}. EM has also been analyzed as a preconditioned gradient
+method \citep{xu1996convergence}, which is the closest prior framing to our
+claim that EM conditioning is structural. The uniform $1/2$ curvature bound we
+use follows the multinomial-logistic Hessian bound of \citet{bohning1992multinomial}
+and the Popoviciu variance inequality.
+
+\paragraph{Classical EM failure modes.}
+Classical EM is cleanest when the expected complete-data objective separates
+over component-private parameters. Shared parameters, non-separable M-steps,
+singular components, hard assignments, and diffuse responsibilities are known
+failure modes. This paper identifies their neural counterparts inside the chain
+rule.
+
+\paragraph{Generative versus discriminative training.}
+The empirical distinction between generative and discriminative training is
+well known \citep{ng2002discriminative}. We do not claim merely that the
+objectives differ. We identify a mechanism inside one architecture: a curvature
+dichotomy, measured gradient dominance, near-orthogonality of the CE and EM
+paths, and causal restoration under stop-gradient.
+
+\paragraph{Loss landscapes and basin structure.}
+The basin analysis uses linear mode connectivity and permutation alignment
+ideas from the neural-network loss-landscape literature
+\citep{frankle2020linear,entezari2022role}. Alignment is needed because raw
+interpolation between component models can create artificial barriers from
+permutation symmetry alone.
+
+\paragraph{Layer-wise objectives.}
+Greedy layer-wise pretraining and deep belief networks showed that useful
+representations can be learned by protected local objectives
+\citep{hinton2006fast}. This paper gives an implicit-EM mechanism for why local
+objectives can preserve structure that end-to-end backpropagation does not.
+
+\paragraph{Scope.}
+This is not a general theory of deep-network conditioning. The claims are about
+EM sites and the corridors through which their responsibility gradients travel.

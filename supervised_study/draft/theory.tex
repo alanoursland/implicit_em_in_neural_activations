@@ -1,0 +1,108 @@
+\section{Theory: The Conditioning Boundary}
+
+\subsection{The Simplex Invariant}
+
+\begin{lemma}[Simplex invariant and curvature bound]
+For
+\[
+    L_{\mathrm{LSE}}(d) = -\log \sum_j \exp(-d_j),
+    \qquad r = \operatorname{softmax}(-d),
+\]
+the gradient $\nabla_d L_{\mathrm{LSE}}=r$ lies on the probability simplex, and
+the Hessian is
+\[
+    H_d L_{\mathrm{LSE}}
+    = \operatorname{diag}(r) - rr^\top,
+    \qquad
+    \|H_d L_{\mathrm{LSE}}\|_2 \le \frac{1}{2}.
+\]
+\end{lemma}
+
+The proof is the standard covariance form of the multinomial-logistic Hessian,
+together with the Bohning or Popoviciu bound. The important point here is that
+the bound is uniform in $d$ and independent of parameters.
+
+\subsection{Private Parameters Inherit the Bound}
+
+\begin{proposition}[Conditioning under private energies]
+Let each component energy be a private affine map
+\[
+    d_j = w_j^\top x + b_j.
+\]
+Then
+\[
+    \|\nabla_\theta L_{\mathrm{LSE}}\|_2 \le \|x\|,
+    \qquad
+    \|H_\theta L_{\mathrm{LSE}}\|_2 \le \frac{1}{2}\|x\|^2.
+\]
+Under batch-mean training,
+\[
+    \|H_\theta L_{\mathrm{LSE}}\|_2
+    \le \frac{1}{2}\mathbb{E}\|x\|^2,
+\]
+a data constant independent of the current parameters.
+\end{proposition}
+
+This proposition explains the single-layer optimizer signature: the admissible
+learning-rate range does not shrink as parameters move, curvature is not learned
+or anisotropic, and an adaptive optimizer has little to correct.
+
+\begin{proposition}[Smooth monotone kernels]
+For $d_j=\phi(w_j^\top x+b_j)$ with $\phi$ monotone and $|\phi'|,|\phi''|$
+bounded, the same parameter-independence survives up to constants determined by
+the kernel bounds.
+\end{proposition}
+
+Softplus is the main smooth case. ReLU satisfies the curvature bounds almost
+everywhere but has a separate absorbing-state pathology: once a unit receives
+zero gradient, it may never recover.
+
+\subsection{Composition Replaces the Constant With a Learned Spectrum}
+
+\begin{proposition}[Loss of conditioning under learned composition]
+Let
+\[
+    y = \operatorname{NLS}(d), \qquad h = W_2 y, \qquad
+    L_{\mathrm{CE}} = \operatorname{CE}(h,c),
+\]
+and $p=\operatorname{softmax}(h)$. Then the Hessian of $L_{\mathrm{CE}}$ with
+respect to $d$ contains the conjugated softmax Hessian
+\[
+    J^\top W_2^\top(\operatorname{diag}(p)-pp^\top)W_2J,
+\]
+plus curvature terms from the NLS map. Consequently,
+\[
+    \|H_d L_{\mathrm{CE}}\|_2 = O(\sigma_{\max}(W_2)^2).
+\]
+\end{proposition}
+
+The uniform $1/2$ bound of the local LSE site is replaced by a learned,
+time-varying, anisotropic quantity. The theorem is stated without LayerNorm for
+clarity; empirical curvature measurements use the actual model including
+LayerNorm, so the reported constants absorb its effect.
+
+\paragraph{Scope of the claim.}
+The propositions give sufficient conditions for preserving EM conditioning and
+demonstrate loss of conditioning when a shared sign-indefinite learned map
+intervenes. They do not prove necessity for all possible architectures, nor do
+they provide a convergence proof for the composed system.
+
+\subsection{Operations That Preserve or Destroy the Invariant}
+
+The invariant is preserved by private per-component parameters,
+per-coordinate monotone maps, bounded smooth kernels, and stochastic or Markov
+maps at least at first order. It is destroyed by dense sign-indefinite learned
+maps, objective mixing, hard gates, and shared lower parameters.
+
+\subsection{Classical EM Connection}
+
+Classical EM's efficiency comes from the E-step making the expected
+complete-data objective separate over component-private parameters. With
+private component parameters $\theta_j$, the objective has the form
+\[
+    Q(\theta) = \sum_j Q_j(\theta_j),
+\]
+and the M-step decouples into independent per-component problems. If a lower
+map is shared by all components, this separation disappears and the M-step
+becomes a coupled generalized-EM problem. Backpropagation through shared lower
+layers is the neural version of this classical failure.

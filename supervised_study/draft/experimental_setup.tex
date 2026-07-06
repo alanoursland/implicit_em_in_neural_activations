@@ -1,0 +1,33 @@
+\section{Experimental Setup}
+
+\subsection{Model}
+
+The experiments use a small supervised MNIST classifier:
+\[
+    x \rightarrow \operatorname{Linear}(784,K) \rightarrow \operatorname{ReLU}
+    \rightarrow d
+    \rightarrow \operatorname{NLS}(d)
+    \rightarrow \operatorname{Linear}(K,10)
+    \rightarrow \operatorname{LayerNorm}
+    \rightarrow \operatorname{CE}.
+\]
+Depending on the experiment, the intermediate NLS and volume-control terms are
+ablated. The local auxiliary objective is
+\[
+    L_{\mathrm{aux}}(d)
+    = L_{\mathrm{LSE}}(d) + L_{\mathrm{var}}(d) + L_{\mathrm{tc}}(d).
+\]
+
+\subsection{Metrics}
+
+Representation health is measured by dead units, minimum variance, redundancy,
+and responsibility entropy. Optimization conditioning is measured by
+learning-rate spread, convergence-time variability, Adam versus SGD gaps,
+gradient norm ratios, cosine similarity between CE and EM gradients, and
+Hessian spectral norms with respect to the intermediate distances $d$.
+
+\subsection{Experimental Logic}
+
+Experiments 1--2 test at-site failures and volume-control transfer. Experiment
+3 observes the loss of conditioning under ordinary supervised composition.
+Experiment 4 measures the mechanism and causally restores the property.

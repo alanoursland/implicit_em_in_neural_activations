@@ -1,0 +1,76 @@
+\section{Results III: The Mechanism and Causal Test}
+
+\subsection{Predictions Ledger}
+
+\begin{table}[h]
+\centering
+\begin{tabular}{p{0.16\linewidth}p{0.42\linewidth}p{0.28\linewidth}}
+\toprule
+Test & Prediction & Measured \\
+\midrule
+Exp1 & Supervision does not give intermediate volume control & Dead units in every baseline seed \\
+Exp1 & Partial volume control is worse than none & Redundancy increases from 20.5 to 187.0 \\
+Exp3 & Optimizer signature disappears under composition & SGD spans 83.8--96.2; Adam helps \\
+Exp4-P1 & CE dominates EM at small $\lambda$ & 30--70x, cosine near zero \\
+Exp4-P2 & LSE curvature stays below $1/2$ & Bound held; CE path 13--100x larger \\
+Exp4-P3 & Stop-gradient restores conditioning & LR spread falls from 10.9 to 1.3 points \\
+\bottomrule
+\end{tabular}
+\caption{Prediction ledger for the supervised study.}
+\label{tab:predictions-ledger}
+\end{table}
+
+\subsection{Experiment 4 Design}
+
+The causal experiment compares four arms: joint training with
+$\lambda=0.001$, joint training with $\lambda=0.03$, joint training with
+$\lambda=1$, and stop-gradient training where the supervised head reads
+detached intermediate distances. Feature quality is measured by a fixed-protocol
+linear probe trained on frozen distances.
+
+\subsection{Causal Restoration of Conditioning}
+
+Probe accuracy spread across a $1000\times$ SGD learning-rate range falls from
+10.9 points in the CE-dominated joint arm to 1.3 points under stop-gradient.
+The $\lambda=1$ joint arm is indistinguishable from stop-gradient, while
+$\lambda=0.03$ lies between the two regimes. Supervision is not the problem; the
+composition corridor is.
+
+\subsection{Gradient Competition}
+
+At $\lambda=0.001$, the CE gradient reaching the intermediate distances
+dominates the weighted auxiliary EM gradient by $30$--$70\times$. Their cosine
+similarity is approximately zero. The EM signal is drowned, not opposed.
+
+\subsection{Curvature Dichotomy}
+
+The LSE Hessian with respect to $d$ remains bounded by $1/2$ at every measured
+point. Under pure EM training it saturates the bound, reaching
+$0.4993$--$0.4997$. The CE-path Hessian is roughly $13$--$100\times$ larger,
+non-monotone, and consistent with $W_2$ spectral scaling. Distance from
+$1/2$ therefore acts as a diagnostic of mixture sharpness.
+
+\subsection{Lambda-Resolution Curve}
+
+The graded claim should be supported by a denser sweep over $\lambda$. The
+planned central figure plots conditioning spread and probe accuracy against the
+measured CE/EM gradient ratio, not against $\lambda$ itself.
+
+\subsection{Basin Analysis}
+
+Linear mode connectivity between EM-dominated and CE-dominated checkpoints will
+formalize the fine-tuning claim. Hidden units must be permutation-aligned before
+interpolation, for example with Hungarian matching.
+
+\subsection{Adam Arm Under Stop-Gradient}
+
+The Adam arm completes the Paper 2 optimizer signature. The prediction is that
+Adam provides little advantage under stop-gradient and a clear advantage in the
+joint CE-dominated arm.
+
+\subsection{Stochastic-Map Arm}
+
+Replacing $W_2$ with a non-negative row-normalized map tests the one
+simplex-compatible preservation class not yet covered experimentally. A positive
+result would provide the controlled bridge to attention's row-stochastic value
+path.
