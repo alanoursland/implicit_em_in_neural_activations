@@ -5,15 +5,15 @@ explains how standard neural objectives can instantiate generalized EM without
 explicit latent-variable updates. We show that the identity is local. In
 distance coordinates, the LSE Hessian is uniformly bounded by $1/2$; with
 private component parameters, this gives a parameter-independent curvature
-bound. When the same site is composed behind a learned dense map, the composed
-cross-entropy path contains a conjugated softmax Hessian whose bound scales with
-the learned spectrum of the map, so the parameter-independent guarantee is
-forfeited.
+bound. When the same site is composed behind a learned dense map, the leading term of
+the composed cross-entropy Hessian is a conjugated softmax Hessian whose bound
+scales with the learned spectrum of the map, so the parameter-independent
+guarantee is forfeited.
 
-Experiments in supervised MNIST networks confirm the resulting split. Volume
-control at an intermediate EM site eliminates dead units and reduces redundancy
-across widths, showing that local mixture failures can be repaired inside a
-supervised model. But the optimizer signatures of the single-layer implicit-EM
+Experiments in supervised MNIST networks confirm the split named in the title:
+volume control transfers, conditioning does not. Volume control at an
+intermediate EM site eliminates dead units and reduces redundancy across widths,
+showing that local mixture failures can be repaired inside a supervised model. But the optimizer signatures of the single-layer implicit-EM
 model do not survive ordinary supervised composition: SGD becomes
 learning-rate sensitive again and Adam becomes useful again. Measuring the
 intermediate gradients shows that, at the standard auxiliary weight, the

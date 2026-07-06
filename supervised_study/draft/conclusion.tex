@@ -11,23 +11,24 @@ The theory identifies that boundary. In distance coordinates, the local LSE
 Hessian is uniformly bounded by $1/2$. When component parameters are private,
 this yields a parameter-independent curvature bound and explains the
 single-site optimizer signature observed in earlier work. When the same site is
-trained through a learned dense corridor, the composed CE path contains a
-conjugated softmax Hessian whose scale depends on the learned map. The local
-guarantee is therefore forfeited.
+trained through a learned dense corridor, the leading term of the composed CE
+Hessian is a conjugated softmax Hessian whose scale depends on the learned map.
+The local guarantee is therefore forfeited.
 
-The supervised experiments confirm the split. Volume control transfers: it
-repairs dead units, collapse, and redundancy at an intermediate EM site. The
-conditioning does not transfer through ordinary supervised composition: SGD
-becomes learning-rate sensitive, Adam becomes useful, and the CE path dominates
-the local EM path at the standard auxiliary weight. Cutting that path with
-stop-gradient restores the conditioning signature. Increasing the EM weight
-until the EM path dominates restores it as well, even with the graph fully
-connected.
+The supervised experiments confirm the split from both sides: volume control
+transfers to an intermediate EM site, but the single-site optimizer conditioning
+does not survive ordinary composition---and is restored, causally, by cutting the
+corridor or letting the EM path dominate.
 
-The resulting rule is local, graded, and structural. Local volume-control
-failures can be repaired locally. EM conditioning survives only when
-responsibility gradients reach the relevant parameters directly, through a
-compatible transport, or with enough dominance to set the effective landscape.
-Ordinary dense backpropagation should not be expected to preserve it. This is
-the boundary the implicit-EM framework needs: knowing which properties transfer,
-which fail, and which architectural interventions can make them survive.
+The resulting rule is local, graded, and structural. EM conditioning survives
+only when responsibility gradients reach the relevant parameters directly,
+through a simplex-compatible transport, or with enough dominance to set the
+effective landscape; ordinary dense backpropagation should not be expected to
+preserve it. Two consequences point beyond this paper. For architecture, it
+motivates building depth as protected local EM sites rather than expecting a
+single owned objective to condition every layer---the layer-wise direction. For
+interpretation, it says the intermediate softmax sites of a standard
+transformer, owning no objective of their own, should not be read as inheriting
+EM's optimization structure---the controlled basis for the companion attention
+work. Knowing which properties transfer, which fail, and which interventions
+make them survive is the boundary the implicit-EM framework now provides.

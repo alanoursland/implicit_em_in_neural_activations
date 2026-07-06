@@ -10,73 +10,41 @@ structure survives the pullback to parameters.
 
 \subsection{Responsibilities as Gradients}
 
-For an objective with log-sum-exp structure over distances,
-\[
-    L_{\mathrm{LSE}}(d) = -\log \sum_{j=1}^K \exp(-d_j),
-    \qquad
-    r = \operatorname{softmax}(-d),
-\]
-the derivative with respect to each distance coordinate is
-\[
-    \frac{\partial L_{\mathrm{LSE}}}{\partial d_j} = r_j.
-\]
-The gradient is therefore a posterior responsibility vector: it is
-nonnegative, sums to one, and assigns each component a fractional share of the
-update. This is the sense in which gradient descent on an LSE distance
-objective performs an implicit E-step. The responsibilities are not introduced
-as auxiliary variables; they appear as the gradient that the optimizer receives.
+The starting point (Section~\ref{sec:introduction}) is the algebraic identity
+$\partial L_{\mathrm{LSE}}/\partial d_j = r_j$: the gradient of an LSE distance
+objective is a posterior responsibility vector---nonnegative, summing to one,
+assigning each component a fractional share of the update. Gradient descent on
+such an objective performs an implicit E-step, with responsibilities appearing
+as the gradient rather than as auxiliary variables.
 
-This identity is algebraic. It does not require a particular parameterization,
-architecture, or optimizer. Its consequences depend on what happens next: the
-responsibility vector may reach private component parameters directly, or it
-may be mixed with other gradients and pulled through learned maps before it
-updates earlier weights.
+The identity is purely algebraic; it assumes no particular parameterization,
+architecture, or optimizer. Everything in this paper turns on what happens
+\emph{next}: the responsibility vector may reach private component parameters
+directly, or it may be mixed with other gradients and pulled through learned
+maps before it updates earlier weights.
 
 \subsection{Cross-Entropy Is a Label-Clamped Responsibility Interface}
 
 Supervised cross-entropy has the same exponentiation-and-normalization
-interface, but with the observed label clamping one component. For logits
-$h\in\mathbb{R}^C$,
-\[
-    L_{\mathrm{CE}}(h,y)
-    =
-    -h_y + \log \sum_{c=1}^C \exp(h_c),
-    \qquad
-    p = \operatorname{softmax}(h),
-\]
-and
-\[
-    \frac{\partial L_{\mathrm{CE}}}{\partial h_c}
-    =
-    p_c - \mathbf{1}\{c=y\}.
-\]
-The output softmax is thus an EM-like interface whose posterior is clamped by
-the label: probability mass is removed from the true class and assigned to the
-competing classes according to the model posterior.
+interface, with the label clamping one component: its logit gradient is
+$p_c-\mathbb{1}\{c=y\}$ (Section~\ref{sec:notation}), removing probability mass
+from the true class and redistributing it according to the model posterior.
 
-This observation is useful but also dangerous. It is correct to say that the
-output loss supplies responsibility-shaped geometry at the output logits. It is
-not correct to conclude that every earlier hidden layer is itself doing EM. The
-gradient that reaches an earlier layer has already passed through the head
-Jacobian and any intervening nonlinearities. It need not be nonnegative, need
-not sum to one, and need not remain aligned with hidden components.
+This observation is useful but also dangerous. It is correct that the output
+loss supplies responsibility-shaped geometry at the output logits. It is
+\emph{not} correct to conclude that every earlier hidden layer is itself doing
+EM. The gradient reaching an earlier layer has already passed through the head
+Jacobian and any intervening nonlinearities; it need not be nonnegative, sum to
+one, or remain aligned with hidden components.
 
 \subsection{Local EM Sites Inside a Network}
 
 The supervised architecture studied here deliberately creates an intermediate
-site. The first map produces component distances $d_1,\ldots,d_K$. The
-NegLogSoftmin transform
-\[
-    \operatorname{NLS}(d)_j
-    =
-    d_j + \log\sum_k \exp(-d_k)
-\]
-calibrates these distances so that
-\[
-    \exp(-\operatorname{NLS}(d)_j)=r_j.
-\]
-This gives the hidden layer an explicit distance-to-responsibility interface
-rather than relying on the output loss to impose structure indirectly.
+site. The first map produces component distances $d_1,\ldots,d_K$, and the
+NegLogSoftmin transform (Section~\ref{sec:notation}) calibrates them so that
+$\exp(-\operatorname{NLS}(d)_j)=r_j$, giving the hidden layer an explicit
+distance-to-responsibility interface rather than relying on the output loss to
+impose structure indirectly.
 
 The distinction between an output interface and an intermediate site is central.
 At the output, the supervised objective owns the softmax. At the hidden layer,
@@ -92,31 +60,20 @@ mixture models. Components can collapse, become redundant, or receive
 essentially no responsibility. The decoder-free encoder study addressed these
 failures with volume control: a variance term prevents dead or collapsed
 components, and a decorrelation term prevents all components from moving
-together.
-
-In this paper the local auxiliary objective is
-\[
-    L_{\mathrm{aux}}
-    =
-    L_{\mathrm{LSE}} + L_{\mathrm{var}} + L_{\mathrm{tc}},
-\]
-with the supervised objective
-\[
-    L_{\mathrm{total}}
-    =
-    L_{\mathrm{CE}}+\lambda L_{\mathrm{aux}}.
-\]
-The variance term is the anti-collapse part of the local mixture geometry. The
-decorrelation or total-correlation term is the anti-redundancy part. Together
-they play the role of a volume barrier: the components are encouraged to occupy
-distinct directions rather than concentrate in the same small region.
+together. In the local auxiliary objective $L_{\mathrm{aux}}=L_{\mathrm{LSE}}
++L_{\mathrm{var}}+L_{\mathrm{tc}}$ (Section~\ref{sec:notation}), the variance
+term is the anti-collapse part and the decorrelation term the anti-redundancy
+part. Together they act as a volume barrier, encouraging components to occupy
+distinct directions rather than concentrate in the same small region---the
+neural analogue of the log-determinant in a Gaussian mixture.
 
 The first empirical question is whether these local repairs still work inside a
-supervised network. They do: Results I shows that volume control eliminates
-dead units and reduces redundancy at the intermediate site. The second question
-is harder: whether the optimizer conditioning observed in the single-layer
-implicit-EM model transfers through the supervised head. Results II and III show
-that it does not, except when the local EM path is isolated or made dominant.
+supervised network. They do: Section~\ref{sec:results-volume} shows that volume
+control eliminates dead units and reduces redundancy at the intermediate site.
+The second question is harder: whether the optimizer conditioning observed in the
+single-layer implicit-EM model transfers through the supervised head.
+Sections~\ref{sec:results-conditioning} and~\ref{sec:mechanism} show that it does
+not, except when the local EM path is isolated or made dominant.
 
 \subsection{Locality Versus Inheritance}
 

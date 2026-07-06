@@ -12,14 +12,16 @@ and still fail to inherit the optimizer conditioning of an isolated EM model.
 The three adjectives in the main claim refer to different parts of the
 evidence.
 
-Implicit EM is \emph{local}. The identity lives at the coordinates seen by an
-LSE or softmax objective. In distance coordinates, the LSE gradient is a
-responsibility vector and the curvature is uniformly bounded. When that vector
-updates private component parameters directly, Proposition~\ref{prop:private-affine}
-gives a parameter-independent bound. When it is pulled through a learned dense
-map, Proposition~\ref{prop:composition} shows that the bound no longer controls
-the composed path. Results II and III show the empirical consequence: ordinary
-supervised composition restores learning-rate sensitivity and an Adam advantage.
+Implicit EM is \emph{local}: the responsibility structure exists at an LSE or
+softmax site and extends to parameters only when the path preserves component
+identity---it does not automatically penetrate a learned dense map. The theory
+is the formal version of this. When the responsibility vector updates private
+component parameters directly, Proposition~\ref{prop:private-affine} gives a
+parameter-independent curvature bound; when it is pulled through a learned dense
+map, Proposition~\ref{prop:composition} shows the same bound no longer controls
+the composed path. Sections~\ref{sec:results-conditioning}
+and~\ref{sec:mechanism} show the empirical consequence: ordinary supervised
+composition restores learning-rate sensitivity and an Adam advantage.
 
 Implicit EM is \emph{graded}. The decisive variable is not whether the
 computation graph contains a path from CE to $W_1$. The $\lambda=1$ joint arm
@@ -39,20 +41,19 @@ dominance, or compatible transport.
 
 \subsection{What Transfers}
 
-The part that transfers is the local mixture geometry. Results I show that
+The part that transfers is the local mixture geometry. As Results~I established,
 supervised learning does not by itself supply volume control to an intermediate
-component site: the baseline has dead units and zero minimum variance. Adding
-NLS alone creates competition but does not fix the degeneracy. Adding variance
-without decorrelation prevents dead units but produces severe redundancy. Full
-volume control eliminates dead units and reduces redundancy across widths.
+site, and only full volume control (not competition alone, and not the
+anti-collapse term alone) eliminates dead units and redundancy across widths.
+The local EM site is not decorative and the auxiliary objective is not inert: it
+moves the structural health of the representation in the direction the
+decoder-free encoder study predicted.
 
-This is the positive result. The local EM site is not decorative, and the
-auxiliary objective is not inert. It changes the structural health of the
-representation in the direction predicted by the decoder-free encoder study.
-The fact that the Var+Decorr control also performs well is useful rather than
-damaging: it separates ordinary regularization from the narrower EM-specific
-claim. Volume control can be good regularization, and when attached to an NLS
-site it also stabilizes the local distance-to-responsibility geometry.
+The Var+Decorr control---which also performs well---is useful rather than
+damaging. It separates ordinary regularization from the narrower EM-specific
+claim: volume control is good regularization on its own, and when attached to an
+NLS site it additionally stabilizes the calibrated
+distance-to-responsibility geometry.
 
 \subsection{What Does Not Transfer}
 

@@ -51,29 +51,26 @@ updates. Mixture likelihoods can develop singular components, and hard or nearly
 hard assignments can leave components with little chance of recovery. Diffuse
 responsibilities, conversely, produce weak specialization and slow progress.
 
-This paper uses these classical failure modes as a structural analogy, but makes
-a neural claim. A hidden layer trained through a dense supervised head is a
-shared-parameter M-step in disguise: many upper hypotheses pull on the same
-lower parameters through $W_2$. Volume-control failures are the local analogue
-of mixture degeneracy; dense backpropagation failures are the structural
-analogue of non-separable M-steps. The experiments test both sides separately.
+This paper uses these classical failure modes as a structural analogy: at-site
+volume-control failures are the local analogue of mixture degeneracy, and dense
+backpropagation failures are the analogue of the coupled, non-separable M-step
+that arises when components share parameters. We make this correspondence precise
+in Section~\ref{sec:theory} (a hidden layer trained through a dense head is a
+shared-parameter M-step in disguise), and test the two sides separately in the
+experiments.
 
 \subsection{Generative and Discriminative Training}
 
-The difference between generative and discriminative training is a standard
-reference point for this work \citep{ng2002discriminative}. A skeptical reading
-of our results might say only that local EM-like objectives are generative and
-cross-entropy is discriminative, so of course they behave differently.
-
-That reading describes the high-level contrast but misses the mechanism. We use
-one architecture and vary how the supervised and local objectives reach the
-same parameters. The mechanism is measured inside that architecture: the local
-LSE Hessian stays bounded, the CE-path curvature is larger and
-parameter-dependent, the CE gradient dominates the local EM gradient at small
-$\lambda$, and stop-gradient restores the conditioning signature. Thus the
-paper does not merely restate generative versus discriminative training. It
-identifies the corridor through which the discriminative objective destroys the
-local EM conditioning guarantee.
+The generative--discriminative distinction \citep{ng2002discriminative} is the
+high-level contrast a skeptic will invoke: local EM-like objectives are
+generative, cross-entropy is discriminative, so of course they differ. Our
+result is more specific. Within one architecture, holding data and the local
+site fixed and varying only how CE reaches $W_1$, we measure the mechanism---the
+bounded LSE curvature, the larger parameter-dependent CE-path curvature, the
+gradient dominance, and its causal reversal under stop-gradient. The
+contribution is not that two objectives differ but the identification of the
+corridor through which the discriminative objective destroys local EM
+conditioning.
 
 \subsection{Local and Decoupled Learning}
 
@@ -100,23 +97,15 @@ bound no longer governs the update.
 
 \subsection{Auxiliary Losses, Gradient Dominance, and Interference}
 
-The supervised experiments train with both a main CE loss and a local auxiliary
-EM loss. This places the work near the literature on multi-task learning,
-auxiliary objectives, gradient conflict, and loss balancing. PCGrad
-\citep{yu2020pcgrad} modifies updates when task gradients conflict. GradNorm
-\citep{chen2018gradnorm} adapts task weights to balance training rates. Gradient
-starvation \citep{pezeshki2021gradient} studies how one signal can dominate
-learning and prevent another from being used.
-
-Our use of gradient measurements is different. We do not propose a method for
-balancing auxiliary losses. Instead, the gradient ratio is the causal variable
-for a specific structural property: whether EM conditioning is visible at
-$W_1$. At small $\lambda$, the CE path dominates the weighted local EM path by
-tens of times. At large $\lambda$ or under stop-gradient, the EM path controls
-the update and the conditioning signature returns. The measured cosines show no
-detectable alignment or opposition; the local EM signal is mainly drowned, not
-cancelled by an adversarial gradient. This distinguishes the phenomenon from
-the conflict regime targeted by gradient surgery.
+Training with both a main CE loss and a local auxiliary EM loss places the work
+near multi-task learning and gradient-interference methods: PCGrad
+\citep{yu2020pcgrad} modifies conflicting task gradients, GradNorm
+\citep{chen2018gradnorm} balances task weights, and gradient starvation
+\citep{pezeshki2021gradient} studies one signal dominating another. We do not
+propose a balancing method; the gradient ratio is instead our causal variable
+for whether EM conditioning is visible at $W_1$. Notably, the measured cosines
+show the EM signal is \emph{drowned}, not opposed---distinguishing this from the
+conflicting-gradient regime that gradient surgery targets.
 
 \subsection{Loss Landscapes and Basin Structure}
 

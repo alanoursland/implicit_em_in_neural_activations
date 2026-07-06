@@ -1,4 +1,5 @@
 \section{Notation and Conventions}
+\label{sec:notation}
 
 This section fixes the sign convention used throughout the paper. We use
 \emph{energy} and \emph{distance} interchangeably: lower values indicate better
@@ -31,10 +32,12 @@ denotes the output-layer class posterior. The label-clamped cross-entropy
 gradient is
 \[
     \frac{\partial L_{\mathrm{CE}}}{\partial h_j}
-    = p_j - \mathbf{1}\{j=y\}.
+    = p_j - \mathbb{1}\{j=y\}.
 \]
 We reserve $r$ for component responsibilities at an intermediate EM site and
-$p$ for output class probabilities.
+$p$ for output class probabilities. We write $\mathbb{1}\{\cdot\}$ for the
+indicator function and $\mathbf{1}$ for the all-ones vector; these are distinct
+objects despite the similar glyphs.
 
 The supervised model has two maps of interest. The first map, $W_1$, sends the
 input to component energies. Its rows are treated as private component

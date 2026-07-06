@@ -45,7 +45,7 @@ The gradient calculation gives
 Differentiating $r$ with respect to $d$ gives
 \[
     \frac{\partial r_j}{\partial d_k}
-    = -r_j(\mathbf{1}\{j=k\}-r_k),
+    = -r_j(\mathbb{1}\{j=k\}-r_k),
 \]
 so $\nabla_d^2 L_{\mathrm{LSE}}=rr^\top-\operatorname{diag}(r)$. For any vector
 $v$,
@@ -193,36 +193,104 @@ because $\partial \log \sum_k \exp(-d_k)/\partial d_j=-r_j$.
 \begin{proposition}[Composition forfeits the uniform bound]
 \label{prop:composition}
 For the composed supervised path above, the Hessian of $L_{\mathrm{CE}}$ with
-respect to the intermediate distances $d$ contains the conjugated softmax
-Hessian
+respect to the intermediate distances $d$ decomposes as
 \[
-    J^\top W_2^\top
+    \nabla_d^2 L_{\mathrm{CE}}
+    =
+    \underbrace{J^\top W_2^\top
     \left(\operatorname{diag}(p)-pp^\top\right)
-    W_2J,
+    W_2J}_{\text{Gauss--Newton term}}
+    \;+\;
+    \underbrace{\sum_{l}\frac{\partial L_{\mathrm{CE}}}{\partial y_l}\,
+    \nabla_d^2 y_l}_{\text{NLS second-order term}}.
 \]
-plus curvature terms from the NLS map. Consequently, its norm is controlled by
-a bound whose leading term scales as $\sigma_{\max}(W_2)^2$ rather than by a
-parameter-independent constant.
+The Gauss--Newton term is bounded by $\tfrac{K}{2}\,\sigma_{\max}(W_2)^2$, a
+quantity that depends on the \emph{learned} spectrum of $W_2$; the uniform,
+parameter-independent bound of Lemma~\ref{lem:simplex} therefore no longer
+controls the composed curvature. We bound the Gauss--Newton term explicitly and
+do not claim a parameter-independent bound on the NLS second-order term; the
+point is only that composition introduces a $\sigma_{\max}(W_2)^2$ dependence
+absent from the isolated site, which the empirical curvature of
+Section~\ref{sec:mechanism} then shows to be large in practice.
 \end{proposition}
 
 \begin{proof}
-The CE Hessian with respect to logits is
+The label clamp $-h_c$ in $L_{\mathrm{CE}}$ is linear in $h$, so it contributes
+to the gradient $p-e_c$ but not to the second derivative. The CE Hessian with
+respect to logits is therefore the softmax Hessian
 \[
     H_h L_{\mathrm{CE}}
     =
-    \operatorname{diag}(p)-pp^\top.
+    \operatorname{diag}(p)-pp^\top,
 \]
-Pulling this term back through the linear map $h=W_2y$ and the NLS Jacobian
-$J$ gives the displayed conjugated term. The remaining terms come from the
-second derivatives of $y=\operatorname{NLS}(d)$, weighted by the incoming
-gradient from the head. Since
+independent of the label. Pulling this term back through the linear map
+$h=W_2y$ and the NLS Jacobian $J=\partial y/\partial d$ gives the displayed
+Gauss--Newton term $J^\top W_2^\top(\operatorname{diag}(p)-pp^\top)W_2J$; the
+remaining terms come from the second derivatives of $y=\operatorname{NLS}(d)$,
+weighted by the incoming gradient from the head.
+
+To bound the leading term we need the two conjugating norms. First, the softmax
+Hessian satisfies $\|\operatorname{diag}(p)-pp^\top\|_2\le 1/2$ exactly as in
+Lemma~\ref{lem:simplex}, so
 \[
     \|W_2^\top(\operatorname{diag}(p)-pp^\top)W_2\|_2
     \le
-    \frac{1}{2}\sigma_{\max}(W_2)^2,
+    \frac{1}{2}\sigma_{\max}(W_2)^2 .
 \]
-up to the NLS Jacobian constants, the bound now depends on the learned spectrum
-of $W_2$.
+Second, we bound the NLS Jacobian $J=I-\mathbf{1}r^\top$, which is not a
+contraction. We compute $\|J\|_2$ in closed form. Writing
+\[
+    J^\top J
+    = I - \mathbf{1}r^\top - r\mathbf{1}^\top + K\,rr^\top
+    = I + M,
+    \qquad
+    M := -\mathbf{1}r^\top - r\mathbf{1}^\top + K\,rr^\top,
+\]
+the perturbation $M$ is supported on $\operatorname{span}\{\mathbf{1},r\}$: for
+any $v$ orthogonal to both $\mathbf{1}$ and $r$ we have $Mv=0$, so $J^\top J$ acts
+as the identity on that complement (eigenvalue $1$). If
+$r=\mathbf{1}/K$, then $J$ is the orthogonal projector onto
+$\mathbf{1}^{\perp}$, so the eigenvalues of $J^\top J$ are $1$ with
+multiplicity $K-1$ and $0$ once. Otherwise $\mathbf{1}$ and $r$ are linearly
+independent. On $\operatorname{span}\{\mathbf{1},r\}$, using
+$\mathbf{1}^\top\mathbf{1}=K$, $\mathbf{1}^\top r=1$, and
+$r^\top r=\|r\|_2^2=:s$, the operator $M$ has matrix representation
+$\left(\begin{smallmatrix}-1 & -s\\ 0 & Ks-1\end{smallmatrix}\right)$ in the
+basis $\{\mathbf{1},r\}$, with eigenvalues $-1$ and $Ks-1$. Hence the eigenvalues
+of $J^\top J$ are $\{1\ (\text{multiplicity }K-2),\;0,\;Ks\}$ away from the
+uniform point, with the same top eigenvalue formula at the uniform point. Thus
+\[
+    \|J\|_2^2 = \lambda_{\max}(J^\top J) = \max(1, Ks) = K\|r\|_2^2,
+\]
+since $Ks\ge 1$ for a probability vector (as $\|r\|_2^2\ge 1/K$). Because
+$\|r\|_2^2\le\|r\|_1=1$ on the simplex, with equality only at a vertex,
+\[
+    \|J\|_2 = \sqrt{K}\,\|r\|_2 \le \sqrt{K},
+\]
+attained exactly when $r$ is one-hot and equal to $1$ when $r=\mathbf{1}/K$. We
+keep this factor explicit rather than absorb it into an unnamed constant.
+Combining,
+\[
+    \big\|J^\top W_2^\top(\operatorname{diag}(p)-pp^\top)W_2J\big\|_2
+    \le
+    \|J\|_2^2\cdot\tfrac{1}{2}\sigma_{\max}(W_2)^2
+    \le
+    \tfrac{K}{2}\,\sigma_{\max}(W_2)^2 .
+\]
+The leading factor is $\sigma_{\max}(W_2)^2$, modulated by an NLS-Jacobian factor
+bounded by $K/2$ that depends only on the number of components. Two features
+distinguish this from Lemma~\ref{lem:simplex}: the bound scales with the
+\emph{learned} spectrum of the corridor $W_2$, and it is therefore
+parameter-dependent and time-varying rather than a fixed data constant. The NLS
+factor is the (parameter-independent) price of calibration; the corridor factor
+is the source of the forfeited guarantee. This bounds the Gauss--Newton term
+only; we do not bound the NLS second-order term $\sum_l(\partial
+L_{\mathrm{CE}}/\partial y_l)\nabla_d^2 y_l$, which need not be small (it carries
+the incoming head gradient) and which the empirical measurements in
+Section~\ref{sec:mechanism} include. The claim is not that the full composed
+curvature is controlled by $\sigma_{\max}(W_2)^2$, but that composition
+introduces a $\sigma_{\max}(W_2)^2$ dependence that the isolated site does not
+have.
 \end{proof}
 
 Proposition~\ref{prop:composition} is deliberately a

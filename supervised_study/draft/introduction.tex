@@ -116,14 +116,15 @@ The theory gives the local boundary. For an LSE objective in distance
 coordinates, the gradient is a simplex-valued responsibility vector and the
 Hessian has spectral norm at most $1/2$. With private affine component
 parameters, this yields a parameter-independent curvature bound. When the site
-is composed behind a learned dense map, the cross-entropy Hessian contains a
-conjugated term of the form
+is composed behind a learned dense map, the leading (Gauss--Newton) term of the
+cross-entropy Hessian is the conjugated form
 \[
     J^\top W_2^\top
     (\operatorname{diag}(p)-pp^\top)
     W_2J,
 \]
-so the clean parameter-independent guarantee is forfeited.
+whose norm scales with the learned spectrum $\sigma_{\max}(W_2)^2$, so the clean
+parameter-independent guarantee is forfeited.
 
 The experiments confirm the split. Volume control transfers to an intermediate
 supervised site: it eliminates dead units, prevents collapse, and reduces
