@@ -129,7 +129,6 @@ def check_residual_is_real():
         for _ in range(20):
             dv = RNG.standard_normal(K)
             r = softmax(-dv)  # careful: r = softmax(-d)
-            r = np.exp(-dv - (-dv).max()); r = r / r.sum()
             W2 = RNG.standard_normal((C, K)) * 0.5
             c = int(RNG.integers(C))
 

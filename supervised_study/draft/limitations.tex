@@ -24,10 +24,10 @@ The curvature claims use spectral norms estimated by power iteration on fixed
 batches. The qualitative contrast is large: the local LSE curvature remains
 below $1/2$, while the composed CE-corridor curvature is much larger and
 non-monotone. Still, the exact reported ratios can depend on batch identity,
-batch size, and the number of power-iteration steps. The final presentation
-should report sensitivity to these choices. The key internal check is that the
-LSE bound remains stable and the CE-corridor curvature remains separated from it
-under reasonable measurement variations.
+batch size, and the number of power-iteration steps. We did not run a full
+sensitivity sweep over these numerical choices. The key internal check is that
+the LSE bound remains stable and the CE-corridor curvature remains separated
+from it under reasonable measurement variations.
 
 \paragraph{The $1/2$-saturation diagnostic is demonstrated at one site.}
 The paper uses proximity to the LSE curvature bound as a diagnostic of mixture
@@ -117,11 +117,11 @@ artifacts of component permutation.
 
 \paragraph{Dataset and scale.}
 The experiments use MNIST and small supervised networks. This is appropriate
-for isolating the mechanism, but it limits external validity. The paper should
-not claim state-of-the-art performance, broad deep-learning optimization
-coverage, or automatic transfer to modern large-scale architectures. The claim
-is that the controlled setting exposes a locality boundary that larger systems
-must respect when the same structural conditions are present.
+for isolating the mechanism, but it limits external validity. We do not claim
+state-of-the-art performance, broad deep-learning optimization coverage, or
+automatic transfer to modern large-scale architectures. The claim is that the
+controlled setting exposes a locality boundary that larger systems must respect
+when the same structural conditions are present.
 
 \paragraph{Single main architecture.}
 The experimental architecture has one intermediate EM site followed by a dense

@@ -10,7 +10,8 @@ WHAT THIS DOES AND DOES NOT DO
 This script checks that the *specific inequalities and constants* claimed in the
 proof hold, and are tight where the paper says they are tight. It is a guard
 against arithmetic/spectral-norm errors, not a theorem prover: it confirms the
-claims at sampled / witnessed points and via the symbolic Popoviciu step, but it
+claims at sampled / witnessed points and via the symbolic variance-identity step,
+but it
 does not replace the analytic argument for all d.
 
 CLAIM (Lemma 1)
@@ -145,8 +146,9 @@ def main():
         f"(tight). **{'PASS' if ok_b else 'FAIL'}**")
 
     ok_p = check_popoviciu_symbolic()
-    log(f"- **Popoviciu step (symbolic)**: v^T C(r) v = Var_(j~r)(v_j) "
-        f"confirmed identically. **{'PASS' if ok_p else 'FAIL'}**")
+    log(f"- **Variance identity (symbolic)**: v^T C(r) v = Var_(j~r)(v_j) "
+        f"confirmed identically for a representative K=3 symbolic simplex "
+        f"parameterization. **{'PASS' if ok_p else 'FAIL'}**")
 
     log()
     all_ok = ok_g and ok_h and ok_b and ok_p
