@@ -64,7 +64,9 @@ The variance term $L_{\mathrm{var}}$ is the anti-collapse term: it penalizes
 components whose activations have too little variance over the batch. The
 decorrelation term $L_{\mathrm{tc}}$ is the anti-redundancy term: it penalizes
 correlated component responses. Together they implement the volume-control
-mechanism tested in the decoder-free encoder study.
+mechanism tested in the decoder-free encoder study and are related to the
+variance and redundancy-reduction terms used in VICReg and Barlow Twins
+\citep{bardes2022vicreg,zbontar2021barlow}.
 
 The supervised objective is
 \[
@@ -182,7 +184,7 @@ fixed-protocol linear probe trained on the frozen intermediate distances $d$.
 The probe is a single linear classifier trained with Adam at learning rate
 $10^{-3}$ for 15 epochs, batch size 256, with its own fixed random seed. This
 decouples the measured representation from how well the supervised head trained
-at a particular learning rate.
+at a particular learning rate \citep{alain2016understanding}.
 
 For gradient competition, the training loop measures
 \[
@@ -201,7 +203,7 @@ For curvature tracking, power iteration with exact Hessian-vector products
 estimates the spectral norm of the Hessian with respect to $d$ for both the LSE
 term and the CE corridor through NLS and the head. Measurements use a fixed
 512-example batch every 2 epochs, and $\sigma_{\max}(W_2)$ is recorded
-alongside the curvature estimates.
+alongside the curvature estimates \citep{pearlmutter1994fast}.
 
 \subsection{Metrics}
 

@@ -32,6 +32,8 @@ Equivalently, the negative Hessian is the categorical covariance matrix
     \qquad
     \|C(r)\|_2 = \|\nabla_d^2 L_{\mathrm{LSE}}\|_2 \le \frac{1}{2}.
 \]
+This is the same multinomial-logistic Hessian bound studied by
+\citet{bohning1992multinomial}.
 \end{lemma}
 
 \begin{proof}
@@ -56,7 +58,7 @@ $v$,
     =
     \operatorname{Var}_{j\sim r}(v_j).
 \]
-By Popoviciu's inequality,
+By Popoviciu's inequality \citep{popoviciu1935equations},
 \[
     \operatorname{Var}_{j\sim r}(v_j)
     \le \frac{1}{4}(\max_j v_j-\min_j v_j)^2.
@@ -220,11 +222,15 @@ respect to the intermediate distances $d$ decomposes as
 The Gauss--Newton term is bounded by $\tfrac{K}{2}\,\sigma_{\max}(W_2)^2$, a
 quantity that depends on the \emph{learned} spectrum of $W_2$; the uniform,
 parameter-independent bound of Lemma~\ref{lem:simplex} therefore no longer
-controls the composed curvature. We bound the Gauss--Newton term explicitly and
-do not claim a parameter-independent bound on the NLS second-order term; the
-point is only that composition introduces a $\sigma_{\max}(W_2)^2$ dependence
-absent from the isolated site, which the empirical curvature of
-Section~\ref{sec:mechanism} then shows to be large in practice.
+controls the composed curvature. The decomposition is the usual generalized
+Gauss--Newton separation between the positive semidefinite output-curvature
+pullback and the remaining model-curvature terms
+\citep{schraudolph2002fast,martens2010deep}. We bound the Gauss--Newton term
+explicitly and do not claim a parameter-independent bound on the NLS
+second-order term; the point is only that composition introduces a
+$\sigma_{\max}(W_2)^2$ dependence absent from the isolated site, which the
+empirical curvature of Section~\ref{sec:mechanism} then shows to be large in
+practice.
 \end{proposition}
 
 \begin{proof}
@@ -244,7 +250,7 @@ weighted by the incoming gradient from the head.
 
 To bound the leading term we need the two conjugating norms. First, the softmax
 Hessian satisfies $\|\operatorname{diag}(p)-pp^\top\|_2\le 1/2$ exactly as in
-Lemma~\ref{lem:simplex}, so
+Lemma~\ref{lem:simplex} and \citet{bohning1992multinomial}, so
 \[
     \|W_2^\top(\operatorname{diag}(p)-pp^\top)W_2\|_2
     \le
