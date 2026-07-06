@@ -49,13 +49,13 @@ not show that stop-gradient is the best practical method; it shows that the CE
 corridor is sufficient to destroy the conditioning signature when it dominates.
 
 \paragraph{Gradient dominance should be measured under the matched optimizer.}
-The gradient-competition measurements reported so far were first taken during
-Adam training at learning rate $10^{-3}$, while the conditioning sweep in the
-causal experiment uses SGD. The dominance ratio is expected to reflect the loss
-geometry at the distance interface rather than an Adam-specific artifact, but
-the cleanest version of the result should measure the same CE/EM ratio under
-the same optimizer and learning-rate sweep used for the conditioning result.
-Until then, the optimizer mismatch should be stated explicitly.
+The gradient-competition measurements are taken during Adam training at learning
+rate $10^{-3}$, while the conditioning sweep in the causal experiment uses SGD.
+The dominance ratio is expected to reflect the loss geometry at the distance
+interface rather than an Adam-specific artifact, but the cleanest version of the
+result would measure the same CE/EM ratio under the same optimizer and
+learning-rate sweep used for the conditioning result. Until then, the optimizer
+mismatch should be stated explicitly.
 
 \paragraph{The optimizer-signature restoration is incomplete.}
 The stop-gradient arm restores SGD learning-rate insensitivity at $W_1$, and the

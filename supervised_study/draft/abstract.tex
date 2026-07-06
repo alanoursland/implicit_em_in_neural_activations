@@ -19,8 +19,8 @@ survive ordinary supervised composition: SGD becomes learning-rate sensitive
 again and the advantage of adaptive methods reappears. Mechanism measurements
 show the same pattern from inside the model. At the standard auxiliary weight,
 gradient diagnostics indicate that the cross-entropy path dominates the weighted
-local EM path by $30$--$70\times$, with no detectable alignment or opposition
-between the two directions. Cutting that path with stop-gradient restores
+local EM path by roughly $67$--$95\times$ late in training, with no detectable
+alignment or opposition between the two directions. Cutting that path with stop-gradient restores
 learning-rate insensitivity; increasing the EM weight until the EM path
 dominates restores the same behavior without cutting the graph. Thus implicit EM
 is local, graded, and structural: volume control repairs failures at EM sites,

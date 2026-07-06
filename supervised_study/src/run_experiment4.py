@@ -69,15 +69,16 @@ class CachedLoader:
         return (len(self.data) + self.batch_size - 1) // self.batch_size
 
 
-def load_mnist_cached(data_dir: str, batch_size: int = 128):
+def load_mnist_cached(data_dir: str, batch_size: int = 128, device=None):
     from torchvision import datasets
 
+    device = torch.device(device or "cpu")
     train = datasets.MNIST(root=data_dir, train=True, download=True)
     test = datasets.MNIST(root=data_dir, train=False, download=True)
-    train_x = train.data.float().div_(255.0).view(len(train), -1)
-    train_y = train.targets
-    test_x = test.data.float().div_(255.0).view(len(test), -1)
-    test_y = test.targets
+    train_x = train.data.float().div_(255.0).view(len(train), -1).to(device)
+    train_y = train.targets.to(device)
+    test_x = test.data.float().div_(255.0).view(len(test), -1).to(device)
+    test_y = test.targets.to(device)
     return (
         CachedLoader(train_x, train_y, batch_size, shuffle=True),
         train_x, train_y, test_x, test_y,
@@ -136,12 +137,13 @@ def linear_probe_accuracy(model, train_x, train_y, test_x, test_y,
         feat_train = model.act(model.linear(train_x))
         feat_test = model.act(model.linear(test_x))
 
-    g = torch.Generator().manual_seed(seed)
-    probe = nn.Linear(feat_train.shape[1], 10)
+    device = feat_train.device
+    g = torch.Generator(device=device).manual_seed(seed)
+    probe = nn.Linear(feat_train.shape[1], 10).to(device)
     opt = torch.optim.Adam(probe.parameters(), lr=lr)
     n = len(feat_train)
     for _ in range(epochs):
-        idx = torch.randperm(n, generator=g)
+        idx = torch.randperm(n, generator=g, device=device)
         for i in range(0, n, batch_size):
             b = idx[i : i + batch_size]
             opt.zero_grad()
@@ -171,7 +173,8 @@ def train_run(arm, lr, seed, loaders, epochs=40, hidden_dim=25,
     lam = {"joint_lam_small": 0.001, "joint_lam_mid": 0.03,
            "joint_lam_1": 1.0, "stopgrad": 1.0}[arm]
 
-    model = Exp4Model(hidden_dim=hidden_dim, detach_head=detach)
+    device = train_x.device
+    model = Exp4Model(hidden_dim=hidden_dim, detach_head=detach).to(device)
     if optimizer_name == "sgd":
         opt = torch.optim.SGD(model.parameters(), lr=lr)
     else:
@@ -256,8 +259,8 @@ def _lam_max(f_builder, d0, iters=30, seed=0):
     d = d0.detach().requires_grad_(True)
     f = f_builder(d)
     g = torch.autograd.grad(f, d, create_graph=True)[0]
-    gen = torch.Generator().manual_seed(seed)
-    v = torch.randn(d.shape, generator=gen)
+    gen = torch.Generator(device=d.device).manual_seed(seed)
+    v = torch.randn(d.shape, generator=gen, device=d.device)
     v = v / v.norm()
     lam = 0.0
     for _ in range(iters):
@@ -305,14 +308,35 @@ def tail_mean(vals, k=5):
     return sum(vals[-k:]) / min(k, len(vals))
 
 
+def _load_json_if_present(path, default):
+    if not path.exists():
+        return default
+    with open(path) as f:
+        return json.load(f)
+
+
+def _sweep_key(arm, lr, seed):
+    return arm, float(lr), int(seed)
+
+
 def phase_sweep(loaders, out_dir, epochs, seeds, hidden_dim, arms=None):
     arms = arms or ["joint_lam_small", "joint_lam_1", "stopgrad"]
     lrs = [0.0001, 0.001, 0.01, 0.1]
-    results = []
-    curves_all = {}
+    results_path = out_dir / "sweep_results.json"
+    curves_path = out_dir / "sweep_curves.json"
+    results = _load_json_if_present(results_path, [])
+    curves_all = _load_json_if_present(curves_path, {})
+    completed = {_sweep_key(r["arm"], r["lr"], r["seed"]) for r in results}
+
     for arm in arms:
         for lr in lrs:
             for seed in seeds:
+                key = _sweep_key(arm, lr, seed)
+                if key in completed:
+                    print(f"SKIP {arm} lr={lr} seed={seed} (already in {results_path.name})",
+                          flush=True)
+                    continue
+
                 _, curves, _, _, probe_acc = train_run(
                     arm, lr, seed, loaders, epochs=epochs, hidden_dim=hidden_dim)
                 rec = {
@@ -330,9 +354,13 @@ def phase_sweep(loaders, out_dir, epochs, seeds, hidden_dim, arms=None):
                 print(f"DONE {arm} lr={lr} seed={seed} probe={probe_acc:.4f} "
                       f"head={rec['test_acc']:.4f} dead={rec['dead_units']:.1f}",
                       flush=True)
-                with open(out_dir / "sweep_results.json", "w") as f:
+                with open(results_path, "w") as f:
                     json.dump(results, f, indent=2)
-    with open(out_dir / "sweep_curves.json", "w") as f:
+                with open(curves_path, "w") as f:
+                    json.dump(curves_all, f)
+                completed.add(key)
+
+    with open(curves_path, "w") as f:
         json.dump(curves_all, f)
     print("SWEEP COMPLETE", flush=True)
 
@@ -379,17 +407,27 @@ def main():
     p.add_argument("--data-dir", type=str, default="E:/ml_datasets")
     p.add_argument("--output-dir", type=str,
                    default=str(_supervised_root / "results" / "experiment4"))
+    p.add_argument("--device", type=str, default="auto",
+                   help="Device to use: auto, cpu, cuda, or cuda:N")
     p.add_argument("--epochs", type=int, default=40)
     p.add_argument("--hidden-dim", type=int, default=25)
     p.add_argument("--seeds", nargs="+", type=int, default=[42, 43, 44])
     p.add_argument("--batch-size", type=int, default=128)
     args = p.parse_args()
 
+    if args.device == "auto":
+        device = "cuda" if torch.cuda.is_available() else "cpu"
+    else:
+        device = args.device
+    if str(device).startswith("cuda") and not torch.cuda.is_available():
+        raise RuntimeError("CUDA was requested, but torch.cuda.is_available() is false.")
+    print(f"Using device: {device}", flush=True)
+
     out_dir = Path(args.output_dir)
     out_dir.mkdir(parents=True, exist_ok=True)
     torch.set_num_threads(max(1, torch.get_num_threads()))
 
-    loaders = load_mnist_cached(args.data_dir, batch_size=args.batch_size)
+    loaders = load_mnist_cached(args.data_dir, batch_size=args.batch_size, device=device)
     if args.phase == "sweep":
         phase_sweep(loaders, out_dir, args.epochs, args.seeds, args.hidden_dim,
                     arms=args.arms)

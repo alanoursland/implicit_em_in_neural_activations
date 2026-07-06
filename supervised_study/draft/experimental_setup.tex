@@ -185,7 +185,7 @@ For gradient competition, the training loop measures
     \qquad
     \cos(\nabla_d L_{\mathrm{CE}},\nabla_d L_{\mathrm{aux}}).
 \]
-The original measurements were taken during Adam training at learning rate
+These measurements are taken during Adam training at learning rate
 $10^{-3}$, while the conditioning sweep uses SGD. We therefore report these
 ratios as a site-level gradient diagnostic rather than as a matched-optimizer
 measurement; the matched-SGD version is a strengthening check.
