@@ -70,8 +70,8 @@ The supervised objective is
     L_{\mathrm{CE}}
     + \lambda L_{\mathrm{aux}},
 \]
-with $\lambda_{\mathrm{reg}}=0.001$ in the initial ablation and capacity
-experiments unless otherwise stated. In Experiments 1--3, the auxiliary loss
+with $\lambda=0.001$ in the initial ablation and capacity experiments unless
+otherwise stated. In Experiments 1--3, the auxiliary loss
 uses the volume-control terms used in those reports. In Experiment 4, the LSE
 term is included explicitly so that the stop-gradient arm trains $W_1$ by the
 same local EM objective as the single-layer model.
@@ -80,7 +80,7 @@ same local EM objective as the single-layer model.
 
 Experiment 1 tests which pieces of the intermediate EM site are needed. The
 architecture uses $K=25$ components, MNIST, 50 training epochs, Adam with
-learning rate $10^{-3}$, $\lambda_{\mathrm{reg}}=0.001$, and 10 seeds
+learning rate $10^{-3}$, $\lambda=0.001$, and 10 seeds
 $(42,\ldots,51)$. Metrics are averaged over the final 10 epochs.
 
 The five configurations are:
@@ -110,7 +110,7 @@ the baseline against NLS plus full volume control at
     K \in \{16,25,36,49,64\}.
 \]
 Each model is trained on MNIST for 50 epochs with Adam at learning rate
-$10^{-3}$, $\lambda_{\mathrm{reg}}=0.001$, and 5 seeds $(42,\ldots,46)$. Metrics
+$10^{-3}$, $\lambda=0.001$, and 5 seeds $(42,\ldots,46)$. Metrics
 are again averaged over the final 10 epochs. This experiment is used to
 distinguish structural health from benchmark accuracy: volume control can
 eliminate dead units and reduce redundancy even when the fixed regularization
@@ -120,7 +120,7 @@ weight is not accuracy-optimal at larger widths.
 
 Experiment 3 asks whether the single-site optimization signature survives
 ordinary supervised composition. It fixes the NLS + full-volume-control model
-with $K=25$ and $\lambda_{\mathrm{reg}}=0.001$, and sweeps optimizer and learning
+with $K=25$ and $\lambda=0.001$, and sweeps optimizer and learning
 rate:
 \[
     \text{optimizer} \in \{\mathrm{SGD},\mathrm{Adam}\},
@@ -192,7 +192,7 @@ measurement; the matched-SGD version is a strengthening check.
 
 For curvature tracking, power iteration with exact Hessian-vector products
 estimates the spectral norm of the Hessian with respect to $d$ for both the LSE
-term and the CE path through NLS and the head. Measurements use a fixed
+term and the CE corridor through NLS and the head. Measurements use a fixed
 512-example batch every 2 epochs, and $\sigma_{\max}(W_2)$ is recorded
 alongside the curvature estimates.
 
@@ -221,6 +221,6 @@ failures: collapse, dead units, and redundancy. Their question is whether local
 volume control repairs these failures inside a supervised network. Experiment 3
 tests whether the single-site conditioning signature survives ordinary
 supervised composition. Experiment 4 separates structure from dominance: the
-dense corridor creates an ill-conditioned CE-path contribution, while the
+dense corridor creates an ill-conditioned CE-corridor contribution, while the
 measured CE/EM gradient ratio determines whether that contribution controls the
 effective landscape.

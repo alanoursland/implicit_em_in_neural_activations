@@ -2,7 +2,7 @@
 \label{sec:mechanism}
 
 Experiment 3 established the boundary observationally; Experiment 4 asks why. It
-tests three mechanism predictions---CE-path dominance at small $\lambda$, the
+tests three mechanism predictions---CE-corridor dominance at small $\lambda$, the
 curvature dichotomy, and causal restoration under stop-gradient---summarized
 against outcomes in the ledger below.
 
@@ -27,8 +27,8 @@ Exp3 & Optimizer signature disappears under composition &
 SGD spans $83.8$--$96.2\%$; Adam helps & \checkmark \\
 Exp4-P1 & CE dominates EM at small $\lambda$ &
 Late CE/EM ratio is $67$--$95\times$ at $\lambda=0.001$ & \checkmark \\
-Exp4-P2 & LSE curvature stays below $1/2$; CE-path curvature is larger &
-LSE bound holds; CE path is $13$--$100\times$ larger & \checkmark \\
+Exp4-P2 & LSE curvature stays below $1/2$; CE-corridor curvature is larger &
+LSE bound holds; CE corridor is $13$--$100\times$ larger & \checkmark \\
 Exp4-P3 & Stop-gradient restores conditioning &
 Learning-rate spread falls from $10.9$ to $1.6$ points & \checkmark \\
 Exp4 & $\lambda=1$ joint behaves like stop-gradient (dominance, not connectivity) &
@@ -163,7 +163,7 @@ Under stop-gradient, the local site stabilizes in a narrow band, roughly
 joint training, the same metric is erratic and sometimes reaches the training
 budget. This supports the same conclusion as the probe sweep: when $W_1$ is
 trained by the local EM objective, the site has the fixed-time behavior of the
-single-layer model; when the CE path dominates, the local EM site does not
+single-layer model; when the CE corridor dominates, the local EM site does not
 stabilize as an autonomous mixture.
 
 \subsection{Gradient Dominance, Not Gradient Opposition}
@@ -203,7 +203,7 @@ This measurement corrects an earlier heuristic interpretation. Since
 $\lambda=0.001$, one might expect a $1000\times$ ratio. The measured ratio is
 $67$--$95\times$ late in training, because the raw auxiliary gradient is larger
 than the raw CE gradient. The full trajectory is wider, with early transients
-before the CE path takes over. The conclusion is unchanged: CE dominates at the
+before the CE corridor takes over. The conclusion is unchanged: CE dominates at the
 operating point, but the causal variable is the measured gradient ratio, not
 $\lambda$ itself.
 
@@ -218,14 +218,14 @@ The prediction is that the dominance ratio is a property of the loss geometry at
 the site, not an Adam-specific artifact; a matched-SGD gradient measurement is a
 remaining strengthening check.
 
-\subsection{Curvature: The LSE Bound Holds, the CE Path Is Large}
+\subsection{Curvature: The LSE Bound Holds, the CE Corridor Is Large}
 
 Proposition~\ref{prop:composition} says that composition forfeits the uniform
 LSE bound; it does not prove that the composed curvature is necessarily large.
 The curvature measurements answer that empirical question. Power iteration on
 exact Hessian-vector products estimates the spectral norm of the Hessian with
 respect to the intermediate distances $d$ for both the local LSE term and the CE
-path through NLS and the head.
+corridor through NLS and the head.
 
 The local LSE curvature obeys the theory at every measured point: it stays below
 $1/2$ in every arm and seed. In the stop-gradient arm, it converges to
@@ -234,7 +234,7 @@ responsibility mass concentrates equally on two components. Under protected
 local-EM training, the mixture sharpens until cluster boundaries become two-way
 ties, and the Hessian detects exactly this geometry.
 
-By contrast, the CE-path curvature in a representative joint
+By contrast, the CE-corridor curvature in a representative joint
 $\lambda=0.001$ trajectory wanders over values such as $6.5$, $17.2$, and $7.8$
 across training. At the same coordinates, this is roughly $13$--$100\times$
 larger than the LSE curvature, non-monotone, and consistent with dependence on

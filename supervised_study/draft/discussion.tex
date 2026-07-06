@@ -19,13 +19,13 @@ is the formal version of this. When the responsibility vector updates private
 component parameters directly, Proposition~\ref{prop:private-affine} gives a
 parameter-independent curvature bound; when it is pulled through a learned dense
 map, Proposition~\ref{prop:composition} shows the same bound no longer controls
-the composed path. Sections~\ref{sec:results-conditioning}
+the composed corridor. Sections~\ref{sec:results-conditioning}
 and~\ref{sec:mechanism} show the empirical consequence: ordinary supervised
 composition restores learning-rate sensitivity and an Adam advantage.
 
 Implicit EM is \emph{graded}. The decisive variable is not whether the
-computation graph contains a path from CE to $W_1$. The $\lambda=1$ joint arm
-keeps that path intact and nevertheless behaves like the stop-gradient arm on
+computation graph contains the CE corridor to $W_1$. The $\lambda=1$ joint arm
+keeps that corridor intact and nevertheless behaves like the stop-gradient arm on
 the conditioning metric. Conversely, the $\lambda=0.001$ joint arm is
 CE-dominated and behaves like an ordinary supervised network. The reported
 CE/EM gradient-ratio diagnostic identifies the causal variable as dominance, not
@@ -62,7 +62,7 @@ supervised composition. In the isolated implicit-EM model, SGD was unusually
 learning-rate insensitive and Adam had little to correct. In the supervised
 network, SGD spans a wide accuracy range across learning rates and Adam becomes
 useful again. The local objective remains present, but it no longer controls the
-training dynamics at $W_1$ when the supervised path dominates.
+training dynamics at $W_1$ when the supervised corridor dominates.
 
 The causal experiment explains why. Cutting the CE-to-$W_1$ corridor restores
 the learning-rate-insensitive signature. Increasing $\lambda$ until the EM path
@@ -93,7 +93,7 @@ at $W_1$ is a sum:
 \]
 When the first term dominates, the effective landscape is the composed
 supervised landscape. When the second term dominates, the local EM geometry
-sets the behavior even though the CE path still exists. A denser
+sets the behavior even though the CE corridor still exists. A denser
 $\lambda$-resolution curve is therefore the natural next strengthening analysis:
 the causal variable is the measured gradient ratio, not the nominal value of
 $\lambda$ and not the binary presence of an edge.
@@ -105,14 +105,14 @@ generative-versus-discriminative distinction. The experiments are compatible
 with that high-level framing, but they are more specific. The same architecture
 is trained with the same data and the same local site while the route by which
 CE reaches $W_1$ is changed. The mechanistic measurements are specific: the LSE
-curvature obeys the $1/2$ bound, the CE-path curvature is larger and changing,
+curvature obeys the $1/2$ bound, the CE-corridor curvature is larger and changing,
 the reported gradient diagnostic shows CE dominance at small $\lambda$, and
-removing that path restores the conditioning signature.
+removing that corridor restores the conditioning signature.
 
 The result is therefore not just that two objectives differ. It identifies how
 the discriminative objective reaches into a local EM site and when that
 gradient controls the update. This is the useful level of explanation for model
-design: it tells us which path must be blocked, weakened, or made compatible if
+design: it tells us which corridor must be blocked, weakened, or made compatible if
 we want local EM conditioning to survive.
 
 \subsection{The Accuracy Trade-Off}

@@ -9,7 +9,7 @@ answer is no. Once the local site is embedded behind an ordinary supervised
 head, SGD becomes learning-rate sensitive again and Adam becomes useful again.
 
 This experiment uses the full intermediate objective, NLS plus variance and
-decorrelation, with $K=25$ and $\lambda_{\mathrm{reg}}=0.001$. We train with
+decorrelation, with $K=25$ and $\lambda=0.001$. We train with
 SGD and Adam over learning rates
 $\{10^{-4},10^{-3},10^{-2},10^{-1}\}$ for 50 epochs on MNIST.
 Table~\ref{tab:optimizer-sweep} reports metrics averaged over epochs 41--50
@@ -113,7 +113,7 @@ the naive inheritance claim that a network with an EM site should inherit EM
 conditioning throughout the composed model.
 
 It does not, by itself, prove the mechanism. The optimizer sweep is consistent
-with the theory that the CE path through $W_2$ contributes a larger,
+with the theory that the CE corridor through $W_2$ contributes a larger,
 ill-conditioned foreign gradient at $W_1$, but Table~\ref{tab:optimizer-sweep}
 does not measure that gradient directly. Results III therefore performs the
 causal test: it measures CE/EM gradient dominance, measures the curvature

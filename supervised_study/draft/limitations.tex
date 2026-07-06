@@ -22,11 +22,11 @@ less task-aligned, not merely less linearly separable.
 \paragraph{The curvature measurements depend on numerical estimation.}
 The curvature claims use spectral norms estimated by power iteration on fixed
 batches. The qualitative contrast is large: the local LSE curvature remains
-below $1/2$, while the composed CE-path curvature is much larger and
+below $1/2$, while the composed CE-corridor curvature is much larger and
 non-monotone. Still, the exact reported ratios can depend on batch identity,
 batch size, and the number of power-iteration steps. The final presentation
 should report sensitivity to these choices. The key internal check is that the
-LSE bound remains stable and the CE-path curvature remains separated from it
+LSE bound remains stable and the CE-corridor curvature remains separated from it
 under reasonable measurement variations.
 
 \paragraph{The $1/2$-saturation diagnostic is demonstrated at one site.}
@@ -44,7 +44,7 @@ the data, labels, architecture, CE loss, and supervised head in place. This
 makes it a strong causal test of the corridor-gradient hypothesis. It is also a
 large intervention: it changes the optimization problem for $W_1$ from joint
 supervised training to protected local training. The interpretation rests on
-the fact that the intervention changes exactly the path under dispute. It does
+the fact that the intervention changes exactly the corridor under dispute. It does
 not show that stop-gradient is the best practical method; it shows that the CE
 corridor is sufficient to destroy the conditioning signature when it dominates.
 
@@ -141,7 +141,7 @@ theory, such as hard gates or bad data geometry.
 
 \paragraph{The theory does not prove composed curvature is always large.}
 Proposition~\ref{prop:composition} is a guarantee-forfeiture statement. It
-shows that the clean $1/2$ LSE bound no longer controls the composed CE path
+shows that the clean $1/2$ LSE bound no longer controls the composed CE corridor
 because the bound can depend on the learned spectrum of $W_2$. The empirical
 measurements show that the composed curvature is large in the studied network.
 The theorem alone does not imply that every dense composition has large

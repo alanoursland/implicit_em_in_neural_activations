@@ -81,7 +81,7 @@ It is \emph{graded}: the relevant variable is the measured share of
 EM-structured gradient reaching the parameters. A fully connected supervised
 graph can behave like an isolated EM site when the local EM gradient dominates,
 and a visible EM site can behave like an ordinary supervised network when the
-cross-entropy path dominates.
+cross-entropy corridor dominates.
 
 It is \emph{structural}: failures divide into at-site failures and corridor
 failures. At-site failures are repaired by local volume control. Corridor
@@ -134,11 +134,11 @@ does not transfer through ordinary supervised composition. In the full
 supervised model, SGD is again learning-rate sensitive and Adam is again useful.
 
 The causal experiment identifies the mechanism. At the standard auxiliary
-weight, the CE path dominates the weighted local EM path by roughly
+weight, the CE corridor dominates the weighted local EM path by roughly
 $67$--$95\times$ late in training, while the two gradients show no detectable
 alignment. The
-local LSE curvature remains bounded by $1/2$, but the composed CE-path
-curvature is larger, non-monotone, and parameter-dependent. Cutting the CE path
+local LSE curvature remains bounded by $1/2$, but the composed CE-corridor
+curvature is larger, non-monotone, and parameter-dependent. Cutting the CE corridor
 to $W_1$ with stop-gradient restores learning-rate insensitivity. Increasing
 the EM weight until the EM path dominates restores the same behavior without
 cutting the graph. Conditioning follows dominance, not mere connectivity.

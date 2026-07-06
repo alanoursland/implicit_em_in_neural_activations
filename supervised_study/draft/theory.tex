@@ -194,7 +194,7 @@ because $\partial \log \sum_k \exp(-d_k)/\partial d_j=-r_j$.
 
 \begin{proposition}[Composition forfeits the uniform bound]
 \label{prop:composition}
-For the composed supervised path above, the Hessian of $L_{\mathrm{CE}}$ with
+For the composed supervised corridor above, the Hessian of $L_{\mathrm{CE}}$ with
 respect to the intermediate distances $d$ decomposes as
 \[
     \nabla_d^2 L_{\mathrm{CE}}
@@ -298,10 +298,10 @@ have.
 Proposition~\ref{prop:composition} is deliberately a
 guarantee-forfeiture statement. It shows that the parameter-independent
 $1/2$ bound of the local LSE site no longer controls the composed supervised
-path. It does \emph{not} prove that the curvature must be large for every
+corridor. It does \emph{not} prove that the curvature must be large for every
 possible $W_2$ or every point in training. The empirical curvature measurements
 in Section~\ref{sec:mechanism} carry that claim for the studied networks: the
-composed CE-path curvature is larger, non-monotone, and parameter-dependent.
+composed CE-corridor curvature is larger, non-monotone, and parameter-dependent.
 
 We state the clean proposition without LayerNorm. The measurements are taken on
 the actual model, including LayerNorm, so its effect is included in the reported
@@ -387,7 +387,7 @@ Low $1/2$-saturation and weak competition \\
 
 This structural story must be reconciled with the graded empirical result. The
 claim is not that sharing alone always destroys the effective conditioning of
-the full update. Rather, sharing creates a foreign CE-path contribution whose
+the full update. Rather, sharing creates a foreign CE-corridor contribution whose
 curvature is no longer controlled by the local LSE bound. The update at $W_1$
 contains both this contribution and the local EM contribution:
 \[
