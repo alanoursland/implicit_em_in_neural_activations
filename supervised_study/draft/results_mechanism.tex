@@ -8,38 +8,48 @@ against outcomes in the ledger below.
 
 \subsection{Predictions Ledger}
 
-Table~\ref{tab:predictions-ledger} summarizes the predictions already tested in
-the supervised study. Because the claims are causal, the ledger separates
-predictions, measurements, and the one interpretation corrected after
-measurement.
+Table~\ref{tab:predictions-ledger} summarizes the predictions tested in the
+supervised study and the strengthening checks still open. Because the claims are
+causal, the ledger separates predictions, measurements, status, and the one
+interpretation corrected after measurement.
 
 \begin{table}[h]
 \centering
-\begin{tabular}{p{0.11\linewidth}p{0.38\linewidth}p{0.28\linewidth}c}
+\begin{tabular}{p{0.11\linewidth}p{0.36\linewidth}p{0.28\linewidth}p{0.13\linewidth}}
 \toprule
-Test & Prediction & Measured & Verdict \\
+Test & Prediction & Measured & Status \\
 \midrule
 Exp1 & Supervision does not give intermediate volume control &
-Baseline has min variance zero and $\ge 1$ dead unit in every seed & \checkmark \\
+Baseline has min variance zero and $\ge 1$ dead unit in every seed & Supported \\
 Exp1 & Partial volume control is worse than none &
-Redundancy increases from $20.5$ to $187.0$; accuracy is worst & \checkmark \\
+Redundancy increases from $20.5$ to $187.0$; accuracy is worst & Supported \\
 Exp3 & Optimizer signature disappears under composition &
-SGD spans $83.8$--$96.2\%$; Adam helps & \checkmark \\
+SGD spans $83.8$--$96.2\%$; Adam helps & Supported \\
 Exp4-P1 & CE dominates EM at small $\lambda$ &
-Late CE/EM ratio is $67$--$95\times$ at $\lambda=0.001$ & \checkmark \\
+Late CE/EM ratio is $67$--$95\times$ at $\lambda=0.001$ & Supported \\
 Exp4-P2 & LSE curvature stays below $1/2$; CE-corridor curvature is larger &
-LSE bound holds; CE corridor is $13$--$100\times$ larger & \checkmark \\
+LSE bound holds; CE corridor is $13$--$100\times$ larger & Supported \\
 Exp4-P3 & Stop-gradient restores conditioning &
-Learning-rate spread falls from $10.9$ to $1.6$ points & \checkmark \\
+Learning-rate spread falls from $10.9$ to $1.6$ points & Supported \\
 Exp4 & $\lambda=1$ joint behaves like stop-gradient (dominance, not connectivity) &
-Spread $1.2$ vs $1.6$ points; both are nearly flat & \checkmark \\
+Spread $1.2$ vs $1.6$ points; both are nearly flat & Supported \\
 Exp4 & Restored conditioning costs task alignment &
-EM-dominated features probe $\sim 88\%$ vs $\sim 96\%$ & \checkmark \\
+EM-dominated features probe $\sim 88\%$ vs $\sim 96\%$ & Supported \\
+Exp4 & CE/EM dominance should hold under the matched SGD sweep &
+Gradient ratio currently measured during Adam at $10^{-3}$ & Open \\
+Exp4 & Adam stop-gradient should lose the ordinary Adam advantage &
+Stop-gradient sweep currently reported for SGD & Open \\
+Theory/Exp4 & Curvature scale should be compared to the
+$\mathbb{E}\|\tilde{x}\|^2$ prediction &
+LSE and CE-corridor curvatures measured; input-scale comparison not yet reported
+& Open \\
 \bottomrule
 \end{tabular}
 \caption{Prediction ledger for the supervised study. The table separates
-mechanism predictions, measurements, and post-measurement interpretation. One
-interpretation was corrected after measurement: the early heuristic claim that
+mechanism predictions, measurements, status, and post-measurement
+interpretation. ``Supported'' means supported by the reported measurements, not
+mathematically closed under every strengthening check. One interpretation was
+corrected after measurement: the early heuristic claim that
 $\lambda=0.001$ implied a $1000\times$ gradient ratio was wrong; the measured
 late-training ratio is $67$--$95\times$ (Section~\ref{sec:mechanism}, gradient
 competition). The full trajectory is wider because of early transients. The
@@ -215,8 +225,10 @@ the EM and CE gradients are not detectably aligned or opposed. The EM signal is
 drowned by a larger foreign signal, not cancelled by an antagonistic one.
 
 The prediction is that the dominance ratio is a property of the loss geometry at
-the site, not an Adam-specific artifact; a matched-SGD gradient measurement is a
-remaining strengthening check.
+the site, not an Adam-specific artifact. That remains substantively open until
+the same CE/EM ratio is measured under the matched SGD sweep used for the
+conditioning result. The current Adam measurement supports the mechanism, but it
+does not close the matched-optimizer question.
 
 \subsection{Curvature: The LSE Bound Holds, the CE Corridor Is Large}
 
