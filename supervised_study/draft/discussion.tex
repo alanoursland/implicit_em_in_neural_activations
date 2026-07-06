@@ -27,9 +27,9 @@ Implicit EM is \emph{graded}. The decisive variable is not whether the
 computation graph contains a path from CE to $W_1$. The $\lambda=1$ joint arm
 keeps that path intact and nevertheless behaves like the stop-gradient arm on
 the conditioning metric. Conversely, the $\lambda=0.001$ joint arm is
-CE-dominated and behaves like an ordinary supervised network. The measured
-CE/EM gradient ratio, not graph connectivity alone, determines which landscape
-the optimizer sees.
+CE-dominated and behaves like an ordinary supervised network. The reported
+CE/EM gradient-ratio diagnostic identifies the causal variable as dominance, not
+graph connectivity alone.
 
 Implicit EM is \emph{structural}. Volume control repairs failures at a local EM
 interface: dead units, collapsed variance, and redundancy. Dense learned
@@ -93,10 +93,10 @@ at $W_1$ is a sum:
 \]
 When the first term dominates, the effective landscape is the composed
 supervised landscape. When the second term dominates, the local EM geometry
-sets the behavior even though the CE path still exists. The
-$\lambda$-resolution curve is therefore central: the causal variable is the
-measured gradient ratio, not the nominal value of $\lambda$ and not the binary
-presence of an edge.
+sets the behavior even though the CE path still exists. A denser
+$\lambda$-resolution curve is therefore the natural next strengthening analysis:
+the causal variable is the measured gradient ratio, not the nominal value of
+$\lambda$ and not the binary presence of an edge.
 
 \subsection{Generative Versus Discriminative Is the Phenomenon, Not the Mechanism}
 
@@ -104,10 +104,10 @@ One deflationary reading is that the paper only rediscovers a familiar
 generative-versus-discriminative distinction. The experiments are compatible
 with that high-level framing, but they are more specific. The same architecture
 is trained with the same data and the same local site while the route by which
-CE reaches $W_1$ is changed. The measured facts are mechanistic: the LSE
+CE reaches $W_1$ is changed. The mechanistic measurements are specific: the LSE
 curvature obeys the $1/2$ bound, the CE-path curvature is larger and changing,
-the CE path dominates the weighted EM path at small $\lambda$, and removing
-that path restores the conditioning signature.
+the reported gradient diagnostic shows CE dominance at small $\lambda$, and
+removing that path restores the conditioning signature.
 
 The result is therefore not just that two objectives differ. It identifies how
 the discriminative objective reaches into a local EM site and when that

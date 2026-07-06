@@ -2,16 +2,16 @@
 \label{sec:mechanism}
 
 Experiment 3 established the boundary observationally; Experiment 4 asks why. It
-tests three predictions---CE-path dominance at small $\lambda$, the curvature
-dichotomy, and causal restoration under stop-gradient---stated in advance and
-summarized against outcomes in the ledger below.
+tests three mechanism predictions---CE-path dominance at small $\lambda$, the
+curvature dichotomy, and causal restoration under stop-gradient---summarized
+against outcomes in the ledger below.
 
 \subsection{Predictions Ledger}
 
 Table~\ref{tab:predictions-ledger} summarizes the predictions already tested in
-the supervised study. The ledger is included because the claims are causal: the
-paper should make clear which outcomes were predictions, which were measurements,
-and where the interpretation was corrected after measurement.
+the supervised study. Because the claims are causal, the ledger separates
+predictions, measurements, and the one interpretation corrected after
+measurement.
 
 \begin{table}[h]
 \centering
@@ -37,12 +37,12 @@ Exp4 & Restored conditioning costs task alignment &
 EM-dominated features probe $\sim 88\%$ vs $\sim 96\%$ & \checkmark \\
 \bottomrule
 \end{tabular}
-\caption{Prediction ledger for the supervised study. Every listed prediction was
-stated before its experiment and confirmed. One interpretation was corrected
-after measurement: the early heuristic claim that $\lambda=0.001$ implied a
-$1000\times$ gradient ratio was wrong; the measured ratio is $30$--$70\times$
-(Section~\ref{sec:mechanism}, gradient competition). The mechanism is unchanged;
-the magnitude was corrected.}
+\caption{Prediction ledger for the supervised study. The table separates
+mechanism predictions, measurements, and post-measurement interpretation. One
+interpretation was corrected after measurement: the early heuristic claim that
+$\lambda=0.001$ implied a $1000\times$ gradient ratio was wrong; the measured
+ratio is $30$--$70\times$ (Section~\ref{sec:mechanism}, gradient competition).
+The mechanism is unchanged; the magnitude was corrected.}
 \label{tab:predictions-ledger}
 \end{table}
 
@@ -149,8 +149,8 @@ Joint, $\lambda=0.001$ & $32.3$ & $15.0$ & $40.0$ & $37.7$ \\
 \bottomrule
 \end{tabular}
 \caption{Epoch when test $L_{\mathrm{LSE}}$ reaches 95\% of its final value.
-The two extreme arms (pure local EM vs.\ strongly CE-dominated) are shown because
-they bound the contrast; this metric was not recorded for the intermediate
+The two extreme arms (CE-blocked local EM path vs.\ strongly CE-dominated) are
+shown because they bound the contrast; this metric was not recorded for the intermediate
 $\lambda=0.03$ and $\lambda=1$ arms. The CE-dominated arm should be read as an
 EM-site stability contrast, not as a classifier failure metric.}
 \label{tab:exp4-lse-time}
@@ -166,9 +166,12 @@ stabilize as an autonomous mixture.
 
 \subsection{Gradient Dominance, Not Gradient Opposition}
 
-The mechanism is visible directly at the distance interface. During joint
-training, the CE and auxiliary gradients with respect to $d$ are measured on the
-same batch. Table~\ref{tab:gradient-competition} reports the ratio
+The mechanism is visible directly at the distance interface. In the reported
+diagnostic, the CE and auxiliary gradients with respect to $d$ are measured on
+the same batch during Adam training at learning rate $10^{-3}$. The conditioning
+sweep uses SGD, so the table should be read as a site-level gradient diagnostic
+rather than a matched-optimizer measurement. Table~\ref{tab:gradient-competition}
+reports the ratio
 \[
     \frac{\|\nabla_d L_{\mathrm{CE}}\|}
          {\lambda\|\nabla_d L_{\mathrm{aux}}\|}
@@ -205,11 +208,9 @@ special high-dimensional orthogonality. The conservative statement is enough:
 the EM and CE gradients are not detectably aligned or opposed. The EM signal is
 drowned by a larger foreign signal, not cancelled by an antagonistic one.
 
-These ratios were first measured during Adam training at learning rate
-$10^{-3}$, whereas the conditioning sweep uses SGD. The final version should
-include the same measurement under SGD or explicitly report the optimizer
-mismatch. The prediction is that the dominance ratio is a property of the loss
-geometry at the site, not an Adam-specific artifact.
+The prediction is that the dominance ratio is a property of the loss geometry at
+the site, not an Adam-specific artifact; a matched-SGD gradient measurement is a
+remaining strengthening check.
 
 \subsection{Curvature: The LSE Bound Holds, the CE Path Is Large}
 
@@ -223,9 +224,9 @@ path through NLS and the head.
 The local LSE curvature obeys the theory at every measured point: it stays below
 $1/2$ in every arm and seed. In the stop-gradient arm, it converges to
 $0.4993$--$0.4997$, essentially saturating the bound. The bound is achieved when
-responsibility mass concentrates equally on two components. Under pure local EM
-training, the mixture sharpens until cluster boundaries become two-way ties,
-and the Hessian detects exactly this geometry.
+responsibility mass concentrates equally on two components. Under protected
+local-EM training, the mixture sharpens until cluster boundaries become two-way
+ties, and the Hessian detects exactly this geometry.
 
 By contrast, the CE-path curvature in a representative joint
 $\lambda=0.001$ trajectory wanders over values such as $6.5$, $17.2$, and $7.8$
@@ -256,14 +257,15 @@ is why the $\lambda$-resolution curve is central: the trade-off should be shown
 as a continuum along the measured CE/EM gradient ratio, not as a binary
 comparison between supervised and unsupervised training.
 
-\subsection{Pending Main Analyses}
+\subsection{Future Strengthening Analyses}
 
-Three analyses complete this section in the final paper. First, the
+Three analyses would strengthen this section. First, a denser
 $\lambda$-resolution curve should replace the three-point ladder with 6--8
 values of $\lambda$, plotting conditioning spread and probe accuracy against the
-measured CE/EM gradient ratio. This is the central figure for the graded claim.
+measured CE/EM gradient ratio. This would be the central figure for the graded
+claim.
 
-Second, the Adam arm under stop-gradient completes the optimizer signature. The
+Second, the Adam arm under stop-gradient would complete the optimizer signature. The
 prediction is that Adam provides little advantage when $W_1$ is trained by the
 local EM objective, while it remains useful in the CE-dominated joint arm.
 
@@ -275,5 +277,5 @@ separate basin.
 The stochastic-map arm is useful but not load-bearing. Replacing $W_2$ with a
 non-negative row-normalized map tests the one simplex-compatible preservation
 class not yet covered. If the row-normalization constraint confounds the probe
-by damaging head accuracy, the result belongs in the appendix as a caveated
+by damaging head accuracy, the result would belong in the appendix as a caveated
 taxonomy-cell experiment rather than in the abstract.

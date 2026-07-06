@@ -13,15 +13,16 @@ guarantee is forfeited.
 Experiments in supervised MNIST networks confirm the split named in the title:
 volume control transfers, conditioning does not. Volume control at an
 intermediate EM site eliminates dead units and reduces redundancy across widths,
-showing that local mixture failures can be repaired inside a supervised model. But the optimizer signatures of the single-layer implicit-EM
-model do not survive ordinary supervised composition: SGD becomes
-learning-rate sensitive again and Adam becomes useful again. Measuring the
-intermediate gradients shows that, at the standard auxiliary weight, the
-cross-entropy path dominates the weighted local EM path by $30$--$70\times$,
-with no detectable alignment or opposition between the two directions. Cutting
-that path with stop-gradient restores learning-rate insensitivity; increasing
-the EM weight until the EM path dominates restores the same behavior without
-cutting the graph. Thus implicit EM is local, graded, and structural: volume
-control repairs failures at EM sites, but EM conditioning survives only when
-responsibility gradients reach the relevant parameters directly, dominantly, or
-through simplex-compatible transport.
+showing that local mixture failures can be repaired inside a supervised model.
+The optimizer signature of the single-layer implicit-EM model, however, does not
+survive ordinary supervised composition: SGD becomes learning-rate sensitive
+again and Adam becomes useful again. Mechanism measurements show the same
+pattern from inside the model. At the standard auxiliary weight, gradient
+diagnostics indicate that the cross-entropy path dominates the weighted local EM
+path by $30$--$70\times$, with no detectable alignment or opposition between the
+two directions. Cutting that path with stop-gradient restores learning-rate
+insensitivity; increasing the EM weight until the EM path dominates restores the
+same behavior without cutting the graph. Thus implicit EM is local, graded, and
+structural: volume control repairs failures at EM sites, but EM conditioning
+survives only when responsibility gradients reach the relevant parameters
+directly, dominantly, or through simplex-compatible transport.
