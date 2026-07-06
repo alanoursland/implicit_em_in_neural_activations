@@ -57,15 +57,21 @@ components.
 
 An LSE competition term by itself does not prevent the standard degeneracies of
 mixture models. Components can collapse, become redundant, or receive
-essentially no responsibility. The decoder-free encoder study addressed these
+essentially no responsibility \citep{redner1984mixture,mclachlan2000finite}.
+The decoder-free encoder study addressed these
 failures with volume control: a variance term prevents dead or collapsed
 components, and a decorrelation term prevents all components from moving
 together. In the local auxiliary objective $L_{\mathrm{aux}}=L_{\mathrm{LSE}}
 +L_{\mathrm{var}}+L_{\mathrm{tc}}$ (Section~\ref{sec:notation}), the variance
 term is the anti-collapse part and the decorrelation term the anti-redundancy
-part. Together they act as a volume barrier, encouraging components to occupy
-distinct directions rather than concentrate in the same small region---the
-neural analogue of the log-determinant in a Gaussian mixture.
+part. This variance-plus-decorrelation pairing is structurally close to
+redundancy-reduction regularizers such as VICReg and Barlow Twins, although here
+it serves a mixture-geometry role at an EM site rather than a self-supervised
+invariance objective \citep{bardes2022vicreg,zbontar2021barlow}. Together the
+terms act as a volume barrier, encouraging components to occupy distinct
+directions rather than concentrate in the same small region. This is analogous
+in role to volume terms in Gaussian mixture likelihoods, not a literal
+identification with the Gaussian log-determinant.
 
 The first empirical question is whether these local repairs still work inside a
 supervised network. They do: Section~\ref{sec:results-volume} shows that volume
@@ -84,6 +90,9 @@ network inherits EM's conditioning. Backpropagation can transport the gradient,
 but transport is not preservation. Dense learned maps can mix signs and
 components; objective sums can add unrelated gradients; gates can turn small
 responsibilities into exactly zero updates.
+These are the failure operations formalized in the next section: sign-indefinite
+mixing, foreign objective sums, and hard gates break the private component
+structure that makes the local responsibility update well conditioned.
 
 Thus there are two different claims one might make about a hidden layer. A
 weak, correct claim is that loss geometry at downstream softmax sites shapes
@@ -95,8 +104,12 @@ rest of the paper draws the boundary between these claims.
 
 The experiments are organized around two failure classes. At-site failures
 occur at a local EM interface: dead components, collapsed variance, redundant
-features, and diffuse or poorly calibrated responsibilities. These are the
-failures volume control is designed to repair.
+features, and diffuse or poorly calibrated responsibilities. Volume control is
+designed to repair the first three by keeping components alive and distinct.
+Diffuse responsibilities are diagnosed separately by the $1/2$-saturation
+measure introduced in Lemma~\ref{lem:simplex}: low curvature relative to the
+$1/2$ bound indicates weak local competition rather than sharp two-way
+component assignment.
 
 Structural failures occur when a responsibility gradient must travel through a
 shared learned corridor before reaching the parameters it is supposed to

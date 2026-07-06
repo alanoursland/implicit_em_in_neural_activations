@@ -39,15 +39,19 @@ NegLogSoftmin:
 When NLS is present, the site has the LSE partition function and the competitive
 Jacobian needed for a local implicit-EM interpretation. When NLS is absent, the
 same downstream classifier receives the raw ReLU-produced coordinates.
+Experiment~1 includes a volume-control arm without NLS to separate the effect of
+the calibrated NegLogSoftmin activation format from generic variance and
+decorrelation regularization.
 
 The second linear map, $W_2$, is the learned dense corridor from intermediate
 components to class logits. It is the map whose pullback destroys the uniform
 conditioning guarantee in Proposition~\ref{prop:composition}. Because $d$ is
 produced by a ReLU after the first affine map, the trained model falls under the
 smooth/ReLU kernel caveat following Proposition~\ref{prop:smooth-kernel}, not
-the clean private-affine case alone. LayerNorm is kept because it is part of the
-trained supervised baseline and stabilizes the logits seen by CE; the clean
-theory omits it, and the curvature measurements include its effect.
+the clean private-affine case alone. The dead-unit metric below is therefore
+also a ReLU absorbing-state diagnostic. LayerNorm is kept because it stabilizes
+the logits seen by CE in the supervised baseline; the clean theory omits it, and
+the curvature measurements include its effect.
 
 \subsection{Local Auxiliary Objective}
 
@@ -77,9 +81,9 @@ The supervised objective is
 \]
 with $\lambda=0.001$ in the initial ablation and capacity experiments unless
 otherwise stated. In Experiments 1--3, the auxiliary loss
-uses the volume-control terms used in those reports. In Experiment 4, the LSE
-term is included explicitly so that the stop-gradient arm trains $W_1$ by the
-same local EM objective as the single-layer model.
+uses the NLS and volume-control terms specified by each ablation. In
+Experiment 4, the LSE term is included explicitly so that the stop-gradient arm
+trains $W_1$ by the same local EM objective as the single-layer model.
 
 \subsection{Experiment 1: Volume-Control Ablation}
 
@@ -88,7 +92,7 @@ architecture uses $K=25$ components, MNIST, 50 training epochs, Adam with
 learning rate $10^{-3}$, $\lambda=0.001$, and 10 seeds
 $(42,\ldots,51)$. Seeds control random initialization, minibatch order, and any
 probe-training randomness in experiments that use probes. Metrics are averaged
-over the final 10 epochs.
+over the final 10 epochs and evaluated on the test set unless otherwise stated.
 
 The five configurations are:
 \[
@@ -118,7 +122,8 @@ the baseline against NLS plus full volume control at
 \]
 Each model is trained on MNIST for 50 epochs with Adam at learning rate
 $10^{-3}$, $\lambda=0.001$, and 5 seeds $(42,\ldots,46)$. Metrics
-are again averaged over the final 10 epochs. This experiment is used to
+are again evaluated on the test set and averaged over the final 10 epochs. This
+experiment is used to
 distinguish structural health from benchmark accuracy: volume control can
 eliminate dead units and reduce redundancy even when the fixed regularization
 weight is not accuracy-optimal at larger widths.
@@ -135,6 +140,8 @@ rate:
     \eta \in \{10^{-4},10^{-3},10^{-2},10^{-1}\}.
 \]
 Each setting is trained for 50 epochs on MNIST with 3 seeds $(42,43,44)$.
+Reported metrics are evaluated on the test set and averaged over the final 10
+epochs.
 The comparison is deliberately aligned with the single-layer implicit-EM
 signature: learning-rate sensitivity, Adam advantage, and whether lower
 auxiliary loss corresponds to better features.
@@ -197,13 +204,18 @@ For gradient competition, the training loop measures
 These measurements are taken during Adam training at learning rate
 $10^{-3}$, while the conditioning sweep uses SGD. We therefore report these
 ratios as a site-level gradient diagnostic rather than as a matched-optimizer
-measurement; the matched-SGD version is a strengthening check.
+measurement; the matched-SGD version is not reported here.
 
 For curvature tracking, power iteration with exact Hessian-vector products
 estimates the spectral norm of the Hessian with respect to $d$ for both the LSE
 term and the CE corridor through NLS and the head. Measurements use a fixed
 512-example batch every 2 epochs, and $\sigma_{\max}(W_2)$ is recorded
 alongside the curvature estimates \citep{pearlmutter1994fast}.
+
+For the private-affine scale check in Proposition~\ref{prop:private-affine}, we
+also compute the data constant $\mathbb{E}\|\tilde{x}\|^2$ using the raw
+$[0,1]$ MNIST pixels with a bias coordinate. Results~III compares the implied
+clean-LSE descent scale to the stop-gradient learning-rate sweep.
 
 \subsection{Metrics}
 

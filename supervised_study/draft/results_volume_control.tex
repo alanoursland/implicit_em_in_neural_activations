@@ -89,9 +89,9 @@ read as healthy specialization: it is sharp competition among nearly duplicated
 components.
 
 This is the cleanest replication of the decoder-free encoder ablation inside a
-supervised network. The diagonal and off-diagonal parts of volume control are
-not interchangeable. Anti-collapse without anti-redundancy can be worse than
-neither.
+supervised network \citep{oursland2026decoderfree}. The diagonal and
+off-diagonal parts of volume control are not interchangeable. Anti-collapse
+without anti-redundancy can be worse than neither.
 
 \subsection{Full Volume Control Repairs the Site}
 
@@ -109,10 +109,13 @@ structure introduced by NLS.
 
 The Var + Decorr only arm is an important control. It matches the full EM-site
 model on accuracy and redundancy, showing that volume control is also a useful
-regularizer. But the representation differs: responsibility entropy is higher
-($2.65$ versus $2.46$), and minimum variance is lower ($3.55$ versus $7.84$).
-Without NLS, the penalties improve feature geometry but do not create the same
-calibrated distance-to-responsibility interface.
+regularizer. But the mechanism is formally different by construction: without
+NLS, the model has no calibrated distance-to-responsibility interface at the
+hidden site. The measured geometry also differs. Minimum variance is lower
+($3.55$ versus $7.84$), and the entropy of $\operatorname{softmax}(-d)$ is
+higher ($2.65$ versus $2.46$). In the no-NLS arm this entropy is only a
+descriptive pseudo-responsibility statistic, not evidence that the raw ReLU
+coordinates were trained as calibrated responsibilities.
 
 This control keeps the interpretation honest. The paper is not claiming that
 every gain comes from a mysterious EM effect. Some gains are ordinary
@@ -178,7 +181,7 @@ even when it helps the task.
 Thus the result should be read as two regimes. In the capacity-constrained
 regime, dead and redundant units are expensive; volume control improves both
 structure and accuracy. In the capacity-abundant regime, overparameterization
-can absorb dead units and exploit correlated features for supervised boundary
+can absorb dead units, and correlated features may help supervised boundary
 refinement. Volume control still produces healthier component geometry, but the
 task accuracy trade-off depends on $\lambda$ and width.
 

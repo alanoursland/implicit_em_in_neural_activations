@@ -18,12 +18,13 @@ The optimizer signature of the single-layer implicit-EM model, however, does not
 survive ordinary supervised composition: SGD becomes learning-rate sensitive
 again and the advantage of adaptive methods reappears. Mechanism measurements
 show the same pattern from inside the model. At the standard auxiliary weight,
-gradient diagnostics indicate that the cross-entropy corridor dominates the weighted
-local EM path by roughly $67$--$95\times$ late in training, with no detectable
-alignment or opposition between the two directions. Cutting that corridor with stop-gradient restores
-learning-rate insensitivity; increasing the EM weight until the EM path
-dominates restores the same behavior without cutting the graph. Thus implicit EM
-is local, graded, and structural: volume control repairs failures at EM sites,
-but EM conditioning survives only when responsibility gradients reach the
-relevant parameters directly or dominantly, with simplex-compatible transport
-remaining a theoretical first-order preservation class.
+site-level gradient diagnostics indicate that the cross-entropy corridor
+dominates the weighted local EM path by roughly $67$--$95\times$ late in
+training, with no detectable alignment or opposition between the two directions.
+Cutting that corridor with stop-gradient restores learning-rate insensitivity;
+increasing the EM weight until the EM path dominates restores the same behavior
+without cutting the graph. Thus implicit EM is local, graded, and structural:
+volume control repairs failures at EM sites, but EM conditioning is visible only
+when the responsibility-gradient path directly or dominantly controls the
+effective update, with simplex-compatible transport remaining a theoretical
+first-order preservation class.

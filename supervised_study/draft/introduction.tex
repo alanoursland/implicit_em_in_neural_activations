@@ -1,11 +1,12 @@
 \section{Introduction}
 \label{sec:introduction}
 
-Log-sum-exp objectives are everywhere in neural networks. Softmax
+Log-sum-exp objectives are ubiquitous in neural networks. Softmax
 classification, attention, contrastive losses, and energy-based objectives all
-contain the same exponentiation-and-normalization geometry. In distance or
-energy coordinates, that geometry has a simple consequence: gradients are
-responsibilities. If
+contain the same exponentiation-and-normalization geometry
+\citep{vaswani2017attention,oord2018representation,lecun2006tutorial}. In
+distance or energy coordinates, that geometry has a simple consequence:
+gradients are responsibilities. If
 \[
     L_{\mathrm{LSE}}(d)
     =
@@ -23,9 +24,10 @@ descent.
 
 This identity gives a precise sense in which standard objectives can implement
 implicit generalized EM. The E-step appears as a normalized gradient over
-components; the parameter update plays the role of a generalized M-step. Prior
-work established this identity and showed that it is prescriptive in a
-single-layer decoder-free encoder \citep{oursland2025implicitem,oursland2026decoderfree}.
+components; the parameter update plays the role of a generalized M-step
+\citep{dempster1977maximum,neal1998view,xu1996convergence}. Prior work
+established this identity and showed that it is prescriptive in a single-layer
+decoder-free encoder \citep{oursland2025implicitem,oursland2026decoderfree}.
 There, an LSE objective with volume control learned structured
 prototype-like features, while removing parts of volume control produced the
 expected mixture failures: dead components, collapse, and redundancy. The same
@@ -75,7 +77,9 @@ The answer is that implicit EM is local, graded, and structural.
 
 It is \emph{local}: responsibility structure exists at LSE and softmax sites,
 and it extends cleanly to parameters only when the path preserves component
-identity. It does not automatically penetrate learned dense maps.
+identity, as with private component blocks, per-component monotone maps, or
+first-order simplex-compatible transports such as stochastic maps. It does not
+automatically penetrate learned dense maps.
 
 It is \emph{graded}: the relevant variable is the measured share of
 EM-structured gradient reaching the parameters. A fully connected supervised
@@ -88,13 +92,14 @@ failures. At-site failures are repaired by local volume control. Corridor
 failures arise when a responsibility gradient is mixed through shared learned
 maps before reaching the parameters it is supposed to condition.
 
-This is the neural version of a classical EM fact. EM is cleanest when the
-expected complete-data objective separates over component-private parameters.
-When components share parameters, the M-step becomes coupled and the clean
-per-component update is lost. Backpropagation through a learned dense corridor
-is parameter sharing in this sense. It creates a foreign contribution at the
-earlier parameters whose curvature is no longer controlled by the local LSE
-bound.
+This is the neural analogue of a classical EM fact, not a reduction of
+supervised cross-entropy to an EM complete-data objective. EM is cleanest when
+the expected complete-data objective separates over component-private
+parameters \citep{dempster1977maximum,mclachlan2000finite}. When components
+share parameters, the M-step becomes coupled and the clean per-component update
+is lost. Backpropagation through a learned dense corridor is parameter sharing
+in this structural sense. It creates a foreign contribution at the earlier
+parameters whose curvature is no longer controlled by the local LSE bound.
 
 That structural claim must be separated from dominance. Sharing explains why
 the cross-entropy contribution is not EM-conditioned; dominance explains when
@@ -125,19 +130,22 @@ cross-entropy Hessian is the conjugated form
     W_2J,
 \]
 whose norm scales with the learned spectrum $\sigma_{\max}(W_2)^2$, so the clean
-parameter-independent guarantee is forfeited.
+parameter-independent guarantee is forfeited. This is the Gauss--Newton part of
+the composed Hessian; the standard decomposition is not the novelty, only the
+contrast with the isolated LSE site \citep{martens2010deep}.
 
 The experiments support the split in this controlled setting. Volume control
 transfers to an intermediate supervised site: it eliminates dead units, prevents
 collapse, and reduces redundancy across widths. But the optimizer conditioning
 does not transfer through ordinary supervised composition. In the full
-supervised model, SGD is again learning-rate sensitive and Adam is again useful.
+supervised model, SGD recovers learning-rate sensitivity and the advantage of
+adaptive methods reappears.
 
 The causal experiment identifies the mechanism. At the standard auxiliary
 weight, the CE corridor dominates the weighted local EM path by roughly
-$67$--$95\times$ late in training, while the two gradients show no detectable
-alignment. The
-local LSE curvature remains bounded by $1/2$, but the composed CE-corridor
+$67$--$95\times$ late in training, while the cosine between the CE and weighted
+local-EM gradients at the intermediate distance interface shows no detectable
+alignment. The local LSE curvature remains bounded by $1/2$, but the composed CE-corridor
 curvature is larger, non-monotone, and parameter-dependent. Cutting the CE corridor
 to $W_1$ with stop-gradient restores learning-rate insensitivity. Increasing
 the EM weight until the EM path dominates restores the same behavior without
@@ -148,18 +156,16 @@ cutting the graph. Conditioning follows dominance, not mere connectivity.
 This paper makes the following contributions.
 
 \begin{enumerate}
-    \item It proves a conditioning contrast between private-parameter LSE
-    objectives and LSE sites composed behind learned dense maps.
-    \item It identifies which operations preserve the responsibility-gradient
-    invariant and which destroy it.
-    \item It separates at-site failures from structural corridor failures.
+    \item It proves a conditioning contrast between private-affine LSE
+    objectives and LSE sites composed behind learned dense maps, and identifies
+    sufficient operations that preserve or destroy the responsibility-gradient
+    invariant.
+    \item It separates at-site failures from structural corridor failures in
+    supervised networks with intermediate EM sites.
     \item It shows that volume control transfers to intermediate supervised EM
-    sites and repairs dead or redundant components.
-    \item It shows that the single-site optimizer signatures of implicit EM do
-    not survive ordinary dense supervised composition.
+    sites, repairing dead or redundant components, while the single-site
+    optimizer signature does not survive ordinary dense supervised composition.
     \item It causally restores the conditioning signature by stop-gradient and
-    by EM dominance, showing that the mechanism is gradient dominance rather
-    than graph connectivity alone.
-    \item It introduces the $1/2$-saturation diagnostic as a local measure of
-    mixture sharpness at an EM site.
+    by EM dominance, and uses the $1/2$-saturation diagnostic to measure local
+    mixture sharpness at the EM site.
 \end{enumerate}

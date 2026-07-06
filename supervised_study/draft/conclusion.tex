@@ -20,11 +20,12 @@ control transfers to an intermediate EM site, but the single-site optimizer
 conditioning does not survive ordinary composition---and is restored, causally,
 by cutting the corridor or letting the EM path dominate.
 
-The resulting rule is local, graded, and structural. EM conditioning survives
-when responsibility gradients reach the relevant parameters directly or when the
-EM path dominates the update; ordinary dense backpropagation should not be
-expected to preserve it. Simplex-compatible transport remains a theoretical
-first-order preservation class rather than a load-bearing empirical claim here.
+The resulting rule is local, graded, and structural. EM conditioning is visible
+when the responsibility-gradient path directly controls the relevant parameters
+or when the EM path dominates the effective update; ordinary dense
+backpropagation should not be expected to preserve it. Simplex-compatible
+transport remains a theoretical first-order preservation class rather than a
+load-bearing empirical claim here.
 Two consequences point beyond this paper. For architecture, the result motivates
 building depth as protected local EM sites rather than expecting a single owned
 objective to condition every layer. For interpretation, it says the intermediate

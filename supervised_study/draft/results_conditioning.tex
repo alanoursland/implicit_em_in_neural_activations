@@ -6,7 +6,8 @@ site: it eliminates dead units and reduces redundancy even though the network is
 trained for classification. Experiment 3 asks whether the optimization
 conditioning from the single-layer implicit-EM model transfers as well. The
 answer is no. Once the local site is embedded behind an ordinary supervised
-head, SGD becomes learning-rate sensitive again and Adam becomes useful again.
+head, SGD becomes learning-rate sensitive again and the advantage of adaptive
+methods reappears.
 
 This experiment uses the full EM-site model from Results I: NLS plus variance
 and decorrelation, with $K=25$ and $\lambda=0.001$. It is therefore not a plain
@@ -46,15 +47,18 @@ is negative when component variances exceed one.}
 
 The single-layer implicit-EM model had an unusual optimization signature: SGD
 was insensitive to learning rate over a wide range, Adam offered little
-advantage, and convergence time was largely fixed. Those properties do not
-survive ordinary supervised composition.
+advantage, and convergence time was largely fixed
+\citep{oursland2025implicitem}. Those properties do not survive ordinary
+supervised composition.
 
 With SGD, accuracy spans $83.83\%$ to $96.23\%$ across the four learning rates,
 a $12.4$ point range. At $10^{-4}$, the model has not converged by epoch 50; at
 $10^{-3}$, it reaches $93.69\%$ but remains well below the best settings. The
-learning-rate axis is therefore active again. The local EM site and its volume
-control are present, but they do not make the composed supervised landscape
-learning-rate insensitive.
+learning-rate axis is therefore active again. In this grid, the evidence is
+final-accuracy and convergence-speed sensitivity, not an observed high-learning
+rate instability edge: SGD improves monotonically through $10^{-1}$. The local
+EM site and its volume control are present, but they do not make the composed
+supervised landscape learning-rate insensitive over the tested range.
 
 This is the empirical counterpart of Proposition~\ref{prop:composition}.
 Composition does not prove that curvature must be large at every point, but it
@@ -103,12 +107,15 @@ $-265.9$ and minimum variance explodes from $7.80$ to $30628.4$. Accuracy,
 however, barely moves: $96.38\%$, $96.37\%$, and $96.58\%$.
 
 This is not a useful improvement in the representation. It shows that the
-volume-control objective has degrees of freedom that are largely orthogonal to
+volume-control objective has escape directions that are largely orthogonal to
 classification accuracy once the useful level of spread and decorrelation has
-been reached. Adam at $10^{-3}$ is therefore the sensible operating point for
-the rest of the supervised experiments: it achieves high accuracy, low
-redundancy, and finite variance without driving the auxiliary geometry to an
-irrelevant extreme.
+been reached. The negative regularization values are not a sign error: the
+variance term is $-\sum_j\log(\operatorname{Var}(d_j)+\epsilon)$, so large
+component variance can drive it downward. LayerNorm after the head may make this
+scale growth easier for CE to tolerate, but the sweep does not isolate that
+mechanism. Adam at $10^{-3}$ is therefore the operating point used below because
+it sits below the runaway regime while retaining high accuracy, low redundancy,
+and finite variance.
 
 \subsection{What Experiment 3 Does and Does Not Establish}
 
@@ -121,9 +128,11 @@ conditioning throughout the composed model.
 It does not, by itself, prove the mechanism. The optimizer sweep is consistent
 with the theory that the CE corridor through $W_2$ contributes a larger,
 ill-conditioned foreign gradient at $W_1$, but Table~\ref{tab:optimizer-sweep}
-does not measure that gradient directly. Results III therefore performs the
-causal test: it measures CE/EM gradient dominance, measures the curvature
-dichotomy, and cuts the CE-to-$W_1$ corridor with stop-gradient. If the
-conditioning signature returns when the corridor is cut or when the EM path
-dominates, then the failure in Experiment 3 is not a failure of volume control.
-It is the locality boundary of implicit EM.
+does not measure that gradient directly. It also does not establish equivalence
+to a plain baseline optimizer sweep; it tests the stronger question of whether
+the full EM-site model preserves the single-site signature. Results III
+therefore performs the causal test: it measures CE/EM gradient dominance,
+measures the curvature dichotomy, and cuts the CE-to-$W_1$ corridor with
+stop-gradient. If the conditioning signature returns when the corridor is cut or
+when the EM path dominates, then the failure in Experiment 3 is not a failure of
+volume control. It is the locality boundary of implicit EM.

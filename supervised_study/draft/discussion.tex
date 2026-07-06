@@ -29,7 +29,8 @@ keeps that corridor intact and nevertheless behaves like the stop-gradient arm o
 the conditioning metric. Conversely, the $\lambda=0.001$ joint arm is
 CE-dominated and behaves like an ordinary supervised network. The reported
 CE/EM gradient-ratio diagnostic identifies the causal variable as dominance, not
-graph connectivity alone.
+graph connectivity alone, although the matched-SGD version of that diagnostic
+remains an open strengthening check.
 
 Implicit EM is \emph{structural}. Volume control repairs failures at a local EM
 interface: dead units, collapsed variance, and redundancy. Dense learned
@@ -45,9 +46,9 @@ The part that transfers is the local mixture geometry. As Results~I established,
 supervised learning does not by itself supply volume control to an intermediate
 site, and only full volume control (not competition alone, and not the
 anti-collapse term alone) eliminates dead units and redundancy across widths.
-The local EM site is not decorative and the auxiliary objective is not inert: it
-moves the structural health of the representation in the direction the
-decoder-free encoder study predicted.
+The local EM site changes the structural health of the representation in the
+same direction observed in the decoder-free encoder study; Results~I replicates
+that volume-control pattern inside a supervised network.
 
 The Var+Decorr control---which also performs well---is useful rather than
 damaging. It separates ordinary regularization from the narrower EM-specific
@@ -61,8 +62,9 @@ The single-site optimizer signature does not transfer through ordinary dense
 supervised composition. In the isolated implicit-EM model, SGD was unusually
 learning-rate insensitive and Adam had little to correct. In the supervised
 network, SGD spans a wide accuracy range across learning rates and Adam becomes
-useful again. The local objective remains present, but it no longer controls the
-training dynamics at $W_1$ when the supervised corridor dominates.
+useful for adaptive scaling. The local objective remains present, but it no
+longer controls the training dynamics at $W_1$ when the supervised corridor
+dominates.
 
 The causal experiment explains why. Cutting the CE-to-$W_1$ corridor restores
 the learning-rate-insensitive signature. Increasing $\lambda$ until the EM path
@@ -98,6 +100,13 @@ $\lambda$-resolution curve is therefore the natural next strengthening analysis:
 the causal variable is the measured gradient ratio, not the nominal value of
 $\lambda$ and not the binary presence of an edge.
 
+The private-affine scale check points in the same direction without carrying the
+main claim. The MNIST data constant gives a clean-LSE descent scale of roughly
+$0.045$, and the stop-gradient arm is stable through learning rate $0.1$. This
+is only an order-of-magnitude sanity check because the experiment uses ReLU
+distances and the full auxiliary objective, but it connects the local curvature
+bound to the observed robust learning-rate range.
+
 \subsection{Generative Versus Discriminative Is the Phenomenon, Not the Mechanism}
 
 One deflationary reading is that the paper only rediscovers a familiar
@@ -114,6 +123,11 @@ the discriminative objective reaches into a local EM site and when that
 gradient controls the update. This is the useful level of explanation for model
 design: it tells us which corridor must be blocked, weakened, or made compatible if
 we want local EM conditioning to survive.
+
+The main remaining qualifications are collected in
+Section~\ref{sec:limitations}: the matched-optimizer gradient ratio is not yet
+reported, the learning-rate sweeps do not find an upper instability edge, and
+the high-learning-rate Adam runs expose an auxiliary escape direction.
 
 \subsection{The Accuracy Trade-Off}
 
@@ -137,11 +151,11 @@ The results suggest a concrete interpretation of discriminative fine-tuning. If
 a representation is first shaped by a local EM objective and then exposed to a
 dominant supervised corridor, fine-tuning may not simply refine the EM solution.
 It may move the model into a different regime whose features are more
-task-aligned but less locally EM-conditioned.
+task-aligned but less locally EM-conditioned \citep{kumar2022fine}.
 
-The current evidence is suggestive rather than complete. The CE and EM paths
-show no detectable alignment, and the EM-dominated and CE-dominated arms occupy
-different accuracy and conditioning regimes. A basin or linear-mode-connectivity
+The current evidence is suggestive rather than complete. The EM-dominated and
+CE-dominated arms occupy different accuracy and conditioning regimes, but local
+gradient directions are not basin evidence. A basin or linear-mode-connectivity
 analysis, with hidden units aligned before interpolation, would test the
 stronger claim: whether the two regimes are connected by a low-loss path or
 separated by a barrier after accounting for permutation symmetry.
@@ -170,16 +184,19 @@ the result belongs as a caveated appendix experiment.
 
 \subsection{Relation to Attention}
 
-The companion attention work asks whether EM-like structure propagates through
+Companion work in preparation asks whether EM-like structure propagates through
 transformer depth. The locality result here gives the controlled answer that
-such propagation should not be assumed. A standard transformer has an output CE
-site that owns an objective; intermediate attention softmaxes are computation
-inside a larger objective, not automatically owned EM sites. Their gradients are
-shaped by foreign downstream losses and learned linear maps.
+such propagation should not be assumed. Attention has known connections to
+associative-memory and softmax retrieval views \citep{ramsauer2021hopfield}, but
+a standard transformer has an output CE site that owns an objective;
+intermediate attention softmaxes are computation inside a larger objective, not
+automatically owned EM sites. Their gradients are shaped by foreign downstream
+losses and learned linear maps.
 
 The connection should remain narrow in this paper. The supervised study is the
-controlled proof of the locality principle. Transformer experiments are the
-``in the wild'' test of the same design rule. The stochastic-map variant is the
-bridge: attention transports values through a stochastic map, which may preserve
-some responsibility-like structure while still failing to preserve full
-optimizer conditioning through the surrounding learned maps.
+controlled test of the locality principle. Transformer experiments would be a
+less controlled test of the same design rule. The stochastic-map variant is the
+bridge: attention transports values through a row-stochastic map at first order,
+which may preserve some responsibility-like structure while still failing to
+preserve full optimizer conditioning through the surrounding learned projections
+and downstream losses.

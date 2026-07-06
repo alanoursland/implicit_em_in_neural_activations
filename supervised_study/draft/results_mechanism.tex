@@ -133,13 +133,18 @@ from reaching $W_1$, the spread falls to $1.6$ points. The network is still
 supervised: the same labels, CE loss, architecture, and head training remain.
 Only the corridor gradient is removed. Supervision itself therefore does not
 destroy the conditioning signature; the pullback through the corridor does.
+As in Experiment 3, this spread is a convergence-speed and final-probe-accuracy
+diagnostic over the tested grid, not evidence that any arm has reached a
+high-learning-rate instability edge.
 
 The $\lambda=1$ joint arm is equally important. It is fully connected: the CE
 gradient still reaches $W_1$. Yet it is indistinguishable from stop-gradient on
 the conditioning metric. This shows that connectivity is not the decisive
 variable. The corridor manufactures a foreign, non-EM contribution, but that
 contribution controls the effective landscape only when it dominates the local
-EM contribution.
+EM contribution. The same point appears in the feature quality: even with label
+gradients still flowing, the $\lambda=1$ arm probes at the stop-gradient level,
+not at the CE-dominated level.
 
 The private-affine theory also gives a crude parameter-space scale check. With
 the MNIST preprocessing used here, raw pixels lie in $[0,1]$ and the augmented
@@ -178,7 +183,10 @@ Joint, $\lambda=0.001$ & $32.3$ & $15.0$ & $40.0$ & $37.7$ \\
 The two extreme arms (CE-blocked local EM path vs.\ strongly CE-dominated) are
 shown because they bound the contrast; this metric was not recorded for the intermediate
 $\lambda=0.03$ and $\lambda=1$ arms. The CE-dominated arm should be read as an
-EM-site stability contrast, not as a classifier failure metric.}
+EM-site stability contrast, not as a classifier failure metric. Because the
+threshold is normalized to each run's own final value, the table is a
+self-normalized timing diagnostic rather than an absolute convergence
+threshold.}
 \label{tab:exp4-lse-time}
 \end{table}
 
@@ -188,7 +196,9 @@ joint training, the same metric is erratic and sometimes reaches the training
 budget. This supports the same conclusion as the probe sweep: when $W_1$ is
 trained by the local EM objective, the site has the fixed-time behavior of the
 single-layer model; when the CE corridor dominates, the local EM site does not
-stabilize as an autonomous mixture.
+stabilize as an autonomous mixture. Because the metric is self-normalized, the
+safe interpretation is the contrast in stability across learning rates, not a
+claim about a shared absolute LSE threshold.
 
 \subsection{Gradient Dominance, Not Gradient Opposition}
 
@@ -237,6 +247,9 @@ approximately $1/\sqrt{25}=0.2$, so a cosine near zero should not be oversold as
 special high-dimensional orthogonality. The conservative statement is enough:
 the EM and CE gradients are not detectably aligned or opposed. The EM signal is
 drowned by a larger foreign signal, not cancelled by an antagonistic one.
+The observed ranges are smaller than this crude random-direction scale; batch
+averaging and the shared NLS interface likely change the relevant null, so we do
+not interpret that undershoot further.
 
 The prediction is that the dominance ratio is a property of the loss geometry at
 the site, not an Adam-specific artifact. That remains substantively open until
@@ -261,7 +274,7 @@ local-EM training, the mixture sharpens until cluster boundaries become two-way
 ties, and the Hessian detects exactly this geometry.
 
 By contrast, the CE-corridor curvature in a representative joint
-$\lambda=0.001$ trajectory wanders over values such as $6.5$, $17.2$, and $7.8$
+$\lambda=0.001$ trajectory takes values including $6.5$, $17.2$, and $7.8$
 across training. At the same coordinates, this is roughly $13$--$100\times$
 larger than the LSE curvature, non-monotone, and consistent with dependence on
 the learned spectrum of $W_2$. This is the empirical half of the theory:
@@ -285,6 +298,7 @@ features. They do not.
 The point is that conditioning is a real property with a real cost. The EM
 regime buys learning-rate robustness, seed-to-seed reproducibility, stable local
 convergence, and zero dead units; it does not buy output accuracy for free. This
-is why the $\lambda$-resolution curve is central: the trade-off should be shown
-as a continuum along the measured CE/EM gradient ratio, not as a binary
-comparison between supervised and unsupervised training.
+is why a denser $\lambda$-resolution curve would be the natural strengthening
+analysis: the trade-off should ultimately be shown as a continuum along the
+measured CE/EM gradient ratio, not as a binary comparison between supervised and
+unsupervised training.

@@ -72,6 +72,14 @@ contribution is not that two objectives differ but the identification of the
 corridor through which the discriminative objective destroys local EM
 conditioning.
 
+Mixtures of experts are the closest classical supervised architecture with
+softmax responsibilities and EM training \citep{jordan1994hierarchical}. Our
+intermediate site is different: it is not a learned gating distribution over
+expert heads, but a local distance-to-responsibility interface embedded inside a
+classifier. The question here is therefore not whether an MoE can be trained by
+EM, but whether an EM-conditioned site keeps its optimizer geometry when a
+supervised head pulls gradients back through it.
+
 \subsection{Local and Decoupled Learning}
 
 The design implication of our theory is local: if an EM site is meant to keep
@@ -107,14 +115,17 @@ PCGrad
 \citep{pezeshki2021gradient} studies one signal dominating another. We do not
 propose a balancing method; the gradient ratio is instead our causal variable
 for whether EM conditioning is visible at $W_1$. Notably, the measured cosines
-show the EM signal is \emph{drowned}, not opposed---distinguishing this from the
-conflicting-gradient regime that gradient surgery targets.
+are near zero rather than strongly negative: the EM signal is \emph{drowned},
+not opposed. This distinguishes the observed regime from the
+conflicting-gradient setting that gradient surgery targets, while leaving the
+near-zero cosine itself as a diagnostic rather than a separate claim of special
+orthogonality.
 
 \subsection{Loss Landscapes and Basin Structure}
 
-The paper also touches the loss-landscape literature through the proposed
-basin and interpolation analyses. Linear mode connectivity shows that networks
-trained in apparently different basins can often be connected by low-loss paths
+The loss-landscape literature suggests a useful future diagnostic for this
+setting. Linear mode connectivity shows that networks trained in apparently
+different basins can often be connected by low-loss paths
 \citep{frankle2020linear}. Permutation invariance is a central complication in
 such analyses: component or neuron relabeling can create artificial barriers if
 models are interpolated without alignment
@@ -125,8 +136,8 @@ can produce representations with different task alignment and different local
 geometry. Linear probes are the first diagnostic for that task alignment
 \citep{alain2016understanding}. A basin analysis asks whether discriminative
 fine-tuning refines the EM solution or moves to a distinct region after
-hidden-unit alignment. This is supporting evidence rather than the main claim;
-the central causal evidence is the stop-gradient and dominance experiment.
+hidden-unit alignment. That analysis is not part of the present evidence; the
+central causal evidence is the stop-gradient and dominance experiment.
 
 \subsection{The Framework's Own Lineage}
 
@@ -151,5 +162,6 @@ This is not a general theory of deep-network optimization, Hessian spectra, or
 generalization. The claims are narrower. They concern log-sum-exp or softmax
 sites, the responsibility gradients those sites create, and the corridors
 through which those gradients reach parameters. Within that scope, the paper
-gives both a formal sufficient condition for preserving EM conditioning and an
-empirical account of how ordinary supervised composition destroys it.
+gives formal sufficient conditions for preserving EM conditioning in
+private/unmixed settings and an empirical account of how ordinary supervised
+composition forfeits those conditions through a learned dense corridor.

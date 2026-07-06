@@ -38,6 +38,15 @@ use across architectures. Claims about $1/2$-saturation should therefore remain
 modest until the same measurement is repeated across depths, datasets, or
 different EM-site parameterizations.
 
+\paragraph{The data-constant learning-rate scale is only a sanity check.}
+Proposition~\ref{prop:private-affine} gives a clean LSE-only scale in terms of
+$\mathbb{E}\|\tilde{x}\|^2$. Results~III reports this constant for MNIST and
+compares the implied descent-lemma scale to the stop-gradient learning-rate
+sweep. The agreement is only order-of-magnitude evidence. The trained model uses
+ReLU distances and the full auxiliary objective, not the pure private-affine
+LSE objective, so this comparison should not be read as a formal prediction of
+the largest stable learning rate.
+
 \paragraph{Stop-gradient is a clean but strong intervention.}
 The stop-gradient arm blocks the CE gradient from reaching $W_1$ while keeping
 the data, labels, architecture, CE loss, and supervised head in place. This
@@ -71,6 +80,9 @@ Therefore the correct conclusion is not strong geometric orthogonality. The
 conservative conclusion is that there is no detectable alignment or opposition
 at the measured scale. This still supports the mechanism: the EM signal is
 drowned by a larger foreign signal, not cancelled by a directly opposing one.
+The observed values are smaller than this crude random-direction scale, but
+batch averaging and the shared NLS interface change the relevant null; we do not
+interpret that undershoot further.
 
 \paragraph{The graded claim is currently supported by few points.}
 The causal experiment includes $\lambda=0.001$, $\lambda=0.03$, $\lambda=1$,

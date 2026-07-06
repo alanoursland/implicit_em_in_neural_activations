@@ -132,11 +132,12 @@ $1/2$.
 \end{proof}
 
 Proposition~\ref{prop:private-affine} is the formal version of the
-single-site conditioning claim. The smoothness constant is fixed before
-training starts. Whatever step-size range is allowed by the data-dependent
-constant does not shrink as the parameters move, and there is no learned
-anisotropy for an adaptive optimizer to correct. This is the mechanism behind
-the optimizer signature observed in the single-layer implicit-EM model.
+single-site conditioning claim for the LSE term. The LSE smoothness constant is
+fixed before training starts. Whatever step-size range is allowed by the
+data-dependent constant does not shrink as the parameters move, and there is no
+learned anisotropy in this term for an adaptive optimizer to correct. This is
+the clean part of the mechanism behind the optimizer signature observed in the
+single-layer implicit-EM model.
 
 This clean bound applies to the LSE contribution. The full auxiliary objective
 used experimentally also contains variance and decorrelation terms, whose
@@ -144,7 +145,9 @@ curvature is not covered by Proposition~\ref{prop:private-affine}. We therefore
 use the proposition as the local conditioning baseline: it identifies the
 parameter-independent part supplied by the responsibility site, while the
 experiments measure the behavior of the full auxiliary objective in the composed
-model.
+model. In particular, $L_{\mathrm{LSE}}$ alone is not a complete well-posed
+training objective; the volume-control terms are what prevent collapse and make
+the learned representation useful.
 
 \begin{proposition}[Smooth monotone kernels]
 \label{prop:smooth-kernel}
@@ -225,12 +228,8 @@ parameter-independent bound of Lemma~\ref{lem:simplex} therefore no longer
 controls the composed curvature. The decomposition is the usual generalized
 Gauss--Newton separation between the positive semidefinite output-curvature
 pullback and the remaining model-curvature terms
-\citep{schraudolph2002fast,martens2010deep}. We bound the Gauss--Newton term
-explicitly and do not claim a parameter-independent bound on the NLS
-second-order term; the point is only that composition introduces a
-$\sigma_{\max}(W_2)^2$ dependence absent from the isolated site, which the
-empirical curvature of Section~\ref{sec:mechanism} then shows to be large in
-practice.
+\citep{schraudolph2002fast,martens2010deep}. We make no
+parameter-independent bound claim for the NLS second-order term.
 \end{proposition}
 
 \begin{proof}
@@ -296,21 +295,21 @@ Combining,
     \le
     \tfrac{K}{2}\,\sigma_{\max}(W_2)^2 .
 \]
+\end{proof}
+
 The leading factor is $\sigma_{\max}(W_2)^2$, modulated by an NLS-Jacobian factor
 bounded by $K/2$ that depends only on the number of components. Two features
 distinguish this from Lemma~\ref{lem:simplex}: the bound scales with the
 \emph{learned} spectrum of the corridor $W_2$, and it is therefore
 parameter-dependent and time-varying rather than a fixed data constant. The NLS
-factor is the (parameter-independent) price of calibration; the corridor factor
+factor is the parameter-independent price of calibration; the corridor factor
 is the source of the forfeited guarantee. This bounds the Gauss--Newton term
-only; we do not bound the NLS second-order term $\sum_l(\partial
-L_{\mathrm{CE}}/\partial y_l)\nabla_d^2 y_l$, which need not be small (it carries
-the incoming head gradient) and which the empirical measurements in
-Section~\ref{sec:mechanism} include. The claim is not that the full composed
-curvature is controlled by $\sigma_{\max}(W_2)^2$, but that composition
-introduces a $\sigma_{\max}(W_2)^2$ dependence that the isolated site does not
-have.
-\end{proof}
+only. The NLS second-order term $\sum_l(\partial L_{\mathrm{CE}}/\partial
+y_l)\nabla_d^2 y_l$ need not be small because it carries the incoming head
+gradient, and the empirical measurements in Section~\ref{sec:mechanism} include
+the full composed curvature. The claim is not that the full composed curvature
+is controlled by $\sigma_{\max}(W_2)^2$, but that composition introduces a
+$\sigma_{\max}(W_2)^2$ dependence that the isolated site does not have.
 
 Proposition~\ref{prop:composition} is deliberately a
 guarantee-forfeiture statement. It shows that the parameter-independent
@@ -328,7 +327,7 @@ LSE guarantee.
 
 \paragraph{Scope of the claim.}
 The propositions above establish sufficient conditions for preserving the local
-EM conditioning guarantee: private component parameters, an unmixed LSE
+EM conditioning guarantee: private affine component parameters, an unmixed LSE
 objective, and monotone per-coordinate kernels. They also show that an
 intervening shared, sign-indefinite learned map forfeits the uniform guarantee.
 They do not prove necessity for arbitrary architectures and do not provide a
@@ -360,7 +359,9 @@ M-step structure.
 
 \subsection{Classical EM Connection}
 
-The last point is the link to classical EM. In the clean case, the E-step
+The last point is the link to classical EM. This is a structural parallel, not a
+claim that supervised cross-entropy is literally an expected complete-data
+objective. In the clean EM case, the E-step
 produces responsibilities and the expected complete-data objective separates:
 \[
     Q(\theta)=\sum_{j=1}^K Q_j(\theta_j).
@@ -384,7 +385,7 @@ in Proposition~\ref{prop:composition} is its coordinate-space fingerprint.
 \centering
 \begin{tabular}{p{0.25\linewidth}p{0.32\linewidth}p{0.32\linewidth}}
 \toprule
-Classical EM failure & Why EM weakens & Neural incarnation \\
+Classical EM failure & Mechanism of failure & Neural incarnation \\
 \midrule
 Shared component parameters & $Q$ stops separating; the M-step is coupled &
 Backpropagation through shared lower maps \\
