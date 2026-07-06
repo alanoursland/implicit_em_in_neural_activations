@@ -8,18 +8,37 @@ therefore produces a responsibility-shaped gradient. The theory section asks
 when this local structure survives the pullback to parameters.
 
 \subsection{Responsibilities as Gradients}
-The starting point (Section~\ref{sec:introduction}) is the algebraic identity
-$\partial L_{\mathrm{LSE}}/\partial d_j = r_j$: the gradient of an LSE
-distance objective is a posterior responsibility vector---nonnegative, summing
-to one, assigning each component a fractional share of the update. Gradient
-descent on such an objective performs an implicit E-step, with
-responsibilities appearing as the gradient rather than as auxiliary variables.
+Log-sum-exp objectives are ubiquitous in neural networks. Softmax
+classification, attention, contrastive losses, and energy-based objectives all
+contain the same exponentiation-and-normalization geometry
+\citep{vaswani2017attention,agarwal2025gradient,oord2018representation,lecun2006tutorial}.
+In distance or energy coordinates, that geometry has a simple consequence:
+gradients are responsibilities. If
+\[
+    L_{\mathrm{LSE}}(d)
+    =
+    -\log \sum_j \exp(-d_j),
+    \qquad
+    r=\operatorname{softmax}(-d),
+\]
+then
+\[
+    \frac{\partial L_{\mathrm{LSE}}}{\partial d_j}=r_j.
+\]
+The posterior responsibility of component $j$ is not an auxiliary variable
+computed outside the optimizer. It is the gradient supplied to gradient
+descent.
 
-The identity is purely algebraic; it assumes no particular parameterization,
-architecture, or optimizer. Everything in this paper turns on what happens
-next: the responsibility vector may reach private component parameters
-directly, or it may be mixed with other gradients and pulled through learned
-maps before it updates earlier weights.
+This identity gives a precise sense in which standard objectives can
+implement implicit generalized EM. The E-step appears as a normalized gradient
+over components; the parameter update plays the role of a generalized M-step
+\citep{dempster1977maximum,neal1998view,xu1996convergence}. The identity is
+purely algebraic; it assumes no particular parameterization, architecture, or
+optimizer.
+
+Everything in this paper turns on what happens next: the responsibility vector
+may reach private component parameters directly, or it may be mixed with other
+gradients and pulled through learned maps before it updates earlier weights.
 
 \subsection{Cross-Entropy as a Label-Clamped Responsibility Interface}
 Supervised cross-entropy has the same exponentiation-and-normalization
@@ -70,6 +89,13 @@ concentrate in the same small region. The role is analogous to that of volume
 terms in Gaussian mixture likelihoods; we do not claim an identification with
 the Gaussian log-determinant.
 
+The decoder-free encoder study also exhibited an unusual optimizer signature:
+SGD was insensitive to learning rate over a wide range, Adam offered little
+representational advantage, lower loss did not necessarily imply better
+features, and convergence time was roughly fixed
+\citep{oursland2026decoderfree}. This optimizer behavior is the phenomenon
+whose transfer fails in the supervised setting studied here.
+
 The first empirical question is whether these local repairs still work inside
 a supervised network. They do: Section~\ref{sec:results-volume} shows that
 volume control eliminates dead units and reduces redundancy at the
@@ -116,6 +142,28 @@ map $W_2$. The CE gradient reaching $W_1$ is pulled through $W_2$ and combined
 with the local auxiliary gradient. When this foreign path dominates, the
 update at $W_1$ no longer has the private, per-component structure of an EM
 M-step.
+
+The structural issue is the neural analogue of a classical EM fact, not a
+reduction of supervised cross-entropy to an EM complete-data objective. EM
+admits per-component M-steps exactly when the expected complete-data objective
+separates over component-private parameters
+\citep{dempster1977maximum,mclachlan2000finite}. When components share
+parameters, the M-step becomes coupled and the per-component update is lost.
+Backpropagation through a learned dense corridor is parameter sharing in this
+structural sense. It creates a foreign contribution at the earlier parameters
+whose curvature is no longer controlled by the local LSE bound.
+
+This structural claim must be separated from dominance. Sharing explains why
+the cross-entropy contribution is not EM-conditioned; dominance explains when
+that contribution controls the update. The gradient at $W_1$ is a sum,
+\[
+    \nabla_{W_1}L_{\mathrm{CE}}
+    +
+    \lambda\nabla_{W_1}L_{\mathrm{aux}}.
+\]
+If the CE term dominates, the effective landscape is the composed supervised
+landscape. If the local auxiliary term dominates, the same graph can recover
+the single-site optimizer signature.
 
 This split sets up the theory. The next section proves that private LSE sites
 inherit a parameter-independent curvature bound, while composition through a
