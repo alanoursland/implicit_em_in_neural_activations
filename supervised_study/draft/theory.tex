@@ -130,11 +130,13 @@ constant does not shrink as the parameters move, and there is no learned
 anisotropy for an adaptive optimizer to correct. This is the mechanism behind
 the optimizer signature observed in the single-layer implicit-EM model.
 
-The constant is also checkable. For a batch-mean objective with smoothness
-constant $L \le \frac{1}{2}\mathbb{E}\|\tilde{x}\|^2$, the descent lemma gives
-a stable full-batch gradient-descent scale on the order of $2/L$. The
-experiments therefore report $\mathbb{E}\|\tilde{x}\|^2$ and compare this scale
-to the learning-rate tolerance observed in the stop-gradient sweep.
+This clean bound applies to the LSE contribution. The full auxiliary objective
+used experimentally also contains variance and decorrelation terms, whose
+curvature is not covered by Proposition~\ref{prop:private-affine}. We therefore
+use the proposition as the local conditioning baseline: it identifies the
+parameter-independent part supplied by the responsibility site, while the
+experiments measure the behavior of the full auxiliary objective in the composed
+model.
 
 \begin{proposition}[Smooth monotone kernels]
 \label{prop:smooth-kernel}

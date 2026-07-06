@@ -57,6 +57,13 @@ the cleanest version of the result should measure the same CE/EM ratio under
 the same optimizer and learning-rate sweep used for the conditioning result.
 Until then, the optimizer mismatch should be stated explicitly.
 
+\paragraph{The optimizer-signature restoration is incomplete.}
+The stop-gradient arm restores SGD learning-rate insensitivity at $W_1$, and the
+ordinary composed arm shows a renewed advantage for Adam. The complementary Adam
+stop-gradient arm has not yet been reported. That run would test the remaining
+half of the optimizer-signature claim: whether Adam loses its advantage when the
+local EM objective owns the $W_1$ update.
+
 \paragraph{Cosine near zero is a weak alignment claim.}
 The measured CE and EM gradients have cosine near zero. In $K=25$ dimensions,
 random directions also have cosine standard deviation about $1/\sqrt{25}=0.2$.
@@ -73,6 +80,29 @@ $\lambda=1$ behaves like stop-gradient despite full connectivity. A denser
 $\lambda$-resolution curve, plotted against the measured CE/EM gradient ratio,
 would make the graded claim much stronger and is the natural next analysis for
 this result.
+
+\paragraph{The learning-rate sweeps mainly show low-rate slowness.}
+The reported sweeps show large final-accuracy spreads across learning rates, but
+the SGD arms mostly improve monotonically over the tested range. Thus the current
+spread metric primarily captures undertraining at small learning rates, not an
+observed upper instability edge. A larger learning-rate rung or time-to-threshold
+analysis would make the smoothness interpretation sharper.
+
+\paragraph{Some structural metrics are close to their training losses.}
+Dead-unit and redundancy measurements are related to the variance and
+decorrelation penalties used in the auxiliary objective. This does not make the
+repair trivial: the cross-metrics matter, for example the variance-only arm
+removes dead units while making redundancy much worse. Still, the overlap
+between objective terms and reported health metrics should be read as a targeted
+repair test rather than as an independent representation-quality measure.
+
+\paragraph{The auxiliary objective has escape directions.}
+The clean curvature propositions apply to the LSE contribution at the local
+responsibility site. The full auxiliary objective also includes variance and
+decorrelation terms, and high-learning-rate Adam can drive the variance term to
+very large values without improving task accuracy. The reported operating point
+is chosen below this runaway regime; the theory should not be read as a global
+smoothness proof for the full auxiliary objective.
 
 \paragraph{The basin interpretation remains incomplete.}
 The discussion interprets discriminative fine-tuning as a dominant foreign
@@ -130,6 +160,16 @@ The paper analyzes local curvature and measures optimization signatures, but it
 does not prove convergence of the full supervised system. The results should be
 read as a conditioning and mechanism study, not as a global optimization theory
 for neural networks.
+
+\paragraph{Future strengthening analyses.}
+A denser $\lambda$-resolution curve, plotted against the measured CE/EM gradient
+ratio, would strengthen the graded claim. A basin or linear-mode-connectivity
+analysis with hidden-unit alignment would test whether EM-dominated and
+CE-dominated checkpoints occupy distinct basins. A nonnegative row-normalized
+corridor would test the simplex-compatible preservation class separately from
+the dense-corridor arms. These analyses are useful extensions, but they are not
+load-bearing for the current volume-control, stop-gradient, dominance, and
+curvature results.
 
 \paragraph{The stochastic-map bridge is not load-bearing.}
 A row-normalized nonnegative corridor is an important preservation-class test

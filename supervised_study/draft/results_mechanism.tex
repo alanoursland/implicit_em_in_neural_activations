@@ -83,9 +83,10 @@ success of the supervised head at a particular learning rate.
 
 \subsection{Cutting the Corridor Restores Learning-Rate Insensitivity}
 
-The stop-gradient arm restores the most visible Paper 2 signature: feature
-quality becomes nearly insensitive to learning rate. Table~\ref{tab:exp4-probe}
-shows linear-probe accuracy across the $1000\times$ SGD sweep.
+The stop-gradient arm restores the most visible optimizer signature from the
+single-layer implicit-EM study \citep{oursland2025implicitem}: feature quality
+becomes nearly insensitive to learning rate. Table~\ref{tab:exp4-probe} shows
+linear-probe accuracy across the $1000\times$ SGD sweep.
 
 \begin{table}[h]
 \centering
@@ -256,26 +257,3 @@ convergence, and zero dead units; it does not buy output accuracy for free. This
 is why the $\lambda$-resolution curve is central: the trade-off should be shown
 as a continuum along the measured CE/EM gradient ratio, not as a binary
 comparison between supervised and unsupervised training.
-
-\subsection{Future Strengthening Analyses}
-
-Three analyses would strengthen this section. First, a denser
-$\lambda$-resolution curve should replace the three-point ladder with 6--8
-values of $\lambda$, plotting conditioning spread and probe accuracy against the
-measured CE/EM gradient ratio. This would be the central figure for the graded
-claim.
-
-Second, the Adam arm under stop-gradient would complete the optimizer signature. The
-prediction is that Adam provides little advantage when $W_1$ is trained by the
-local EM objective, while it remains useful in the CE-dominated joint arm.
-
-Third, a basin or linear-mode-connectivity analysis should interpolate between
-EM-dominated and CE-dominated checkpoints after aligning hidden units. This
-tests whether discriminative fine-tuning refines the EM solution or moves to a
-separate basin.
-
-The stochastic-map arm is useful but not load-bearing. Replacing $W_2$ with a
-non-negative row-normalized map tests the one simplex-compatible preservation
-class not yet covered. If the row-normalization constraint confounds the probe
-by damaging head accuracy, the result would belong in the appendix as a caveated
-taxonomy-cell experiment rather than in the abstract.

@@ -8,27 +8,27 @@ an LSE or softmax objective, not a guarantee that a whole composed network
 inherits EM's optimizer geometry.
 
 The theory identifies that boundary. In distance coordinates, the local LSE
-Hessian is uniformly bounded by $1/2$. When component parameters are private,
-this yields a parameter-independent curvature bound and explains the
+Hessian is uniformly bounded by $1/2$. When component parameters are private and
+affine, this yields a parameter-independent curvature bound and explains the
 single-site optimizer signature observed in earlier work. When the same site is
 trained through a learned dense corridor, the leading term of the composed CE
 Hessian is a conjugated softmax Hessian whose scale depends on the learned map.
 The local guarantee is therefore forfeited.
 
-The supervised experiments confirm the split from both sides: volume control
-transfers to an intermediate EM site, but the single-site optimizer conditioning
-does not survive ordinary composition---and is restored, causally, by cutting the
-corridor or letting the EM path dominate.
+The supervised experiments bear out the split in this controlled setting: volume
+control transfers to an intermediate EM site, but the single-site optimizer
+conditioning does not survive ordinary composition---and is restored, causally,
+by cutting the corridor or letting the EM path dominate.
 
 The resulting rule is local, graded, and structural. EM conditioning survives
-only when responsibility gradients reach the relevant parameters directly,
-through a simplex-compatible transport, or with enough dominance to set the
-effective landscape; ordinary dense backpropagation should not be expected to
-preserve it. Two consequences point beyond this paper. For architecture, it
-motivates building depth as protected local EM sites rather than expecting a
-single owned objective to condition every layer---the layer-wise direction. For
-interpretation, it says the intermediate softmax sites of a standard
-transformer, owning no objective of their own, should not be read as inheriting
-EM's optimization structure---the controlled basis for the companion attention
-work. Knowing which properties transfer, which fail, and which interventions
-make them survive is the boundary the implicit-EM framework now provides.
+when responsibility gradients reach the relevant parameters directly or when the
+EM path dominates the update; ordinary dense backpropagation should not be
+expected to preserve it. Simplex-compatible transport remains a theoretical
+first-order preservation class rather than a load-bearing empirical claim here.
+Two consequences point beyond this paper. For architecture, the result motivates
+building depth as protected local EM sites rather than expecting a single owned
+objective to condition every layer. For interpretation, it says the intermediate
+softmax sites of standard attention architectures, owning no objective of their
+own, should not be read as automatically inheriting EM's optimization structure.
+Knowing which properties transfer, which fail, and which interventions make them
+survive is the boundary the implicit-EM framework now provides.

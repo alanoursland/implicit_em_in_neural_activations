@@ -196,25 +196,6 @@ term and the CE path through NLS and the head. Measurements use a fixed
 512-example batch every 2 epochs, and $\sigma_{\max}(W_2)$ is recorded
 alongside the curvature estimates.
 
-\subsection{Future Strengthening Analyses}
-
-Several additional runs would strengthen the present evidence. First, a denser
-$\lambda$-resolution curve would replace the three-rung ladder with 6--8 values
-of $\lambda$ and plot conditioning spread and probe accuracy against the measured
-CE/EM gradient ratio. The x-axis should be the measured ratio, not $\lambda$
-itself. Second, an Adam arm under stop-gradient would complete the
-optimizer-signature test: the prediction is that Adam gives little advantage
-when $W_1$ is trained by the local EM objective, but remains useful in the
-CE-dominated joint arm.
-
-Two further analyses would strengthen the interpretation. A basin or linear-mode
-connectivity analysis would interpolate between EM-dominated and CE-dominated
-solutions after permutation-aligning hidden units. A stochastic-map arm replaces
-$W_2$ with a non-negative row-normalized map, testing the one
-simplex-compatible preservation class not covered by the dense-corridor arms.
-If the stochastic-map result is confounded by accuracy loss from the constraint,
-it should be treated as an appendix result rather than a headline claim.
-
 \subsection{Metrics}
 
 Representation health is measured by four quantities. A dead unit is a component

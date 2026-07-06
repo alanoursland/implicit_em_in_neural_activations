@@ -53,7 +53,7 @@ components can die, collapse, or duplicate one another. Volume control is meant
 to repair these at-site failures by keeping components alive and distinct.
 
 The second property is optimizer conditioning. In an isolated LSE site with
-private component parameters, the responsibility gradient reaches each
+private affine component parameters, the responsibility gradient reaches each
 component directly. The Hessian in distance coordinates is uniformly bounded by
 $1/2$, and the corresponding parameter-space curvature is bounded by a data
 constant. This explains why the single-layer model behaved differently from a
@@ -61,9 +61,10 @@ typical neural network optimizer problem.
 
 The central issue is whether the second property survives when the same site is
 embedded inside a supervised network. In the model studied here, the first layer
-creates component distances, an NLS transform creates an intermediate EM site,
-and a learned dense map $W_2$ sends those component coordinates to supervised
-class logits. The cross-entropy gradient reaching the first layer is therefore
+creates component distances, a NegLogSoftmin (NLS) transform creates an
+intermediate EM site, and a learned dense map $W_2$ sends those component
+coordinates to supervised class logits. The cross-entropy gradient reaching the
+first layer is therefore
 pulled back through $W_2$ and added to the local EM gradient. That is the
 minimal setting in which to ask whether EM conditioning survives ordinary
 backpropagation composition.
@@ -126,11 +127,11 @@ cross-entropy Hessian is the conjugated form
 whose norm scales with the learned spectrum $\sigma_{\max}(W_2)^2$, so the clean
 parameter-independent guarantee is forfeited.
 
-The experiments confirm the split. Volume control transfers to an intermediate
-supervised site: it eliminates dead units, prevents collapse, and reduces
-redundancy across widths. But the optimizer conditioning does not transfer
-through ordinary supervised composition. In the full supervised model, SGD is
-again learning-rate sensitive and Adam is again useful.
+The experiments support the split in this controlled setting. Volume control
+transfers to an intermediate supervised site: it eliminates dead units, prevents
+collapse, and reduces redundancy across widths. But the optimizer conditioning
+does not transfer through ordinary supervised composition. In the full
+supervised model, SGD is again learning-rate sensitive and Adam is again useful.
 
 The causal experiment identifies the mechanism. At the standard auxiliary
 weight, the CE path dominates the weighted local EM path by about

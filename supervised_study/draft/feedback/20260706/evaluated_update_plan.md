@@ -16,7 +16,7 @@ The most important valid points are:
 
 - The `E||xtilde||^2` descent-lemma comparison is explicitly promised in `theory.tex` and currently not delivered elsewhere.
 - The `30--70x` CE/EM dominance number is measured under Adam while the causal conditioning sweep uses SGD; the text now discloses this, but the abstract and mechanism narrative still rely heavily on it.
-- The single-layer optimizer signature is imported from prior work rather than shown side-by-side in the same units, which weakens the "disappears/returns" narrative.
+- The single-layer optimizer signature is imported from prior work rather than shown side-by-side in the same units, which weakens the "disappears/returns" narrative. This is a persuasiveness issue, not a correctness defect, as long as the prior work is cited clearly.
 - The future-strengthening material is repeated in setup, results, and limitations; this reads like unfinished work rather than controlled scope.
 - Several claims should be scoped to "controlled MNIST evidence supports/bears out" rather than "confirms."
 - Metrics in Results I partly overlap with the training losses, so the paper should acknowledge metric-objective coupling.
@@ -32,17 +32,18 @@ Some feedback is directionally useful but should not be applied literally:
 
 ## Self-Check on This Evaluation
 
-My evaluation could still be too conservative in two places. First, matched-SGD gradient ratios and Adam-under-stop-gradient are likely cheap and would materially strengthen the paper; if those logs/runs are available, prefer adding them over hedging. Second, the single-layer side-by-side comparison may be the most persuasive fix for the whole paper, even if it feels redundant with prior work.
+My evaluation could still be too conservative in two places. First, matched-SGD gradient ratios and Adam-under-stop-gradient are likely cheap and would materially strengthen the paper; if those logs/runs are available, prefer adding them over hedging. Second, the single-layer side-by-side comparison may be the most persuasive fix for the whole paper, even if it is not a P0 requirement because the claim can be supported by citation to prior work.
 
 My evaluation could also be too aggressive in treating the `E||xtilde||^2` promise as P0. If the descent-lemma comparison is not central to the final story, deleting the promise is an acceptable resolution. What is not acceptable is leaving it promised and uncited by results.
 
 ## Cross-Cutting Decisions
 
 1. **Decide the `E||xtilde||^2` path.** Either compute/report the comparison, or remove the promise from `theory.tex`.
-2. **Decide whether new runs are in scope.** Highest value: matched-SGD CE/EM ratio, Adam stop-gradient arm, one larger SGD learning-rate rung, single-layer signature side-by-side.
-3. **Use one canonical rule sentence.** Recommended: "EM conditioning survives when responsibility gradients reach the relevant parameters directly, when the EM path dominates the update, or through a verified compatible transport." If stochastic/simplex transport remains untested and only first-order, qualify it.
-4. **Standardize terminology.** Use `corridor` for the learned dense CE-to-`W_1` route; use `path` only generically. Use `lambda` consistently instead of mixing `lambda` and `lambda_reg`, except where explicitly naming legacy experiment settings.
-5. **Consolidate future work.** Keep future-strengthening material in `limitations.tex` (or a short future-work paragraph), not in setup and results.
+2. **Inventory available data before wording around it.** Check whether existing logs already contain matched-SGD CE/EM ratios, Adam stop-gradient, one larger SGD learning-rate rung, baseline optimizer sweep, single-layer signature numbers, capacity-table SDs, K=64 lambda recalibration, or probe variants. If data exist, prefer reporting them; if not, soften or move to limitations.
+3. **Decide whether new runs are in scope.** Highest value if not already logged: matched-SGD CE/EM ratio, Adam stop-gradient arm, one larger SGD learning-rate rung, single-layer signature side-by-side.
+4. **Use one canonical rule sentence.** Recommended: "EM conditioning survives when responsibility gradients reach the relevant parameters directly, when the EM path dominates the update, or through a verified compatible transport." If stochastic/simplex transport remains untested and only first-order, qualify it.
+5. **Standardize terminology.** Use `corridor` for the learned dense CE-to-`W_1` route; use `path` only generically. Use `lambda` consistently instead of mixing `lambda` and `lambda_reg`, except where explicitly naming legacy experiment settings.
+6. **Consolidate future work.** Keep future-strengthening material in `limitations.tex` (or a short future-work paragraph), not in setup and results.
 
 ## File-by-File Update List
 
@@ -57,6 +58,7 @@ My evaluation could also be too aggressive in treating the `E||xtilde||^2` promi
 ### `supervised_study/draft/introduction.tex`
 
 - **P0** Make the affine assumption explicit at the first optimizer-conditioning mention, not only in Results in Brief.
+- **P1** Replace "The experiments confirm the split" with softer wording such as "The experiments support the split" or "The experiments bear out the split in this controlled setting." This should be standardized with abstract and conclusion.
 - **P1** Define `NLS` at first use as NegLogSoftmin.
 - **P1** Soften the classical EM analogy: make clear that dense backpropagation is structurally parallel to a shared-parameter M-step, not literally an EM reduction for CE.
 - **P1** Add one concrete preview of the operation taxonomy if the contribution list says the paper identifies preserving/destroying operations.
@@ -122,7 +124,7 @@ My evaluation could also be too aggressive in treating the `E||xtilde||^2` promi
 
 ### `supervised_study/draft/results_conditioning.tex`
 
-- **P0** Add a side-by-side anchor for the prior single-layer optimizer signature in the same units, or soften "signature disappears" to make clear it is relative to prior work.
+- **P1** Add a side-by-side anchor for the prior single-layer optimizer signature in the same units, or make the prior-work citation explicit where "signature disappears" is claimed. This is a persuasiveness improvement rather than a correctness blocker.
 - **P1** Add the plain baseline optimizer sweep if available; otherwise state that Experiment 3 tests the full EM-site model, not equivalence to a vanilla classifier.
 - **P1** Address that the shown SGD sensitivity is low-learning-rate slowness, not high-learning-rate instability. Either add a higher learning-rate rung or phrase the result as convergence-speed/final-accuracy sensitivity.
 - **P1** Explain the high-learning-rate Adam variance explosion and negative regularization loss. Mention possible LayerNorm scale-invariance only if supported; otherwise frame as an observed auxiliary escape direction.
@@ -201,8 +203,9 @@ My evaluation could also be too aggressive in treating the `E||xtilde||^2` promi
 
 ## Update Order
 
-1. Resolve P0 consistency: `E||xtilde||^2`, abstract/conclusion overclaims, `Paper 2` leak, related-work "made precise" wording, and future-work consolidation.
-2. Fix measurement-scope wording: matched-optimizer caveat, one-sided LR sweep, metric-objective coupling, auxiliary runaway.
-3. Clean theory/proof presentation: smooth-kernel monotonicity, Prop 2 prose placement, script sign/tautology issues.
-4. Add available numbers/runs if they exist: matched-SGD ratios, Adam stop-gradient, baseline optimizer sweep, single-layer side-by-side, capacity-table SDs.
-5. Verify and update citations last.
+1. Inventory available data/logs before rewriting around missing numbers: matched-SGD ratios, Adam stop-gradient, baseline optimizer sweep, higher learning-rate rung, single-layer side-by-side, capacity-table SDs, K=64 lambda recalibration, and probe variants.
+2. Resolve true P0 consistency: `E||xtilde||^2`, abstract/introduction/conclusion overclaims, `Paper 2` leak, related-work "made precise" wording, and future-work consolidation.
+3. Fix measurement-scope wording based on the data inventory: matched-optimizer caveat, one-sided LR sweep, metric-objective coupling, auxiliary runaway.
+4. Clean theory/proof presentation: smooth-kernel monotonicity, Prop 2 prose placement, script sign/tautology issues.
+5. Add available numbers/runs if they exist; otherwise soften claims or move items to limitations.
+6. Verify and update citations last.

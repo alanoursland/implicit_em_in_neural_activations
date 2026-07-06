@@ -4,25 +4,26 @@ is the posterior responsibility of the corresponding component. This identity
 explains how standard neural objectives can instantiate generalized EM without
 explicit latent-variable updates. We show that the identity is local. In
 distance coordinates, the LSE Hessian is uniformly bounded by $1/2$; with
-private component parameters, this gives a parameter-independent curvature
-bound. When the same site is composed behind a learned dense map, the leading term of
-the composed cross-entropy Hessian is a conjugated softmax Hessian whose bound
-scales with the learned spectrum of the map, so the parameter-independent
-guarantee is forfeited.
+private affine component parameters, this gives a parameter-independent
+curvature bound. When the same site is composed behind a learned dense map, the
+leading term of the composed cross-entropy Hessian is a conjugated softmax
+Hessian whose bound scales with the learned spectrum of the map, so the
+parameter-independent guarantee is forfeited.
 
-Experiments in supervised MNIST networks confirm the split named in the title:
+Experiments in supervised MNIST networks support a controlled dissociation:
 volume control transfers, conditioning does not. Volume control at an
 intermediate EM site eliminates dead units and reduces redundancy across widths,
 showing that local mixture failures can be repaired inside a supervised model.
 The optimizer signature of the single-layer implicit-EM model, however, does not
 survive ordinary supervised composition: SGD becomes learning-rate sensitive
-again and Adam becomes useful again. Mechanism measurements show the same
-pattern from inside the model. At the standard auxiliary weight, gradient
-diagnostics indicate that the cross-entropy path dominates the weighted local EM
-path by $30$--$70\times$, with no detectable alignment or opposition between the
-two directions. Cutting that path with stop-gradient restores learning-rate
-insensitivity; increasing the EM weight until the EM path dominates restores the
-same behavior without cutting the graph. Thus implicit EM is local, graded, and
-structural: volume control repairs failures at EM sites, but EM conditioning
-survives only when responsibility gradients reach the relevant parameters
-directly, dominantly, or through simplex-compatible transport.
+again and the advantage of adaptive methods reappears. Mechanism measurements
+show the same pattern from inside the model. At the standard auxiliary weight,
+gradient diagnostics indicate that the cross-entropy path dominates the weighted
+local EM path by $30$--$70\times$, with no detectable alignment or opposition
+between the two directions. Cutting that path with stop-gradient restores
+learning-rate insensitivity; increasing the EM weight until the EM path
+dominates restores the same behavior without cutting the graph. Thus implicit EM
+is local, graded, and structural: volume control repairs failures at EM sites,
+but EM conditioning survives only when responsibility gradients reach the
+relevant parameters directly or dominantly, with simplex-compatible transport
+remaining a theoretical first-order preservation class.

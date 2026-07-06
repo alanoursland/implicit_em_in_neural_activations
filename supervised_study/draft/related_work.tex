@@ -54,10 +54,9 @@ responsibilities, conversely, produce weak specialization and slow progress.
 This paper uses these classical failure modes as a structural analogy: at-site
 volume-control failures are the local analogue of mixture degeneracy, and dense
 backpropagation failures are the analogue of the coupled, non-separable M-step
-that arises when components share parameters. We make this correspondence precise
-in Section~\ref{sec:theory} (a hidden layer trained through a dense head is a
-shared-parameter M-step in disguise), and test the two sides separately in the
-experiments.
+that arises when components share parameters. Section~\ref{sec:theory} makes
+this structural parallel explicit and testable, without claiming that supervised
+cross-entropy is literally an EM complete-data objective.
 
 \subsection{Generative and Discriminative Training}
 
