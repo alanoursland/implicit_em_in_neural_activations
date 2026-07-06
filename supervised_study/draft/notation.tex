@@ -1,40 +1,109 @@
 \section{Notation and Conventions}
 
-We use energy and distance interchangeably: lower values indicate better
-matches. For an input and $K$ components, $d_j$ denotes the energy of component
-$j$, and
+This section fixes the sign convention used throughout the paper. We use
+\emph{energy} and \emph{distance} interchangeably: lower values indicate better
+matches. For an input $x$ and $K$ components, $d_j$ denotes the energy of
+component $j$. Responsibilities are defined by
 \[
-    r = \operatorname{softmax}(-d)
+    r = \operatorname{softmax}(-d),
+    \qquad
+    r_j = \frac{\exp(-d_j)}{\sum_k \exp(-d_k)}.
 \]
-denotes the responsibility vector. Thus $r_j \ge 0$ and $\sum_j r_j = 1$.
-
-The log-sum-exp objective is
+Thus $r_j \ge 0$ and $\sum_j r_j = 1$. In this convention, the log-sum-exp
+objective is the negative log marginal
 \[
     L_{\mathrm{LSE}}(d) = -\log \sum_j \exp(-d_j),
 \]
-so that
+and differentiating with respect to a distance gives
 \[
     \frac{\partial L_{\mathrm{LSE}}}{\partial d_j} = r_j.
 \]
-This sign convention is fixed throughout the paper.
+The sign is positive because increasing a distance makes the negative log
+marginal larger. If one instead writes logits or negative energies, the same
+identity appears with the opposite sign. All results below use the distance
+convention above.
 
-For supervised classification, $h$ denotes logits and
-$p=\operatorname{softmax}(h)$ denotes the output class posterior. We write
-$W_1$ for the input-to-component map and $W_2$ for the learned dense
-component-to-class map. The latter is the composition corridor whose effect on
-conditioning is the focus of the paper.
+For supervised classification, $h \in \mathbb{R}^C$ denotes class logits and
+\[
+    p = \operatorname{softmax}(h)
+\]
+denotes the output-layer class posterior. The label-clamped cross-entropy
+gradient is
+\[
+    \frac{\partial L_{\mathrm{CE}}}{\partial h_j}
+    = p_j - \mathbf{1}\{j=y\}.
+\]
+We reserve $r$ for component responsibilities at an intermediate EM site and
+$p$ for output class probabilities.
 
-The NegLogSoftmin calibration is
+The supervised model has two maps of interest. The first map, $W_1$, sends the
+input to component energies. Its rows are treated as private component
+parameters in the clean single-site theory. The second map, $W_2$, sends
+component coordinates to class logits. It is the learned dense
+component-to-class map, or \emph{corridor}, through which the supervised
+gradient is pulled back. The largest singular value of this corridor is written
+$\sigma_{\max}(W_2)$.
+
+The NegLogSoftmin calibration used in the experiments is
 \[
     \operatorname{NLS}(d)_j
-    = d_j + \log \sum_k \exp(-d_k),
+    = d_j + \log \sum_k \exp(-d_k).
 \]
-which preserves relative distances and satisfies
+It preserves pairwise distance differences and satisfies
 \[
     \exp(-\operatorname{NLS}(d)_j) = r_j.
 \]
+Thus it converts raw distances into calibrated distances whose exponentials are
+responsibilities.
 
-Volume control consists of an anti-collapse variance penalty $L_{\mathrm{var}}$
-and an anti-redundancy decorrelation or total-correlation penalty
-$L_{\mathrm{tc}}$. Unless otherwise stated, $\lambda$ denotes the total
-auxiliary weight applied to the local EM objective.
+Volume control consists of an anti-collapse variance penalty
+$L_{\mathrm{var}}$ and an anti-redundancy decorrelation or total-correlation
+penalty $L_{\mathrm{tc}}$. We write
+\[
+    L_{\mathrm{aux}}(d)
+    = L_{\mathrm{LSE}}(d) + L_{\mathrm{var}}(d) + L_{\mathrm{tc}}(d)
+\]
+for the local auxiliary EM objective when all terms are active. Unless otherwise
+stated, $\lambda$ denotes the total auxiliary weight in the supervised objective,
+\[
+    L_{\mathrm{total}} = L_{\mathrm{CE}} + \lambda L_{\mathrm{aux}}.
+\]
+In the early ablation experiments, $\lambda_{\mathrm{reg}}=0.001$ unless noted.
+
+Finally, we use the spectral norm of the LSE Hessian in distance coordinates,
+\[
+    \|H_d L_{\mathrm{LSE}}\|_2,
+\]
+as a site-level sharpness diagnostic. Since the LSE Hessian is bounded above by
+$1/2$, we refer to proximity to this bound as the \emph{$1/2$-saturation
+diagnostic}. Saturation indicates sharp two-way component competition at the
+site; values far below $1/2$ indicate diffuse responsibilities.
+
+\begin{table}[h]
+\centering
+\begin{tabular}{ll}
+\toprule
+Symbol & Meaning \\
+\midrule
+$x$ & input example \\
+$K$ & number of intermediate components \\
+$C$ & number of output classes \\
+$d_j$ & energy/distance of component $j$; lower is better \\
+$r=\operatorname{softmax}(-d)$ & responsibility vector over components \\
+$h$ & output logits \\
+$p=\operatorname{softmax}(h)$ & output class posterior \\
+$W_1$ & input-to-component map; private rows in the clean theory \\
+$W_2$ & component-to-class corridor; shared learned dense map \\
+$\sigma_{\max}(W_2)$ & largest singular value of the corridor \\
+$\operatorname{NLS}(d)$ & NegLogSoftmin calibrated distances \\
+$L_{\mathrm{LSE}}$ & local log-sum-exp objective \\
+$L_{\mathrm{var}}$ & variance penalty, anti-collapse term \\
+$L_{\mathrm{tc}}$ & decorrelation/total-correlation penalty, anti-redundancy term \\
+$L_{\mathrm{aux}}$ & local EM auxiliary objective \\
+$\lambda$ & weight on $L_{\mathrm{aux}}$ in supervised training \\
+$H_d$ & Hessian with respect to the distance coordinates $d$ \\
+\bottomrule
+\end{tabular}
+\caption{Notation used throughout the paper.}
+\label{tab:notation}
+\end{table}

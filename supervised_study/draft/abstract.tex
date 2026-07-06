@@ -1,25 +1,27 @@
-Gradient descent on log-sum-exp objectives produces responsibility-weighted
-gradients, so standard neural objectives can instantiate generalized EM without
-explicit latent-variable updates. But this identity is local: it holds at the
-objective interface, and does not imply that a whole deep network inherits EM's
-optimization properties. We characterize this boundary. The Hessian of an LSE
-objective in energy coordinates is uniformly bounded by $1/2$; with private
-component parameters this yields parameter-independent curvature bounded by a
-data constant. When the same site is composed behind a learned dense map, the
-curvature contains a conjugated softmax Hessian,
-$W^\top(\operatorname{diag} p - pp^\top)W$, and scales with the learned
-spectrum. Thus composition turns a locally conditioned EM update into an
-ordinary parameter-dependent deep-network gradient.
+Log-sum-exp objectives produce responsibility gradients: for an objective over
+distances or energies, the derivative with respect to each distance coordinate
+is the posterior responsibility of the corresponding component. This identity
+explains how standard neural objectives can instantiate generalized EM without
+explicit latent-variable updates. We show that the identity is local. In
+distance coordinates, the LSE Hessian is uniformly bounded by $1/2$; with
+private component parameters, this gives a parameter-independent curvature
+bound. When the same site is composed behind a learned dense map, the composed
+cross-entropy path contains a conjugated softmax Hessian whose bound scales with
+the learned spectrum of the map, so the parameter-independent guarantee is
+forfeited.
 
-Experiments in supervised MNIST networks confirm the split. Volume control
-applied at an intermediate EM site eliminates dead units and redundancy across
-widths, showing that local collapse failures transfer. But the optimization
-signatures observed in the single-layer implicit-EM model disappear under
-ordinary supervised composition. Measuring gradients shows that the
-cross-entropy path dominates the local EM path by $30$--$70\times$ and is
-nearly orthogonal to it. Cutting that path with stop-gradient restores
-learning-rate insensitivity and convergence-time invariance; increasing the EM
-weight produces a continuous transition. The result is a local, graded,
-structural account of implicit EM: volume control repairs failures at EM sites,
-but EM conditioning survives only when responsibility gradients reach private
-parameters through simplex-compatible operations.
+Experiments in supervised MNIST networks confirm the resulting split. Volume
+control at an intermediate EM site eliminates dead units and reduces redundancy
+across widths, showing that local mixture failures can be repaired inside a
+supervised model. But the optimizer signatures of the single-layer implicit-EM
+model do not survive ordinary supervised composition: SGD becomes
+learning-rate sensitive again and Adam becomes useful again. Measuring the
+intermediate gradients shows that, at the standard auxiliary weight, the
+cross-entropy path dominates the weighted local EM path by $30$--$70\times$,
+with no detectable alignment or opposition between the two directions. Cutting
+that path with stop-gradient restores learning-rate insensitivity; increasing
+the EM weight until the EM path dominates restores the same behavior without
+cutting the graph. Thus implicit EM is local, graded, and structural: volume
+control repairs failures at EM sites, but EM conditioning survives only when
+responsibility gradients reach the relevant parameters directly, dominantly, or
+through simplex-compatible transport.

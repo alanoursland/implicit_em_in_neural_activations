@@ -1,23 +1,141 @@
 \section{Limitations and Threats to Validity}
+\label{sec:limitations}
+
+The paper makes a narrow claim about where implicit-EM conditioning is
+preserved and where it is lost. The evidence is intentionally controlled rather
+than broad. This section separates threats to the internal interpretation of
+the experiments from limitations on external scope.
 
 \subsection{Threats to Internal Validity}
 
-The representation-quality trade-off currently rests on a fixed-protocol linear
-probe. Additional probes, such as kNN or a small MLP, should test whether the
-ordering is probe-dependent. The curvature measurements use power iteration on
-fixed batches, so sensitivity to batch identity, batch size, and iteration count
-should be reported. The $1/2$-saturation diagnostic is demonstrated at one site;
-claims about generality should remain cautious until measured across multiple
-sites.
+\paragraph{Feature quality is measured primarily by a linear probe.}
+The main accuracy trade-off compares frozen intermediate representations with a
+fixed-protocol linear probe. This is the right first probe because it measures
+linearly accessible class information without allowing the downstream evaluator
+to repair the representation. It is not the only possible measure of feature
+quality. A kNN probe and a small MLP probe on the same frozen distances would
+test whether the $88\%$ versus $96\%$ ordering is a property of the
+representation or a property of the probe. If the ordering survives these
+checks, the interpretation strengthens: EM-dominated features are genuinely
+less task-aligned, not merely less linearly separable.
 
-The stop-gradient intervention changes the gradient path from CE to $W_1$ while
-holding data, labels, architecture, and CE training fixed. This makes it a clean
-causal knob, but the argument should be stated explicitly.
+\paragraph{The curvature measurements depend on numerical estimation.}
+The curvature claims use spectral norms estimated by power iteration on fixed
+batches. The qualitative contrast is large: the local LSE curvature remains
+below $1/2$, while the composed CE-path curvature is much larger and
+non-monotone. Still, the exact reported ratios can depend on batch identity,
+batch size, and the number of power-iteration steps. The final presentation
+should report sensitivity to these choices. The key internal check is that the
+LSE bound remains stable and the CE-path curvature remains separated from it
+under reasonable measurement variations.
+
+\paragraph{The $1/2$-saturation diagnostic is demonstrated at one site.}
+The paper uses proximity to the LSE curvature bound as a diagnostic of mixture
+sharpness. In this study, the diagnostic behaves as predicted: EM-dominated
+training approaches the $1/2$ bound, while CE-dominated training leaves the
+local site diffuse. That supports the diagnostic locally, but not its general
+use across architectures. Claims about $1/2$-saturation should therefore remain
+modest until the same measurement is repeated across depths, datasets, or
+different EM-site parameterizations.
+
+\paragraph{Stop-gradient is a clean but strong intervention.}
+The stop-gradient arm blocks the CE gradient from reaching $W_1$ while keeping
+the data, labels, architecture, CE loss, and supervised head in place. This
+makes it a strong causal test of the corridor-gradient hypothesis. It is also a
+large intervention: it changes the optimization problem for $W_1$ from joint
+supervised training to protected local training. The interpretation rests on
+the fact that the intervention changes exactly the path under dispute. It does
+not show that stop-gradient is the best practical method; it shows that the CE
+corridor is sufficient to destroy the conditioning signature when it dominates.
+
+\paragraph{Gradient dominance should be measured under the matched optimizer.}
+The gradient-competition measurements reported so far were first taken during
+Adam training at learning rate $10^{-3}$, while the conditioning sweep in the
+causal experiment uses SGD. The dominance ratio is expected to reflect the loss
+geometry at the distance interface rather than an Adam-specific artifact, but
+the cleanest version of the result should measure the same CE/EM ratio under
+the same optimizer and learning-rate sweep used for the conditioning result.
+Until then, the optimizer mismatch should be stated explicitly.
+
+\paragraph{Cosine near zero is a weak alignment claim.}
+The measured CE and EM gradients have cosine near zero. In $K=25$ dimensions,
+random directions also have cosine standard deviation about $1/\sqrt{25}=0.2$.
+Therefore the correct conclusion is not strong geometric orthogonality. The
+conservative conclusion is that there is no detectable alignment or opposition
+at the measured scale. This still supports the mechanism: the EM signal is
+drowned by a larger foreign signal, not cancelled by a directly opposing one.
+
+\paragraph{The graded claim is currently supported by few points.}
+The causal experiment includes $\lambda=0.001$, $\lambda=0.03$, $\lambda=1$,
+and stop-gradient. This is enough to show that the effect is not binary:
+$\lambda=0.03$ lies between the CE-dominated and EM-dominated regimes, and
+$\lambda=1$ behaves like stop-gradient despite full connectivity. A denser
+$\lambda$-resolution curve, plotted against the measured CE/EM gradient ratio,
+would make the graded claim much stronger and is the natural central analysis
+for the final version of this result.
+
+\paragraph{The basin interpretation remains incomplete.}
+The discussion interprets discriminative fine-tuning as a dominant foreign
+gradient that can move the model away from local EM structure. The present
+evidence supports this as a mechanism-level interpretation, but it does not yet
+prove that EM-dominated and CE-dominated solutions occupy different basins. A
+linear-mode-connectivity analysis with hidden-unit alignment is needed before
+making a stronger basin claim. Without alignment, apparent barriers could be
+artifacts of component permutation.
 
 \subsection{Limitations of Scope}
 
-The experiments use MNIST and small networks. The paper makes no SOTA claims and
-does not offer a general theory of deep-network conditioning. The formal theory
-gives sufficient conditions, not a universal if-and-only-if. LayerNorm is
-included empirically but omitted from the clean proposition unless folded into
-the constants. No convergence proof is provided for the composed system.
+\paragraph{Dataset and scale.}
+The experiments use MNIST and small supervised networks. This is appropriate
+for isolating the mechanism, but it limits external validity. The paper should
+not claim state-of-the-art performance, broad deep-learning optimization
+coverage, or automatic transfer to modern large-scale architectures. The claim
+is that the controlled setting exposes a locality boundary that larger systems
+must respect when the same structural conditions are present.
+
+\paragraph{Single main architecture.}
+The experimental architecture has one intermediate EM site followed by a dense
+supervised head. This is the architecture needed to test the corridor
+hypothesis directly. Other architectures may include normalization, residual
+paths, attention-style stochastic maps, convolutional sharing, or multiple
+local sites. The theory predicts which operations should preserve or destroy
+the simplex structure, but those variants require separate experiments.
+
+\paragraph{The formal results are sufficient conditions, not an if-and-only-if.}
+The private-parameter propositions show that local LSE sites can inherit a
+parameter-independent curvature bound. The composition proposition shows that a
+learned dense map forfeits that guarantee. These are not universal necessity
+claims. Some composed systems may remain well conditioned for unrelated
+reasons, and some private systems may fail because of effects outside the clean
+theory, such as hard gates or bad data geometry.
+
+\paragraph{The theory does not prove composed curvature is always large.}
+Proposition~\ref{prop:composition} is a guarantee-forfeiture statement. It
+shows that the clean $1/2$ LSE bound no longer controls the composed CE path
+because the bound can depend on the learned spectrum of $W_2$. The empirical
+measurements show that the composed curvature is large in the studied network.
+The theorem alone does not imply that every dense composition has large
+curvature at every point.
+
+\paragraph{LayerNorm is handled empirically but not fully in the clean proof.}
+The measured models include LayerNorm where specified, so the reported
+conditioning and curvature results include its effect. The clean propositions
+omit LayerNorm to isolate the LSE and dense-corridor geometry. A fully expanded
+proof would insert the LayerNorm Jacobian and additional input-dependent terms.
+This would complicate the constants but would not restore the
+parameter-independent LSE guarantee through a learned dense corridor.
+
+\paragraph{No convergence theorem is provided for the composed system.}
+The paper analyzes local curvature and measures optimization signatures, but it
+does not prove convergence of the full supervised system. The results should be
+read as a conditioning and mechanism study, not as a global optimization theory
+for neural networks.
+
+\paragraph{The stochastic-map bridge is not load-bearing.}
+A row-normalized nonnegative corridor is an important preservation-class test
+and a useful bridge to attention, but it should not carry the main claims. If
+the stochastic-map arm is clean, it strengthens the operation taxonomy. If it is
+confounded by reduced task accuracy or head capacity, it should remain an
+appendix-style result. The core claims are already tested by the volume-control
+ablations, optimizer sweep, stop-gradient intervention, gradient dominance, and
+curvature measurements.

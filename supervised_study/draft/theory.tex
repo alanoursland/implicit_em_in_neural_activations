@@ -1,108 +1,334 @@
 \section{Theory: The Conditioning Boundary}
+\label{sec:theory}
+
+The gradient-responsibility identity is local: it is a statement about the
+coordinates $d$ at an exponentiation-and-normalization site. The question for a
+neural network is what happens after this responsibility vector is pulled back
+to parameters. This section isolates the condition under which the local
+curvature bound survives that pullback, and the condition under which it is
+forfeited.
 
 \subsection{The Simplex Invariant}
 
 \begin{lemma}[Simplex invariant and curvature bound]
+\label{lem:simplex}
 For
 \[
-    L_{\mathrm{LSE}}(d) = -\log \sum_j \exp(-d_j),
-    \qquad r = \operatorname{softmax}(-d),
-\]
-the gradient $\nabla_d L_{\mathrm{LSE}}=r$ lies on the probability simplex, and
-the Hessian is
-\[
-    H_d L_{\mathrm{LSE}}
-    = \operatorname{diag}(r) - rr^\top,
+    L_{\mathrm{LSE}}(d) = -\log \sum_{j=1}^K \exp(-d_j),
     \qquad
-    \|H_d L_{\mathrm{LSE}}\|_2 \le \frac{1}{2}.
+    r = \operatorname{softmax}(-d),
+\]
+the gradient $\nabla_d L_{\mathrm{LSE}}=r$ lies on the probability simplex.
+The Hessian is
+\[
+    \nabla_d^2 L_{\mathrm{LSE}}
+    = rr^\top - \operatorname{diag}(r).
+\]
+Equivalently, the negative Hessian is the categorical covariance matrix
+\[
+    C(r)
+    = \operatorname{diag}(r)-rr^\top
+    \succeq 0,
+    \qquad
+    \|C(r)\|_2 = \|\nabla_d^2 L_{\mathrm{LSE}}\|_2 \le \frac{1}{2}.
 \]
 \end{lemma}
 
-The proof is the standard covariance form of the multinomial-logistic Hessian,
-together with the Bohning or Popoviciu bound. The important point here is that
-the bound is uniform in $d$ and independent of parameters.
+\begin{proof}
+The gradient calculation gives
+\[
+    \frac{\partial L_{\mathrm{LSE}}}{\partial d_j}
+    =
+    \frac{\exp(-d_j)}{\sum_k \exp(-d_k)}
+    = r_j.
+\]
+Differentiating $r$ with respect to $d$ gives
+\[
+    \frac{\partial r_j}{\partial d_k}
+    = -r_j(\mathbf{1}\{j=k\}-r_k),
+\]
+so $\nabla_d^2 L_{\mathrm{LSE}}=rr^\top-\operatorname{diag}(r)$. For any vector
+$v$,
+\[
+    v^\top C(r)v
+    =
+    \sum_j r_j v_j^2 - \left(\sum_j r_j v_j\right)^2
+    =
+    \operatorname{Var}_{j\sim r}(v_j).
+\]
+By Popoviciu's inequality,
+\[
+    \operatorname{Var}_{j\sim r}(v_j)
+    \le \frac{1}{4}(\max_j v_j-\min_j v_j)^2.
+\]
+For $\|v\|_2=1$, the squared range is at most $2$, hence
+$v^\top C(r)v\le 1/2$. Taking the supremum over unit vectors proves the bound.
+\end{proof}
+
+The important feature is not merely boundedness, but \emph{where the bound
+lives}. In distance coordinates it is absolute: no parameter value, scale, or
+training time appears. The gradient is a normalized conditional expectation,
+and the curvature is the covariance of that conditional distribution.
 
 \subsection{Private Parameters Inherit the Bound}
 
-\begin{proposition}[Conditioning under private energies]
+\begin{proposition}[Conditioning under private affine energies]
+\label{prop:private-affine}
 Let each component energy be a private affine map
 \[
-    d_j = w_j^\top x + b_j.
+    d_j = w_j^\top x + b_j,
 \]
-Then
+and let $\theta=(w_1,b_1,\ldots,w_K,b_K)$. For a single example,
 \[
-    \|\nabla_\theta L_{\mathrm{LSE}}\|_2 \le \|x\|,
-    \qquad
-    \|H_\theta L_{\mathrm{LSE}}\|_2 \le \frac{1}{2}\|x\|^2.
+    \|\nabla_\theta L_{\mathrm{LSE}}\|_2
+    \le \sqrt{\|x\|^2+1},
 \]
-Under batch-mean training,
+and
 \[
-    \|H_\theta L_{\mathrm{LSE}}\|_2
-    \le \frac{1}{2}\mathbb{E}\|x\|^2,
+    \|\nabla_\theta^2 L_{\mathrm{LSE}}\|_2
+    \le \frac{1}{2}(\|x\|^2+1).
 \]
-a data constant independent of the current parameters.
+If biases are omitted from the norm or absorbed into an augmented input, this is
+the bound $\|\nabla^2_\theta L_{\mathrm{LSE}}\|_2\le
+\frac{1}{2}\|\tilde{x}\|^2$. Under batch-mean training,
+\[
+    \|\nabla_\theta^2 L_{\mathrm{LSE}}\|_2
+    \le
+    \frac{1}{2}\mathbb{E}\|\tilde{x}\|^2,
+\]
+a constant determined by the data and independent of the current parameters.
 \end{proposition}
 
-This proposition explains the single-layer optimizer signature: the admissible
-learning-rate range does not shrink as parameters move, curvature is not learned
-or anisotropic, and an adaptive optimizer has little to correct.
+\begin{proof}
+Let $\tilde{x}=(x,1)$ absorb the bias and write $d_j=\theta_j^\top\tilde{x}$.
+Since $d$ is linear in the private parameter blocks, there is no second-order
+term from the map $\theta\mapsto d$. The gradient block for component $j$ is
+$r_j\tilde{x}$, so
+\[
+    \|\nabla_\theta L_{\mathrm{LSE}}\|_2^2
+    =
+    \sum_j r_j^2 \|\tilde{x}\|^2
+    \le
+    \|\tilde{x}\|^2.
+\]
+The Hessian has blocks
+\[
+    \left(\nabla_\theta^2 L_{\mathrm{LSE}}\right)_{jk}
+    =
+    \left(rr^\top-\operatorname{diag}(r)\right)_{jk}
+    \tilde{x}\tilde{x}^\top,
+\]
+or, up to sign, $C(r)\otimes \tilde{x}\tilde{x}^\top$. The spectral norm of a
+Kronecker product is the product of spectral norms, and Lemma~\ref{lem:simplex}
+gives the factor $1/2$.
+\end{proof}
+
+Proposition~\ref{prop:private-affine} is the formal version of the
+single-site conditioning claim. The smoothness constant is fixed before
+training starts. Whatever step-size range is allowed by the data-dependent
+constant does not shrink as the parameters move, and there is no learned
+anisotropy for an adaptive optimizer to correct. This is the mechanism behind
+the optimizer signature observed in the single-layer implicit-EM model.
+
+The constant is also checkable. For a batch-mean objective with smoothness
+constant $L \le \frac{1}{2}\mathbb{E}\|\tilde{x}\|^2$, the descent lemma gives
+a stable full-batch gradient-descent scale on the order of $2/L$. The
+experiments therefore report $\mathbb{E}\|\tilde{x}\|^2$ and compare this scale
+to the learning-rate tolerance observed in the stop-gradient sweep.
 
 \begin{proposition}[Smooth monotone kernels]
-For $d_j=\phi(w_j^\top x+b_j)$ with $\phi$ monotone and $|\phi'|,|\phi''|$
-bounded, the same parameter-independence survives up to constants determined by
-the kernel bounds.
-\end{proposition}
-
-Softplus is the main smooth case. ReLU satisfies the curvature bounds almost
-everywhere but has a separate absorbing-state pathology: once a unit receives
-zero gradient, it may never recover.
-
-\subsection{Composition Replaces the Constant With a Learned Spectrum}
-
-\begin{proposition}[Loss of conditioning under learned composition]
+\label{prop:smooth-kernel}
 Let
 \[
-    y = \operatorname{NLS}(d), \qquad h = W_2 y, \qquad
-    L_{\mathrm{CE}} = \operatorname{CE}(h,c),
+    d_j = \phi(w_j^\top x+b_j)
 \]
-and $p=\operatorname{softmax}(h)$. Then the Hessian of $L_{\mathrm{CE}}$ with
-respect to $d$ contains the conjugated softmax Hessian
-\[
-    J^\top W_2^\top(\operatorname{diag}(p)-pp^\top)W_2J,
-\]
-plus curvature terms from the NLS map. Consequently,
-\[
-    \|H_d L_{\mathrm{CE}}\|_2 = O(\sigma_{\max}(W_2)^2).
-\]
+with private component parameters, $\phi'\ge 0$, $|\phi'|\le B_1$, and
+$|\phi''|\le B_2$. Then the parameter-space curvature of
+$L_{\mathrm{LSE}}(d(\theta))$ is bounded by a constant multiple of
+$\|\tilde{x}\|^2$ that depends only on $B_1$ and $B_2$, not on the current
+parameters.
 \end{proposition}
 
-The uniform $1/2$ bound of the local LSE site is replaced by a learned,
-time-varying, anisotropic quantity. The theorem is stated without LayerNorm for
-clarity; empirical curvature measurements use the actual model including
-LayerNorm, so the reported constants absorb its effect.
+\begin{proof}
+The chain rule gives two terms:
+\[
+    \nabla_\theta^2 L
+    =
+    J^\top \nabla_d^2 L J
+    +
+    \sum_j \frac{\partial L}{\partial d_j}\nabla_\theta^2 d_j.
+\]
+The first term is bounded by Lemma~\ref{lem:simplex} and
+$\|J\|^2\le B_1^2\|\tilde{x}\|^2$. The second term is block diagonal across
+components; since $\partial L/\partial d_j=r_j$ and $\sum_j r_j=1$, its norm is
+bounded by $B_2\|\tilde{x}\|^2$. Thus the total curvature is bounded by
+$(B_1^2/2+B_2)\|\tilde{x}\|^2$ up to the harmless convention for including
+biases.
+\end{proof}
+
+Softplus is the main smooth case in this paper. ReLU should be read separately:
+its curvature bounds hold almost everywhere, but it introduces a zeroth-order
+absorbing-state pathology. When a unit is gated off, its gradient can become
+exactly zero, and the unit may not recover. That failure is not a violation of
+the curvature bound; it is the neural version of hard-assignment cluster death.
+
+\subsection{Composition Forfeits the Uniform Bound}
+
+We now compose the same local site behind a learned dense map. Let
+\[
+    y = \operatorname{NLS}(d),
+    \qquad
+    h = W_2y,
+    \qquad
+    L_{\mathrm{CE}} = -h_c + \log\sum_{\ell}\exp(h_\ell),
+\]
+and $p=\operatorname{softmax}(h)$. The Jacobian of
+$y=\operatorname{NLS}(d)$ is
+\[
+    J = \frac{\partial y}{\partial d}
+      = I - \mathbf{1}r^\top,
+\]
+because $\partial \log \sum_k \exp(-d_k)/\partial d_j=-r_j$.
+
+\begin{proposition}[Composition forfeits the uniform bound]
+\label{prop:composition}
+For the composed supervised path above, the Hessian of $L_{\mathrm{CE}}$ with
+respect to the intermediate distances $d$ contains the conjugated softmax
+Hessian
+\[
+    J^\top W_2^\top
+    \left(\operatorname{diag}(p)-pp^\top\right)
+    W_2J,
+\]
+plus curvature terms from the NLS map. Consequently, its norm is controlled by
+a bound whose leading term scales as $\sigma_{\max}(W_2)^2$ rather than by a
+parameter-independent constant.
+\end{proposition}
+
+\begin{proof}
+The CE Hessian with respect to logits is
+\[
+    H_h L_{\mathrm{CE}}
+    =
+    \operatorname{diag}(p)-pp^\top.
+\]
+Pulling this term back through the linear map $h=W_2y$ and the NLS Jacobian
+$J$ gives the displayed conjugated term. The remaining terms come from the
+second derivatives of $y=\operatorname{NLS}(d)$, weighted by the incoming
+gradient from the head. Since
+\[
+    \|W_2^\top(\operatorname{diag}(p)-pp^\top)W_2\|_2
+    \le
+    \frac{1}{2}\sigma_{\max}(W_2)^2,
+\]
+up to the NLS Jacobian constants, the bound now depends on the learned spectrum
+of $W_2$.
+\end{proof}
+
+Proposition~\ref{prop:composition} is deliberately a
+guarantee-forfeiture statement. It shows that the parameter-independent
+$1/2$ bound of the local LSE site no longer controls the composed supervised
+path. It does \emph{not} prove that the curvature must be large for every
+possible $W_2$ or every point in training. The empirical curvature measurements
+in Section~\ref{sec:mechanism} carry that claim for the studied networks: the
+composed CE-path curvature is larger, non-monotone, and parameter-dependent.
+
+We state the clean proposition without LayerNorm. The measurements are taken on
+the actual model, including LayerNorm, so its effect is included in the reported
+curvature. A proof with LayerNorm would insert another per-sample Jacobian and
+additional input-dependent terms; it would not restore the parameter-independent
+LSE guarantee.
 
 \paragraph{Scope of the claim.}
-The propositions give sufficient conditions for preserving EM conditioning and
-demonstrate loss of conditioning when a shared sign-indefinite learned map
-intervenes. They do not prove necessity for all possible architectures, nor do
-they provide a convergence proof for the composed system.
+The propositions above establish sufficient conditions for preserving the local
+EM conditioning guarantee: private component parameters, an unmixed LSE
+objective, and monotone per-coordinate kernels. They also show that an
+intervening shared, sign-indefinite learned map forfeits the uniform guarantee.
+They do not prove necessity for arbitrary architectures and do not provide a
+convergence theorem for the composed system.
 
 \subsection{Operations That Preserve or Destroy the Invariant}
 
-The invariant is preserved by private per-component parameters,
-per-coordinate monotone maps, bounded smooth kernels, and stochastic or Markov
-maps at least at first order. It is destroyed by dense sign-indefinite learned
-maps, objective mixing, hard gates, and shared lower parameters.
+The preceding propositions can be summarized by how operations treat the
+simplex-valued responsibility gradient.
+
+\paragraph{Preserving operations.}
+Private per-component parameters preserve the alignment between responsibility
+$r_j$ and parameter block $\theta_j$. Per-coordinate monotone maps preserve sign
+and component identity, changing only local scales. Smooth bounded kernels
+preserve parameter-independent curvature up to constants. Stochastic maps are a
+partial first-order preservation class: if $A$ is row-stochastic, then pulling a
+nonnegative unit-mass vector back through $A^\top$ preserves nonnegativity and
+total mass because $\mathbf{1}^\top A^\top g=(A\mathbf{1})^\top g=\mathbf{1}^\top
+g$.
+
+\paragraph{Destroying operations.}
+Dense sign-indefinite learned maps do not preserve nonnegativity, normalization,
+or component alignment. Objective mixing replaces a single posterior gradient
+with a sum of gradients from different objectives; the sum is generally not the
+posterior of any one latent-variable model. Hard gates such as ReLU can turn
+small responsibility into exactly zero gradient, creating absorbing states.
+Shared lower parameters couple the component updates and destroy the separated
+M-step structure.
 
 \subsection{Classical EM Connection}
 
-Classical EM's efficiency comes from the E-step making the expected
-complete-data objective separate over component-private parameters. With
-private component parameters $\theta_j$, the objective has the form
+The last point is the link to classical EM. In the clean case, the E-step
+produces responsibilities and the expected complete-data objective separates:
 \[
-    Q(\theta) = \sum_j Q_j(\theta_j),
+    Q(\theta)=\sum_{j=1}^K Q_j(\theta_j).
 \]
-and the M-step decouples into independent per-component problems. If a lower
-map is shared by all components, this separation disappears and the M-step
-becomes a coupled generalized-EM problem. Backpropagation through shared lower
-layers is the neural version of this classical failure.
+Each component owns its own parameters, and the M-step decouples into
+independent per-component optimizations. This separation is the source of EM's
+algorithmic structure.
+
+If all components depend on a shared lower map, the separation disappears.
+Writing the lower parameters as $\psi$, the complete-data terms have the form
+$Q_j(\theta_j,\psi)$, so
+\[
+    Q(\theta,\psi)=\sum_j Q_j(\theta_j,\psi)
+\]
+is no longer separable in $\psi$. The M-step becomes a single coupled
+optimization problem. Backpropagation through shared lower layers is the neural
+version of this classical shared-parameter failure, and the conjugated Hessian
+in Proposition~\ref{prop:composition} is its coordinate-space fingerprint.
+
+\begin{table}[h]
+\centering
+\begin{tabular}{p{0.25\linewidth}p{0.32\linewidth}p{0.32\linewidth}}
+\toprule
+Classical EM failure & Why EM weakens & Neural incarnation \\
+\midrule
+Shared component parameters & $Q$ stops separating; the M-step is coupled &
+Backpropagation through shared lower maps \\
+Non-separable / generalized EM & No closed-form independent M-step &
+Component energies computed by deep maps \\
+Singular components & Variance collapses and likelihood becomes unbounded &
+LSE-only collapse without volume control \\
+Hard assignment & Zero-responsibility components cannot recover &
+Dead ReLU units \\
+High missing information & Diffuse responsibilities slow convergence &
+Low $1/2$-saturation and weak competition \\
+\bottomrule
+\end{tabular}
+\caption{Classical EM failure modes and their neural counterparts.}
+\label{tab:em-failures}
+\end{table}
+
+This structural story must be reconciled with the graded empirical result. The
+claim is not that sharing alone always destroys the effective conditioning of
+the full update. Rather, sharing creates a foreign CE-path contribution whose
+curvature is no longer controlled by the local LSE bound. The update at $W_1$
+contains both this contribution and the local EM contribution:
+\[
+    \nabla_{W_1} L_{\mathrm{total}}
+    =
+    \nabla_{W_1} L_{\mathrm{CE}}
+    +
+    \lambda \nabla_{W_1}L_{\mathrm{aux}}.
+\]
+When the CE contribution dominates, the effective landscape is the
+non-separable shared-parameter landscape. When the EM contribution dominates,
+the same graph can behave like the isolated EM site. Thus the structural result
+explains why the foreign term is ill-conditioned, while the dominance result
+explains when that term matters.

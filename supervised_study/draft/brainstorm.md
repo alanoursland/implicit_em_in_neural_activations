@@ -1052,3 +1052,40 @@ diagnostic-generality claim (contribution 4). Candidate to **defer to P004
 (Layer-Wise Implicit EM)** as the empirical extension rather than bloat P001.
 Decide during drafting; parked in P001's Required-Work as deferrable.
 
+### Reviewer feedback round 1 — the load-bearing fix
+
+Full triage lives at the end of outline.md ("Reviewer Feedback Triage"). The one
+conceptual fix worth carrying here because it reshapes the paper's core sentences:
+
+**Punchline vs the λ=1 result.** "Backprop composition is parameter sharing in
+disguise" is a *structural/binary* story (sharing kills the M-step decomposition).
+But the centerpiece result is "λ=1 joint ≈ stop-gradient: dominance, not
+connectivity" — and in the λ=1 arm the corridor is fully connected and W1 is fully
+shared, yet conditioning *survives*. Quoted side by side these contradict.
+
+Resolution (now in §1.3, §3.5): split the mechanism into two questions.
+- **Structure (why the foreign term is ill-conditioned):** sharing W1 through W2
+  makes the CE-path M-step non-separable → its gradient carries `σ_max(W2)²`
+  curvature. Always true when connected. This is "parameter sharing in disguise."
+- **Dominance (when that term decides the landscape):** the gradient at W1 is a sum
+  of a well-conditioned EM term + the ill-conditioned CE-path term; whichever
+  dominates sets the curvature. λ=1 → EM dominates → survives despite full sharing;
+  λ=0.001 → CE dominates → destroyed; stop-gradient → CE term zero → survives.
+
+So sharing does not *by itself* destroy conditioning — it *manufactures* an
+ill-conditioned contribution, and dominance decides whether it wins. Prop 3's clean
+classical picture is the **limiting case** (CE dominant, EM absent), not the whole
+mechanism. This is what makes the claim genuinely *graded*, and why the
+λ-resolution curve — not the stop-gradient point — is the central figure.
+
+Other applied fixes (see outline triage): Prop 2 renamed "forfeits the uniform
+bound" (it's an upper bound, not proof curvature is large — §7.4 carries that);
+88/96 deflation pre-empted (continuum + "who wants conditioning off-output");
+§2 gains gradient-conflict (PCGrad, GradNorm, gradient starvation) and
+local-learning (Belilovsky, synthetic gradients, Forward-Forward) citations;
+cosine-vs-chance (±1/√K), Adam-vs-SGD measurement mismatch, convergence-time
+framing in the CE-dominated arm, and the Prop-1 ½·E‖x‖² → quantitative-lr upgrade.
+
+**Pre-submission (not done):** scrub all `E:\...` paths from outline.md and this
+file; verify added citations; final section renumber.
+

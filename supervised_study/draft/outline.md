@@ -77,9 +77,12 @@ optimization properties. We characterize this boundary. The Hessian of an LSE
 objective in energy coordinates is uniformly bounded by 1/2; with private
 component parameters this yields parameter-independent curvature bounded by a
 data constant. When the same site is composed behind a learned dense map, the
-curvature contains a conjugated softmax Hessian, W^T(diag p - pp^T)W, and scales
-with the learned spectrum. Thus composition turns a locally conditioned EM
-update into an ordinary parameter-dependent deep-network gradient.
+curvature contains a conjugated softmax Hessian, W^T(diag p - pp^T)W, and its
+upper bound scales with the learned spectrum sigma_max(W2)^2 — the
+parameter-independent guarantee is forfeited (we do not claim the bound proves
+curvature is large; the measurements do that). Composition thus removes the
+uniform guarantee, and empirically the composed curvature is 13-100x larger,
+non-monotone, and parameter-dependent.
 
 Experiments in supervised MNIST networks confirm the split. Volume control
 applied at an intermediate EM site eliminates dead units and redundancy across
@@ -156,6 +159,30 @@ Backpropagation composition is parameter sharing in disguise. The neural failure
 is the classical EM failure that appears when components no longer own private
 parameters and the M-step stops separating.
 
+**Reconciliation (critical — state this explicitly; §1.3, §3.5, §7 must agree).**
+The punchline and the centerpiece result (λ=1 joint ≈ stop-gradient: dominance,
+not connectivity) are not in tension once the mechanism is split into two
+questions:
+
+- *Why is the foreign contribution ill-conditioned?* — **Structure.** Sharing W1
+  across all upper hypotheses through W2 makes the CE-path M-step non-separable
+  (Prop 3), so the CE-path gradient at W1 carries the `σ_max(W2)²` curvature
+  (Prop 2). This is "parameter sharing in disguise." It is always true when the
+  corridor is connected.
+- *When does that contribution decide the landscape?* — **Dominance.** The gradient
+  arriving at W1 is a sum of a well-conditioned EM term (Prop 1) and the
+  ill-conditioned CE-path term. Whichever dominates sets the effective curvature.
+  λ=1 makes EM dominate → conditioning survives *despite* full sharing;
+  λ=0.001 makes the CE path dominate → conditioning is destroyed; stop-gradient
+  zeroes the CE term → survives trivially.
+
+So sharing does not by itself destroy conditioning; it *manufactures an
+ill-conditioned contribution*, and dominance decides whether that contribution
+wins. Proposition 3's clean classical story is the **limiting case** (CE path
+dominant, EM path absent), not the whole mechanism. This is exactly what makes the
+claim *graded* rather than binary — and it is why the λ-resolution curve (§7.6),
+not the stop-gradient point alone, is the central figure.
+
 ### 1.4 Contributions
 
 1. Prove the conditioning contrast between private-parameter LSE objectives and
@@ -205,20 +232,42 @@ restoration). See §8.3.
 (§7.6 / §8.4) that formalizes the fine-tuning observation. Hungarian/permutation
 matching is required or the barrier is a relabeling artifact.
 
-**Layer-wise objectives and the framework's own lineage.** Greedy layer-wise
-pretraining / DBNs (Hinton et al. 2006) — the mechanism this paper reinterprets:
-local objectives create owned EM sites; end-to-end backprop does not preserve them.
-Paper 1 (implicit EM identity, arXiv:2512.24780), Paper 2 (decoder-free
-volume-control model), and the companion Mahalanobis paper (arXiv:2410.19352) are
-the internal lineage. **The companion attention paper** (*Depth Is Not
-Temperature*) is positioned in §8.6: it invokes this paper's locality result on
+**Gradient conflict / multi-task and auxiliary-loss balancing.** We measure
+dominance ratios and cosines between a main (CE) and auxiliary (EM) loss at a
+shared parameter — squarely the multi-task / gradient-interference literature.
+Cite PCGrad / gradient surgery (Yu et al. 2020), auxiliary-task and loss-weighting
+work (e.g. GradNorm, Chen et al. 2018), and **gradient starvation** (Pezeshki et
+al. 2021, the closest in spirit — one signal drowning another). Our contribution
+relative to this line: we do not propose a balancing method; we show the ratio is
+the *causal control variable* for an interpretable structural property
+(EM conditioning), with a stop-gradient positive control. Note our finding that the
+two gradients are near-**orthogonal** (drowned, not opposed) distinguishes this
+from the conflict regime PCGrad targets.
+
+**Local / decoupled learning (beyond DBNs).** The design rule "create EM sites
+locally, protect with stop-gradients" sits next to greedy layer-wise pretraining /
+DBNs (Hinton et al. 2006), decoupled greedy layer-wise training (Belilovsky et al.
+2019), synthetic gradients / decoupled neural interfaces (Jaderberg et al. 2017),
+and Forward-Forward (Hinton 2022). Position P004 (layer-wise EM) as the constructive
+paper in this family; P001 supplies the *why* (owned sites vs. foreign-gradient
+corridors).
+
+**The framework's own lineage.** Paper 1 (implicit EM identity, arXiv:2512.24780),
+Paper 2 (decoder-free volume-control model, arXiv:2601.06478), and the companion
+Mahalanobis paper (arXiv:2410.19352). **The companion attention paper** (*Depth Is
+Not Temperature*) is positioned in §8.6: it invokes this paper's locality result on
 real transformers; this paper is its controlled proof.
 
 **What is deliberately not claimed as related.** No general deep-network
 conditioning theory (Hessian-based generalization work, NTK, etc.) — the claims are
 about EM sites and their corridors only. Mention once to bound scope.
 
-## 2b. Background: Where EM Lives
+## 2.5 Background: Where EM Lives
+
+(Numbered 2.5 to avoid the §2/§2b collision; in the final manuscript, promote
+Related Work to §2 and this Background to §3, cascading the later section numbers.
+Kept as 2.5 here so the many cross-references below — §3.x theory, §7.x results —
+stay stable during outlining.)
 
 ### 2.1 Gradient-Responsibility Identity
 
@@ -311,6 +360,15 @@ does not shrink as parameters move; curvature is not learned or anisotropic; an
 adaptive optimizer has little to correct. This is *why* SGD was learning-rate
 insensitive, Adam gave no advantage, and convergence time was fixed.
 
+*Upgrade to a quantitative prediction (near-free — do it).* The bound
+`L = (1/2) E||x||^2` is a *checkable number*. Smooth-descent theory gives a stable
+SGD step size up to ≈ `2/L`. Compute `E||x||^2` on MNIST, report the predicted
+admissible-lr ceiling, and overlay the measured lr tolerance from the
+stop-gradient sweep (§7.2). If they match, "explains Paper 2's anomaly" upgrades
+from qualitative to **quantitative** for essentially the cost of one expectation and
+one overlay line on an existing figure. High value-to-effort; flag as a headline
+supporting result.
+
 *Extension to smooth monotone kernels (Proposition 1').* For `d_j = phi(w_j^T x + b_j)`
 with `phi` monotone and `|phi'|, |phi''|` bounded (Softplus), the chain rule adds
 bounded diagonal and second-order factors; parameter-independence survives up to
@@ -318,9 +376,15 @@ constants. **ReLU:** the bounds hold almost everywhere, with a zeroth-order
 absorbing-state caveat (a dead unit's zero gradient can become permanent) — stated
 as a caveat, not swept under Proposition 1'.
 
-### 3.3 Composition Replaces the Constant With a Learned Spectrum (Proposition 2)
+### 3.3 Composition Forfeits the Uniform Bound (Proposition 2)
 
-**Proposition 2 (loss of conditioning under composition).** Compose the same EM
+Name it "**forfeits the uniform bound**," not "loss of conditioning." The
+proposition is an upper-bound statement; it shows the parameter-independent
+*guarantee* is no longer available, not that curvature is necessarily large. The
+"and in practice it really is large" weight is carried by §7.4 (measured 13-100x,
+non-monotone). Keep this split sharp — a theory reviewer pokes exactly here.
+
+**Proposition 2 (composition forfeits the uniform bound).** Compose the same EM
 site behind a learned dense map: `y = NLS(d)`, `h = W2 y`, `L_CE = CE(h, c)`,
 `p = softmax(h)`. Then the Hessian of `L_CE` with respect to `d` contains the
 conjugated softmax Hessian
@@ -329,8 +393,10 @@ conjugated softmax Hessian
 J^T W2^T (diag(p) - pp^T) W2 J   (+ curvature terms from NLS),
 ```
 
-so that `||H_d L_CE||_2 = O(sigma_max(W2)^2)`. The uniform `1/2` bound of Lemma 1
-is replaced by a **learned, time-varying, anisotropic** quantity.
+so that `||H_d L_CE||_2 <= O(sigma_max(W2)^2)`. The uniform `1/2` bound of Lemma 1
+no longer holds; the controlling quantity is now **learned, time-varying, and
+anisotropic**. Whether it is actually large is an empirical question, answered
+affirmatively in §7.4.
 
 **Scope of the claim (boxed).** Propositions 1–2 establish *sufficient* conditions
 for preservation (private parameters, monotone kernels, unmixed objective) and
@@ -397,6 +463,17 @@ Key claim: EM works cleanly when the E-step separates the objective over private
 component parameters. Backpropagation composition violates this by making lower
 parameters shared across all upper hypotheses. The neural failure is not new — it
 is the classical failure rediscovered inside the chain rule.
+
+**Scope of Prop 3 relative to the graded result (must state — see §1.3
+reconciliation).** Proposition 3 explains why the *CE-path contribution* to the
+gradient at W1 is ill-conditioned: sharing makes its M-step non-separable. It does
+**not** say the composed system is always ill-conditioned — the λ=1 joint arm shares
+parameters fully yet stays well-conditioned because the EM contribution dominates
+the sum (§7.2–7.3). Prop 3 is therefore the *structural* half (why the foreign term
+is bad); the graded result is the *dominance* half (when it wins). The clean
+classical picture is the limiting case where the CE path dominates and the EM path
+is absent. Do not let this section imply sharing alone destroys conditioning; that
+is precisely the sentence a reviewer would quote against the λ=1 result.
 
 ## 4. Experimental Setup
 
@@ -631,6 +708,15 @@ Convergence-time invariance also returns:
 - stop-gradient reaches 95% final LSE around 22-32 epochs across learning rates
 - joint lambda = 0.001 is erratic and sometimes never reaches the threshold
 
+**Frame the convergence-time metric carefully.** "Epoch to reach 95% of final LSE"
+is a natural stability measure in the EM-dominated arms, but in the CE-dominated
+arm *nobody is optimizing LSE* — the auxiliary term is drowned — so "erratic /
+never converges" there means "LSE is along for the ride," not "optimization
+failed." Report it as *the EM site never stabilizes when the CE path dominates*,
+which is the intended reading, and do not imply the CE-dominated model failed to
+train (its accuracy is fine; §6.1). Consider reporting the metric only for the
+arms where LSE is a live objective, with the CE-dominated arm shown as a contrast.
+
 ### 7.3 Gradient Competition
 
 Measured at the distance interface:
@@ -648,6 +734,21 @@ gradient is larger.
 
 The lambda = 1 joint arm behaves like stop-gradient, proving that conditioning
 follows gradient dominance, not graph connectivity.
+
+**Two measurement fixes (do before drafting the figure):**
+- *Cosine vs chance, not vs zero.* In K=25 the cosine of two random vectors has
+  std ≈ 1/√K ≈ 0.2. "Cosine ≈ 0" is the high-dimensional default and reads as
+  vacuous unless stated relative to that noise floor. Report the measured cosine
+  distribution against the ±0.2 chance band (and how many σ below it, if any), or
+  the orthogonality claim is unconvincing. If the measured cosine is *within* the
+  chance band, the honest statement is "no detectable alignment," which still
+  supports "drowned, not opposed."
+- *Optimizer mismatch.* The gradient-competition numbers were taken during **Adam**
+  training at lr=0.001, while the conditioning sweep (§7.2) is **SGD**. Either add
+  an SGD gradient-ratio measurement so the mechanism and the causal sweep are on the
+  same optimizer, or state the mismatch explicitly and argue the ratio is an
+  optimizer-independent property of the loss geometry (preferable to measure, not
+  assert).
 
 ### 7.4 Curvature Dichotomy
 
@@ -673,6 +774,21 @@ This should be stated plainly:
 Well-conditioned optimization of a less task-aligned objective does not beat
 ill-conditioned optimization of the task objective. The EM regime buys
 optimization stability, not accuracy.
+
+**Pre-empt the deflationary reading (do this explicitly).** In the stop-gradient
+arm W1 never sees label information, so a skeptic reads 88-vs-96 as "unsupervised
+features probe worse than supervised — obviously." Two defenses:
+
+- *It is a continuum, not a binary.* The λ-resolution curve (§7.6) shows the
+  probe accuracy and conditioning spread trade off smoothly along the *measured*
+  gradient ratio. This is the primary rebuttal and a second reason §7.6 is central.
+- *Name who wants conditioning.* Conditioning is worth buying when the cost is paid
+  somewhere other than output accuracy: learning-rate robustness with **no tuning**,
+  seed-to-seed **reproducibility**, **fixed convergence time**, and **zero dead
+  units** — and, crucially, in settings where the EM site is *not* competing with a
+  task head at the output: **layer-local objectives** (P004) and the **attention
+  transport story** (A002). Frame the trade-off as "not an accuracy trade at the
+  output," not as "EM loses."
 
 ### 7.6 The λ-Resolution Curve (central figure — promoted from optional)
 
@@ -716,6 +832,12 @@ cell. A positive result predicts that InfoMax-style volume control transfers to
 attention (at-site) while conditioning does not (structural) — exactly the split
 the attention paper needs. Cost: ~1 day. **Recommended IN**, given the two papers
 are being written as a pair (see ordering note at end).
+
+**Pre-decided fallback (avoid the bridge becoming the softest target).** If the
+result comes back confounded by the row-normalization accuracy hit, it moves to the
+**appendix** as "taxonomy cell populated, caveated," and does **not** appear in the
+abstract or the headline claims. The clean results (Exp 1-4 + λ-curve + basin) carry
+the paper; the stochastic-map arm strengthens the taxonomy but is never load-bearing.
 
 ## 8. Discussion
 
@@ -931,4 +1053,43 @@ Ranked; all feasible on the local GPU (RTX 3080 Ti, 12 GB + shared).
 9. **λ-resolution curve** (central; x = measured CE/EM ratio) — promoted to main.
 10. **Basin interpolation plot** (aligned; task-loss barrier) — promoted to main.
 11. Predictions ledger (§7.0) rendered as a compact table/figure.
+
+## Reviewer Feedback Triage (round 1 — applied)
+
+Read-through feedback, triaged. Applied items are folded into the sections above.
+
+**Required (applied):**
+1. *Punchline vs λ=1 tension* — the "parameter sharing in disguise" sentence and
+   the "dominance not connectivity" result can be quoted against each other.
+   Fixed: split structure (why the foreign term is ill-conditioned, Prop 3) from
+   dominance (when it wins). Reconciliation paragraph added to §1.3; guardrail
+   added to §3.5. **This was the one to fix before drafting.**
+2. *Prop 2 oversells* — it is an upper bound (guarantee forfeited), not proof of
+   large curvature. Renamed "Composition Forfeits the Uniform Bound"; abstract
+   softened; §7.4 carries the "actually large" weight.
+3. *88/96 deflationary reading* — pre-empted in §7.5 (continuum via λ-curve;
+   "who wants conditioning" when the cost is paid off-output).
+4. *Related-work gaps* — added gradient-conflict/multi-task (PCGrad, GradNorm,
+   gradient starvation) and local-learning (Belilovsky, synthetic gradients,
+   Forward-Forward) to §2.
+
+**Local surgery (applied):**
+5. Cosine ≈ 0 → report vs chance band (±1/√K ≈ 0.2), §7.3.
+6. Gradient-competition measured under Adam, sweep under SGD → add SGD measurement
+   or argue optimizer-independence, §7.3.
+7. Convergence-time metric odd in CE-dominated arm (nobody optimizes LSE there) →
+   reframed in §7.2.
+8. Prop 1 constant ½·E‖x‖² is a checkable lr prediction (≈2/L) → upgrade to
+   quantitative, §3.2.
+9. §2b/§2 numbering collision → §2.5 with a promote-in-final note.
+
+**Scope discipline (applied):**
+10. Stochastic-map arm: pre-decided appendix fallback if row-norm confounds the
+    probe; never load-bearing, §7.9. Depth sweep stays deferred to P004.
+
+**Pre-submission checklist (NOT yet done — do before anything leaves the machine):**
+- **Scrub all `E:\...` absolute paths** (currently in §2, §8.6, and brainstorm.md)
+  → replace with repo-relative references or citations.
+- Confirm arXiv IDs and author-year for every citation added in §2.
+- Final section renumber (Related Work → §2, Background → §3, cascade).
 

@@ -1,42 +1,184 @@
 \section{Results I: At-Site Failures Are Repaired Locally}
+\label{sec:results-volume}
 
-\subsection{Volume-Control Ablation}
+The theory separates two kinds of failure. Structural failures arise when a
+responsibility gradient is pulled through a shared learned corridor. At-site
+failures occur at the EM interface itself: components die, collapse, or become
+redundant. The first two experiments test the at-site half. They ask whether
+supervision supplies enough intermediate volume control, and whether the
+variance and decorrelation terms repair the same failures inside a supervised
+network that they repair in the single-layer model.
 
-The first experiment asks whether supervision supplies enough intermediate
-volume control. It compares a baseline MLP, NLS alone, partial volume control,
-full volume control, and volume control without NLS on MNIST with $K=25$.
+\subsection{Supervision Does Not Supply Intermediate Volume Control}
+
+Experiment 1 ablates the intermediate EM site at $K=25$. All models share the
+same supervised classifier after the intermediate layer; only NLS and the local
+volume-control terms are changed. Table~\ref{tab:volume-ablation} reports the
+summary over the final 10 epochs and 10 seeds.
 
 \begin{table}[h]
 \centering
-\begin{tabular}{lrrrrr}
+\begin{tabular}{lccccc}
 \toprule
-Config & Dead & Min Var & Redundancy & Entropy & Accuracy \\
+Config & Dead Units & Min Var & Redundancy & Resp. Entropy & Accuracy \\
 \midrule
-Baseline & 1.40 & 0.000 & 20.5 & 3.08 & 96.09 \\
-NLS only & 1.20 & 0.264 & 24.9 & 2.93 & 96.14 \\
-NLS + Var & 0.00 & 11.74 & 187.0 & 2.09 & 95.75 \\
-NLS + Var + Decorr & 0.00 & 7.84 & 13.9 & 2.46 & 96.34 \\
-Var + Decorr only & 0.10 & 3.55 & 13.3 & 2.65 & 96.40 \\
+Baseline &
+$1.40\pm0.49$ & $0.000\pm0.000$ & $20.5\pm2.8$ & $3.08\pm0.02$ &
+$96.09\pm0.07$ \\
+NLS only &
+$1.20\pm0.98$ & $0.264\pm0.408$ & $24.9\pm3.0$ & $2.93\pm0.02$ &
+$96.14\pm0.17$ \\
+NLS + Var &
+$0.00\pm0.00$ & $11.74\pm3.08$ & $187.0\pm38.7$ & $2.09\pm0.09$ &
+$95.75\pm0.21$ \\
+NLS + Var + Decorr &
+$0.00\pm0.00$ & $7.84\pm1.17$ & $13.9\pm0.5$ & $2.46\pm0.04$ &
+$96.34\pm0.11$ \\
+Var + Decorr only &
+$0.10\pm0.30$ & $3.55\pm1.49$ & $13.3\pm0.9$ & $2.65\pm0.07$ &
+$96.40\pm0.10$ \\
 \bottomrule
 \end{tabular}
-\caption{Volume-control ablation summary. Accuracy is reported in percent.}
+\caption{Volume-control ablation at $K=25$. Accuracy is reported in percent.
+All values are mean $\pm$ standard deviation over seeds.}
 \label{tab:volume-ablation}
 \end{table}
 
-Supervised gradients do not provide intermediate volume control: the baseline
-has dead ReLU units in every seed. NLS without volume control is insufficient.
-Variance alone is pathological, producing alive but highly redundant units.
-Full volume control repairs the site. Volume control without NLS is useful
-regularization, but it does not produce the same calibrated EM structure.
+The baseline has minimum variance zero across all seeds and an average of
+$1.4$ dead units out of 25. Supervised cross-entropy trains the output layer,
+but the gradient reaching the hidden layer through $W_2$ does not prevent
+intermediate collapse. This is the first at-site result: labels provide
+structure at the output interface, but not volume control for an intermediate
+component site.
 
-\subsection{Capacity Sweep}
+\subsection{Competition Without Volume Control Is Not Enough}
 
-The capacity sweep compares the baseline with NLS plus full volume control for
-$K \in \{16,25,36,49,64\}$. The baseline has dead units at every width, with a
-stable dead fraction around five to seven percent. Volume control eliminates
-dead units at every width. Redundancy grows with width, and volume control
-reduces the slope and tightens seed variability.
+NLS alone introduces the LSE partition function and the competitive Jacobian at
+the intermediate site. If competition by itself stabilized the representation,
+NLS-only should improve the health metrics. It does not. Accuracy is unchanged
+relative to the baseline, dead units remain, and redundancy increases from
+$20.5$ to $24.9$. The local EM geometry is present, but without volume control it
+has no reason to keep every component alive and distinct.
 
-The accuracy effect is capacity- and $\lambda$-dependent. This paper therefore
-uses the capacity experiment as evidence for structural health rather than as a
-benchmark claim.
+This matters for the paper's central distinction. The failure here is not that
+the EM identity is absent. The NLS site supplies the identity. The failure is
+that an EM site without volume control has the same degeneracies as an
+unregularized mixture model.
+
+\subsection{Partial Volume Control Is Worse Than None}
+
+The variance-only arm isolates the anti-collapse half of volume control. It
+works on the metric it directly targets: dead units fall to zero and minimum
+variance rises to $11.74$. But it is the worst configuration overall.
+Redundancy explodes to $187.0$, roughly nine times the baseline, and accuracy
+falls to $95.75\%$.
+
+The mechanism is straightforward. A variance penalty forces every component to
+move, but without decorrelation the cheapest way for all components to have
+high variance is for them to move together. The representation becomes alive
+but redundant. The low responsibility entropy in this arm, $2.09$, should not be
+read as healthy specialization: it is sharp competition among nearly duplicated
+components.
+
+This is the cleanest replication of the decoder-free encoder ablation inside a
+supervised network. The diagonal and off-diagonal parts of volume control are
+not interchangeable. Anti-collapse without anti-redundancy can be worse than
+neither.
+
+\subsection{Full Volume Control Repairs the Site}
+
+Adding decorrelation fixes the variance-only pathology. The full NLS + Var +
+Decorr model has zero dead units, high minimum variance, and the lowest
+redundancy among the EM-site configurations. Redundancy falls to $13.9$, and
+accuracy rises to $96.34\%$ with a tight seed standard deviation.
+
+The accuracy improvement is not the main claim. The main claim is that local
+volume control repairs local structural health. The full model keeps every
+component alive and distinct while preserving the calibrated responsibility
+structure introduced by NLS.
+
+\subsection{Volume Control Without NLS Is Good Regularization, Not the Same Mechanism}
+
+The Var + Decorr only arm is an important control. It matches the full EM-site
+model on accuracy and redundancy, showing that volume control is also a useful
+regularizer. But the representation differs: responsibility entropy is higher
+($2.65$ versus $2.46$), and minimum variance is lower ($3.55$ versus $7.84$).
+Without NLS, the penalties improve feature geometry but do not create the same
+calibrated distance-to-responsibility interface.
+
+This control keeps the interpretation honest. The paper is not claiming that
+every gain comes from a mysterious EM effect. Some gains are ordinary
+regularization. The EM-specific claim is narrower: when a local EM site exists,
+the same volume-control terms that stabilize mixture components stabilize the
+site's responsibilities and component geometry.
+
+\subsection{The Capacity Sweep: Structural Health Persists Across Width}
+
+Experiment 2 tests whether the ablation result is specific to $K=25$. It
+compares the baseline against NLS plus full volume control for
+$K\in\{16,25,36,49,64\}$, using 5 seeds per width. Table~\ref{tab:capacity}
+summarizes the key structural and accuracy metrics.
+
+\begin{table}[h]
+\centering
+\begin{tabular}{lcccccc}
+\toprule
+$K$ & Config & Dead & Dead Frac. & Min Var & Redundancy & Accuracy \\
+\midrule
+16 & Baseline & $1.0\pm0.9$ & $6.3\%$ & $0.097$ & $11.0\pm2.2$ & $95.19$ \\
+16 & Full VC & $0.0\pm0.0$ & $0.0\%$ & $5.22$ & $9.1\pm0.9$ & $95.32$ \\
+25 & Baseline & $1.4\pm0.5$ & $5.6\%$ & $0.000$ & $19.0\pm1.3$ & $96.07$ \\
+25 & Full VC & $0.0\pm0.0$ & $0.0\%$ & $7.76$ & $13.8\pm0.5$ & $96.35$ \\
+36 & Baseline & $2.4\pm1.9$ & $6.7\%$ & $0.030$ & $31.7\pm5.1$ & $96.63$ \\
+36 & Full VC & $0.0\pm0.0$ & $0.0\%$ & $9.51$ & $21.1\pm1.5$ & $96.60$ \\
+49 & Baseline & $2.5\pm0.9$ & $5.0\%$ & $0.000$ & $48.1\pm3.6$ & $97.04$ \\
+49 & Full VC & $0.0\pm0.0$ & $0.0\%$ & $12.65$ & $29.7\pm0.5$ & $96.87$ \\
+64 & Baseline & $4.1\pm1.3$ & $6.3\%$ & $0.000$ & $69.0\pm7.2$ & $97.29$ \\
+64 & Full VC & $0.0\pm0.0$ & $0.0\%$ & $15.33$ & $41.2\pm0.8$ & $97.00$ \\
+\bottomrule
+\end{tabular}
+\caption{Capacity sweep. Accuracy is reported in percent. Full VC denotes NLS
+plus variance and decorrelation penalties.}
+\label{tab:capacity}
+\end{table}
+
+The dead-unit result is width-invariant. Every baseline width has dead units,
+and the dead fraction is stable at roughly $5$--$7\%$. Full volume control
+eliminates dead units at every width. This is not a small-architecture accident:
+the baseline routes around dead capacity, while volume control keeps all
+components active.
+
+Redundancy also scales in the predicted direction. In the baseline, redundancy
+grows roughly linearly with width, from $11.0$ at $K=16$ to $69.0$ at $K=64$.
+Full volume control lowers redundancy at every width and sharply reduces the
+seed-to-seed variance. At $K=64$, the redundancy standard deviation falls from
+$7.2$ to $0.8$.
+
+\subsection{Accuracy Is Secondary and Capacity-Dependent}
+
+The accuracy pattern is more nuanced. With the fixed $\lambda_{\mathrm{reg}}$
+used in the sweep, volume control improves accuracy at $K=16$ and $K=25$, is
+neutral around $K=36$, and slightly hurts at $K=49$ and $K=64$. This is not a
+failure of the structural claim. The fixed regularization weight is not
+calibrated per width, and the larger models can use correlated extra units as
+boundary refiners. A decorrelation penalty treats this cooperation as
+redundancy, even when it helps the task.
+
+Thus the result should be read as two regimes. In the capacity-constrained
+regime, dead and redundant units are expensive; volume control improves both
+structure and accuracy. In the capacity-abundant regime, overparameterization
+can absorb dead units and exploit correlated features for supervised boundary
+refinement. Volume control still produces healthier component geometry, but the
+task accuracy trade-off depends on $\lambda$ and width.
+
+\subsection{Conclusion of Results I}
+
+Experiments 1--2 establish the at-site half of the paper. The supervised
+gradient does not supply volume control to intermediate components. Competition
+without volume control is insufficient. Partial volume control can be
+pathological. Full volume control repairs collapse and redundancy locally, and
+the repair persists across width.
+
+This is exactly the part of implicit EM that transfers through supervised
+networks: local mixture degeneracies can be fixed by local volume control. The
+next results ask whether the optimizer conditioning transfers as well.

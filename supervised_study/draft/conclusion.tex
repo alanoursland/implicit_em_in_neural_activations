@@ -1,15 +1,33 @@
 \section{Conclusion}
+\label{sec:conclusion}
 
-Implicit EM is not a property of whole networks. It is a local structure created
-by LSE or softmax objectives over distances and energies. When responsibility
-gradients reach private parameters directly, the resulting landscape has
-parameter-independent curvature and exhibits the optimizer signatures observed
-in the single-layer model. When those gradients pass through ordinary learned
-dense maps, the simplex invariant is destroyed and curvature becomes learned,
-anisotropic, and optimizer-sensitive.
+Log-sum-exp objectives make responsibilities appear as gradients. This gives
+standard neural objectives a precise implicit-EM interpretation, but the
+interpretation has a boundary. It is a statement about the coordinates seen by
+an LSE or softmax objective, not a guarantee that a whole composed network
+inherits EM's optimizer geometry.
 
-The supervised study draws the boundary from both sides. Volume control repairs
-local collapse and redundancy at intermediate EM sites. But conditioning
-survives only under isolation, dominance, or simplex-compatible structure.
-Knowing which properties transfer and which do not is the design rule the
-implicit-EM framework provides.
+The theory identifies that boundary. In distance coordinates, the local LSE
+Hessian is uniformly bounded by $1/2$. When component parameters are private,
+this yields a parameter-independent curvature bound and explains the
+single-site optimizer signature observed in earlier work. When the same site is
+trained through a learned dense corridor, the composed CE path contains a
+conjugated softmax Hessian whose scale depends on the learned map. The local
+guarantee is therefore forfeited.
+
+The supervised experiments confirm the split. Volume control transfers: it
+repairs dead units, collapse, and redundancy at an intermediate EM site. The
+conditioning does not transfer through ordinary supervised composition: SGD
+becomes learning-rate sensitive, Adam becomes useful, and the CE path dominates
+the local EM path at the standard auxiliary weight. Cutting that path with
+stop-gradient restores the conditioning signature. Increasing the EM weight
+until the EM path dominates restores it as well, even with the graph fully
+connected.
+
+The resulting rule is local, graded, and structural. Local volume-control
+failures can be repaired locally. EM conditioning survives only when
+responsibility gradients reach the relevant parameters directly, through a
+compatible transport, or with enough dominance to set the effective landscape.
+Ordinary dense backpropagation should not be expected to preserve it. This is
+the boundary the implicit-EM framework needs: knowing which properties transfer,
+which fail, and which architectural interventions can make them survive.

@@ -1,26 +1,123 @@
 \section{Results II: Conditioning Does Not Survive Composition}
+\label{sec:results-conditioning}
 
-\subsection{Optimizer Sweep}
+Results I showed that volume control transfers to an intermediate supervised
+site: it eliminates dead units and reduces redundancy even though the network is
+trained for classification. Experiment 3 asks whether the optimization
+conditioning from the single-layer implicit-EM model transfers as well. The
+answer is no. Once the local site is embedded behind an ordinary supervised
+head, SGD becomes learning-rate sensitive again and Adam becomes useful again.
 
-The optimizer experiment tests whether the single-layer implicit-EM optimization
-signature survives when the EM site is placed inside a supervised network. The
-model uses NLS plus full volume control, $K=25$, $\lambda=0.001$, SGD and Adam,
-and learning rates in $\{10^{-4},10^{-3},10^{-2},10^{-1}\}$.
+This experiment uses the full intermediate objective, NLS plus variance and
+decorrelation, with $K=25$ and $\lambda_{\mathrm{reg}}=0.001$. We train with
+SGD and Adam over learning rates
+$\{10^{-4},10^{-3},10^{-2},10^{-1}\}$ for 50 epochs on MNIST.
+Table~\ref{tab:optimizer-sweep} reports metrics averaged over epochs 41--50
+and 3 seeds.
 
-SGD is strongly learning-rate sensitive, spanning $83.83\%$ to $96.23\%$
-accuracy. Adam clearly helps: Adam at learning rate $10^{-4}$ reaches
-$95.34\%$, and Adam at $10^{-3}$ reaches $96.38\%$. This differs from the
-single-layer unsupervised setting, where Adam offered little advantage.
+\begin{table}[h]
+\centering
+\begin{tabular}{llccccc}
+\toprule
+Opt. & LR & Acc. & CE & Reg. & Min Var & Redundancy \\
+\midrule
+SGD & $10^{-4}$ & $83.83\pm4.96$ & $0.868$ & $107.5$ & $0.015$ & $27.5$ \\
+SGD & $10^{-3}$ & $93.69\pm0.26$ & $0.275$ & $69.9$ & $0.065$ & $19.6$ \\
+SGD & $10^{-2}$ & $95.63\pm0.12$ & $0.155$ & $19.2$ & $0.436$ & $17.7$ \\
+SGD & $10^{-1}$ & $96.23\pm0.09$ & $0.133$ & $-34.3$ & $4.01$ & $16.2$ \\
+Adam & $10^{-4}$ & $95.34\pm0.33$ & $0.170$ & $24.6$ & $0.324$ & $18.0$ \\
+Adam & $10^{-3}$ & $96.38\pm0.11$ & $0.133$ & $-57.3$ & $7.80$ & $13.8$ \\
+Adam & $10^{-2}$ & $96.37\pm0.12$ & $0.160$ & $-158.3$ & $423.2$ & $11.9$ \\
+Adam & $10^{-1}$ & $96.58\pm0.05$ & $0.179$ & $-265.9$ & $30628.4$ & $11.9$ \\
+\bottomrule
+\end{tabular}
+\caption{Optimizer sweep for the full intermediate objective. Accuracy is in
+percent. Metrics are averaged over the final 10 epochs and 3 seeds.}
+\label{tab:optimizer-sweep}
+\end{table}
 
-\subsection{Loss-Feature Decoupling}
+\subsection{The Single-Site Optimizer Signature Disappears}
 
-At high Adam learning rates, the regularization loss decreases and minimum
-variance explodes without meaningful accuracy gains. This partially echoes the
-decoder-free encoder result: the auxiliary geometry has degrees of freedom that
-are orthogonal to task accuracy.
+The single-layer implicit-EM model had an unusual optimization signature: SGD
+was insensitive to learning rate over a wide range, Adam offered little
+advantage, and convergence time was largely fixed. Those properties do not
+survive ordinary supervised composition.
 
-\subsection{Transition to Mechanism}
+With SGD, accuracy spans $83.83\%$ to $96.23\%$ across the four learning rates,
+a $12.4$ point range. At $10^{-4}$, the model has not converged by epoch 50; at
+$10^{-3}$, it reaches $93.69\%$ but remains well below the best settings. The
+learning-rate axis is therefore active again. The local EM site and its volume
+control are present, but they do not make the composed supervised landscape
+learning-rate insensitive.
 
-The optimizer sweep shows that the local EM site is not enough. Experiment 4
-measures why: the composed cross-entropy path dominates the local EM path, and
-the two gradients are nearly orthogonal.
+This is the empirical counterpart of Proposition~\ref{prop:composition}.
+Composition does not prove that curvature must be large at every point, but it
+removes the parameter-independent guarantee that explained the single-site
+behavior. Experiment 3 shows that, in this supervised network, the missing
+guarantee matters.
+
+\subsection{Adam Becomes Useful Again}
+
+Adam clearly improves the low-learning-rate regime. At learning rate $10^{-4}$,
+Adam reaches $95.34\%$, close to SGD at $10^{-2}$ and far above SGD at the
+matched learning rate. At $10^{-3}$, Adam reaches $96.38\%$, matching or
+slightly exceeding SGD at $10^{-1}$. The CE loss tells the same story: Adam
+finds low supervised loss efficiently at learning rates where SGD is still
+undertrained.
+
+This is not a contradiction of Results I. Volume control is still repairing
+the intermediate site. The point is narrower: the optimizer no longer sees the
+private, responsibility-weighted landscape of the single-layer EM model. The
+gradient reaching $W_1$ is the sum of a local auxiliary contribution and a
+supervised contribution pulled back through the learned head. That composed
+gradient behaves like an ordinary deep-network gradient, and adaptive scaling
+is useful.
+
+\subsection{The Local Site Still Responds to Volume Control}
+
+Although the conditioning signature disappears, the local volume-control
+objective is not inert. As learning rate increases, the structural metrics move
+in the expected direction. For SGD, minimum variance rises from $0.015$ to
+$4.01$ and redundancy falls from $27.5$ to $16.2$. For Adam, redundancy falls to
+$13.8$ at $10^{-3}$ and to $11.9$ at the higher learning rates. The auxiliary
+objective is shaping the representation.
+
+The distinction is therefore between structural repair and optimizer
+conditioning. Volume control can repair at-site failures while failing to
+control the global training dynamics. This is the central split of the paper:
+collapse prevention transfers locally, but EM conditioning does not
+automatically propagate through the supervised corridor.
+
+\subsection{Loss-Feature Decoupling Partially Replicates}
+
+The high-learning-rate Adam runs recover one part of the earlier single-layer
+phenomenology: lower auxiliary loss need not mean better task features. From
+Adam $10^{-3}$ to $10^{-1}$, the regularization loss decreases from $-57.3$ to
+$-265.9$ and minimum variance explodes from $7.80$ to $30628.4$. Accuracy,
+however, barely moves: $96.38\%$, $96.37\%$, and $96.58\%$.
+
+This is not a useful improvement in the representation. It shows that the
+volume-control objective has degrees of freedom that are largely orthogonal to
+classification accuracy once the useful level of spread and decorrelation has
+been reached. Adam at $10^{-3}$ is therefore the sensible operating point for
+the rest of the supervised experiments: it achieves high accuracy, low
+redundancy, and finite variance without driving the auxiliary geometry to an
+irrelevant extreme.
+
+\subsection{What Experiment 3 Does and Does Not Establish}
+
+Experiment 3 establishes the observational boundary. The same local objective
+that repairs collapse in Results I does not preserve the single-site optimizer
+signature under ordinary supervised training. This is already enough to reject
+the naive inheritance claim that a network with an EM site should inherit EM
+conditioning throughout the composed model.
+
+It does not, by itself, prove the mechanism. The optimizer sweep is consistent
+with the theory that the CE path through $W_2$ contributes a larger,
+ill-conditioned foreign gradient at $W_1$, but Table~\ref{tab:optimizer-sweep}
+does not measure that gradient directly. Results III therefore performs the
+causal test: it measures CE/EM gradient dominance, measures the curvature
+dichotomy, and cuts the CE-to-$W_1$ corridor with stop-gradient. If the
+conditioning signature returns when the corridor is cut or when the EM path
+dominates, then the failure in Experiment 3 is not a failure of volume control.
+It is the locality boundary of implicit EM.
