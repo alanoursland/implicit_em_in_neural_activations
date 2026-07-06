@@ -8,9 +8,11 @@ conditioning from the single-layer implicit-EM model transfers as well. The
 answer is no. Once the local site is embedded behind an ordinary supervised
 head, SGD becomes learning-rate sensitive again and Adam becomes useful again.
 
-This experiment uses the full intermediate objective, NLS plus variance and
-decorrelation, with $K=25$ and $\lambda=0.001$. We train with
-SGD and Adam over learning rates
+This experiment uses the full EM-site model from Results I: NLS plus variance
+and decorrelation, with $K=25$ and $\lambda=0.001$. It is therefore not a plain
+baseline optimizer sweep; the question is whether the full local EM site
+preserves the single-site optimizer signature after supervised composition. We
+train with SGD and Adam over learning rates
 $\{10^{-4},10^{-3},10^{-2},10^{-1}\}$ for 50 epochs on MNIST.
 Table~\ref{tab:optimizer-sweep} reports metrics averaged over epochs 41--50
 and 3 seeds.
@@ -21,18 +23,22 @@ and 3 seeds.
 \toprule
 Opt. & LR & Acc. & CE & Reg. & Min Var & Redundancy \\
 \midrule
-SGD & $10^{-4}$ & $83.83\pm4.96$ & $0.868$ & $107.5$ & $0.015$ & $27.5$ \\
-SGD & $10^{-3}$ & $93.69\pm0.26$ & $0.275$ & $69.9$ & $0.065$ & $19.6$ \\
-SGD & $10^{-2}$ & $95.63\pm0.12$ & $0.155$ & $19.2$ & $0.436$ & $17.7$ \\
-SGD & $10^{-1}$ & $96.23\pm0.09$ & $0.133$ & $-34.3$ & $4.01$ & $16.2$ \\
-Adam & $10^{-4}$ & $95.34\pm0.33$ & $0.170$ & $24.6$ & $0.324$ & $18.0$ \\
-Adam & $10^{-3}$ & $96.38\pm0.11$ & $0.133$ & $-57.3$ & $7.80$ & $13.8$ \\
-Adam & $10^{-2}$ & $96.37\pm0.12$ & $0.160$ & $-158.3$ & $423.2$ & $11.9$ \\
-Adam & $10^{-1}$ & $96.58\pm0.05$ & $0.179$ & $-265.9$ & $30628.4$ & $11.9$ \\
+SGD & $10^{-4}$ & $83.83\pm4.96$ & $0.868$ & $107.5$ & $0.015\pm0.007$ & $27.5\pm0.9$ \\
+SGD & $10^{-3}$ & $93.69\pm0.26$ & $0.275$ & $69.9$ & $0.065\pm0.013$ & $19.6\pm1.3$ \\
+SGD & $10^{-2}$ & $95.63\pm0.12$ & $0.155$ & $19.2$ & $0.436\pm0.031$ & $17.7\pm0.5$ \\
+SGD & $10^{-1}$ & $96.23\pm0.09$ & $0.133$ & $-34.3$ & $4.01\pm0.34$ & $16.2\pm1.3$ \\
+Adam & $10^{-4}$ & $95.34\pm0.33$ & $0.170$ & $24.6$ & $0.324\pm0.108$ & $18.0\pm0.5$ \\
+Adam & $10^{-3}$ & $96.38\pm0.11$ & $0.133$ & $-57.3$ & $7.80\pm1.55$ & $13.8\pm0.6$ \\
+Adam & $10^{-2}$ & $96.37\pm0.12$ & $0.160$ & $-158.3$ & $423.2\pm40.6$ & $11.9\pm0.5$ \\
+Adam & $10^{-1}$ & $96.58\pm0.05$ & $0.179$ & $-265.9$ & $30628.4\pm2967.6$ & $11.9\pm0.4$ \\
 \bottomrule
 \end{tabular}
-\caption{Optimizer sweep for the full intermediate objective. Accuracy is in
-percent. Metrics are averaged over the final 10 epochs and 3 seeds.}
+\caption{Optimizer sweep for the full EM-site model. All metrics are evaluated
+on the test set and averaged over the final 10 epochs and 3 seeds; accuracy is
+in percent. Reg. is the unweighted local volume-control objective
+$L_{\mathrm{var}}+L_{\mathrm{tc}}$ before multiplication by $\lambda$. It can be
+negative because $L_{\mathrm{var}}=-\sum_j\log(\operatorname{Var}(d_j)+\epsilon)$
+is negative when component variances exceed one.}
 \label{tab:optimizer-sweep}
 \end{table}
 
