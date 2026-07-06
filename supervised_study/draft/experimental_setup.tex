@@ -42,9 +42,12 @@ same downstream classifier receives the raw ReLU-produced coordinates.
 
 The second linear map, $W_2$, is the learned dense corridor from intermediate
 components to class logits. It is the map whose pullback destroys the uniform
-conditioning guarantee in Proposition~\ref{prop:composition}. LayerNorm is kept
-in the empirical model because it is part of the trained supervised baseline;
-the clean theory omits it and the curvature measurements include its effect.
+conditioning guarantee in Proposition~\ref{prop:composition}. Because $d$ is
+produced by a ReLU after the first affine map, the trained model falls under the
+smooth/ReLU kernel caveat following Proposition~\ref{prop:smooth-kernel}, not
+the clean private-affine case alone. LayerNorm is kept because it is part of the
+trained supervised baseline and stabilizes the logits seen by CE; the clean
+theory omits it, and the curvature measurements include its effect.
 
 \subsection{Local Auxiliary Objective}
 
@@ -81,7 +84,9 @@ same local EM objective as the single-layer model.
 Experiment 1 tests which pieces of the intermediate EM site are needed. The
 architecture uses $K=25$ components, MNIST, 50 training epochs, Adam with
 learning rate $10^{-3}$, $\lambda=0.001$, and 10 seeds
-$(42,\ldots,51)$. Metrics are averaged over the final 10 epochs.
+$(42,\ldots,51)$. Seeds control random initialization, minibatch order, and any
+probe-training randomness in experiments that use probes. Metrics are averaged
+over the final 10 epochs.
 
 The five configurations are:
 \[
@@ -174,8 +179,10 @@ For the conditioning sweep, each arm is trained with SGD at
 \]
 for 40 epochs and 3 seeds. Feature quality is measured after training by a
 fixed-protocol linear probe trained on the frozen intermediate distances $d$.
-This decouples the measured representation from how well the supervised head
-trained at a particular learning rate.
+The probe is a single linear classifier trained with Adam at learning rate
+$10^{-3}$ for 15 epochs, batch size 256, with its own fixed random seed. This
+decouples the measured representation from how well the supervised head trained
+at a particular learning rate.
 
 For gradient competition, the training loop measures
 \[
@@ -199,17 +206,23 @@ alongside the curvature estimates.
 \subsection{Metrics}
 
 Representation health is measured by four quantities. A dead unit is a component
-whose activation variance is effectively zero over the evaluation window.
-Minimum variance records the weakest component variance. Redundancy measures
-correlation or duplication among component responses. Responsibility entropy is
-computed from $r=\operatorname{softmax}(-d)$ and measures how sharp the local
-component assignments are.
+whose activation variance is below $0.01$ over the evaluation batch. Minimum
+variance records the weakest component variance. Redundancy is
+$\|\operatorname{Corr}(d)-I\|_{F,\mathrm{off}}^2$, the squared Frobenius norm of
+the off-diagonal correlation matrix among component responses. Responsibility
+entropy is the mean sample entropy
+\[
+    \frac{1}{N}\sum_{i=1}^N
+    \left[-\sum_{j=1}^K r_{ij}\log(r_{ij}+10^{-8})\right],
+    \qquad r_i=\operatorname{softmax}(-d_i),
+\]
+and measures how sharp the local component assignments are.
 
 Optimization conditioning is measured by learning-rate spread, convergence-time
 stability, Adam versus SGD gaps, gradient dominance ratios, cosine similarity
 between CE and auxiliary gradients, and Hessian spectral norms with respect to
-the intermediate distances. For cosine measurements, the analysis should compare
-the observed values to the random-vector scale $1/\sqrt{K}$, not merely to zero.
+the intermediate distances. For cosine measurements, we compare the observed
+values to the random-vector scale $1/\sqrt{K}$, not merely to zero.
 For convergence time, the reported LSE-stabilization metric is interpreted as an
 EM-site stability measure; in CE-dominated arms the classifier may train well
 even if the local LSE site does not stabilize.
