@@ -41,15 +41,18 @@ Exp4 & Adam stop-gradient should lose the ordinary Adam advantage &
 Stop-gradient sweep currently reported for SGD & Open \\
 Theory/Exp4 & Curvature scale should be compared to the
 $\mathbb{E}\|\tilde{x}\|^2$ prediction &
-LSE and CE-corridor curvatures measured; input-scale comparison not yet reported
-& Open \\
+For MNIST, $\mathbb{E}\|\tilde{x}\|^2=88.8$, giving clean-LSE scale
+$2/L\approx0.045$; stop-gradient is stable through $\eta=0.1$ & Reported with
+caveat \\
 \bottomrule
 \end{tabular}
 \caption{Prediction ledger for the supervised study. The table separates
 mechanism predictions, measurements, status, and post-measurement
 interpretation. ``Supported'' means supported by the reported measurements, not
-mathematically closed under every strengthening check. One interpretation was
-corrected after measurement: the early heuristic claim that
+mathematically closed under every strengthening check. ``Reported with caveat''
+marks a quantitative scale check whose order of magnitude is reported but whose
+clean-theory assumptions do not exactly match the experimental arm. One
+interpretation was corrected after measurement: the early heuristic claim that
 $\lambda=0.001$ implied a $1000\times$ gradient ratio was wrong; the measured
 late-training ratio is $67$--$95\times$ (Section~\ref{sec:mechanism}, gradient
 competition). The full trajectory is wider because of early transients. The
@@ -137,6 +140,17 @@ the conditioning metric. This shows that connectivity is not the decisive
 variable. The corridor manufactures a foreign, non-EM contribution, but that
 contribution controls the effective landscape only when it dominates the local
 EM contribution.
+
+The private-affine theory also gives a crude parameter-space scale check. With
+the MNIST preprocessing used here, raw pixels lie in $[0,1]$ and the augmented
+input satisfies $\mathbb{E}\|\tilde{x}\|^2=88.8$ on the training set. The clean
+LSE bound from Proposition~\ref{prop:private-affine} is therefore
+$L\le \tfrac12\mathbb{E}\|\tilde{x}\|^2=44.4$, corresponding to a descent-lemma
+scale $2/L\approx0.045$. The stop-gradient arm remains stable through
+$\eta=0.1$, which is the same order of magnitude. This should be read only as a
+sanity check: the experiment uses ReLU distances and the full
+$L_{\mathrm{aux}}$ objective, so it is not a formal test of the clean LSE-only
+private-affine bound.
 
 The intermediate value $\lambda=0.03$ lies between the two regimes. Its spread is
 $5.8$ points, roughly halfway between the CE-dominated and EM-dominated arms.
