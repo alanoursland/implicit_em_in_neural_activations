@@ -69,6 +69,10 @@ The important feature is not merely boundedness, but \emph{where the bound
 lives}. In distance coordinates it is absolute: no parameter value, scale, or
 training time appears. The gradient is a normalized conditional expectation,
 and the curvature is the covariance of that conditional distribution.
+The equality case also gives a diagnostic used in
+Section~\ref{sec:mechanism}: approaching the $1/2$ bound means the local
+responsibility vector is approaching sharp two-way competition, while values far
+below $1/2$ indicate diffuse responsibilities.
 
 \subsection{Private Parameters Inherit the Bound}
 
@@ -154,6 +158,10 @@ parameters.
 \end{proposition}
 
 \begin{proof}
+The monotonicity condition $\phi'\ge 0$ preserves the first-order component
+orientation: increasing a preactivation cannot reverse a component's distance
+coordinate. The curvature bound itself uses only the uniform derivative bounds
+$|\phi'|\le B_1$ and $|\phi''|\le B_2$.
 The chain rule gives two terms:
 \[
     \nabla_\theta^2 L
@@ -166,7 +174,7 @@ The first term is bounded by Lemma~\ref{lem:simplex} and
 $\|J\|^2\le B_1^2\|\tilde{x}\|^2$. The second term is block diagonal across
 components; since $\partial L/\partial d_j=r_j$ and $\sum_j r_j=1$, its norm is
 bounded by $B_2\|\tilde{x}\|^2$. Thus the total curvature is bounded by
-$(B_1^2/2+B_2)\|\tilde{x}\|^2$ up to the harmless convention for including
+$(B_1^2/2+B_2)\|\tilde{x}\|^2$ up to the bias convention above for including
 biases.
 \end{proof}
 
