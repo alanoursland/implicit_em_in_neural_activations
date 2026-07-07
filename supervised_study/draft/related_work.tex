@@ -43,22 +43,24 @@ make the retrieval geometry explicit \citep{ramsauer2021hopfield}. More
 recently, \citet{agarwal2025gradient} derived first-order attention training
 dynamics in which cross-entropy induces advantage-form attention-score
 updates and value updates weighted by attention responsibilities. They frame
-the training-time EM correspondence as structural rather than variational:
-the updates are driven by backpropagated error signals, not by an explicit
-expected complete-data likelihood.
+this training-time correspondence as EM-like and structural rather than variational:
+the derived updates have the form of responsibility-weighted and
+advantage-based EM-like steps. The implicit-EM account 
+\citep{oursland2025implicitem} sharpens this interpretation. In the 
+distance-based LSE case, when neural outputs are read as distances or 
+energies, the log-sum-exp term is a mixture marginal whose gradients are 
+posterior responsibilities. Under that interpretation, the 
+responsibility-gradient algebra is not merely EM-like; it is implicit EM.
 
-The implicit-EM identity gives a more general local statement for
-log-sum-exp distance objectives: the gradient with respect to each component
-distance is its posterior responsibility \citep{oursland2025implicitem}.
-This addresses the training-time gap left by the structural analogy, under
-the conditions of a distance or energy LSE site: the responsibility is not
-only a useful routing interpretation but the gradient supplied to gradient
-descent. This places unsupervised mixture-like objectives, supervised
-cross-entropy, and attention-style softmax interfaces under a shared local
-algebra. The present paper does not address inference-time Bayesian
-computation in trained attention models. It asks the next training-time
-question: when such responsibility-shaped gradients exist locally, do their
-optimizer consequences survive the pullback through the rest of the network?
+This gives a more general local statement for log-sum-exp distance
+objectives: the gradient with respect to each component distance is its
+posterior responsibility. It places unsupervised mixture-like objectives,
+supervised cross-entropy, and attention-style softmax interfaces under a
+shared local algebra. The present paper does not address inference-time
+Bayesian computation in trained attention models. It asks the next
+training-time question: when such responsibility-shaped gradients exist
+locally, do their optimizer consequences survive the pullback through the rest
+of the network?
 
 \subsection{The Single-Site Baseline}
 The decoder-free sparse-autoencoder study tested the unsupervised branch of
@@ -172,12 +174,12 @@ evidence here is the stop-gradient and dominance intervention.
 This paper continues a specific line of inquiry. The attention-gradient work
 of \citet{agarwal2025gradient} showed that cross-entropy training of
 attention has EM-like local dynamics, while explicitly treating the
-training-time EM correspondence as structural. The implicit-EM identity
-\citep{oursland2025implicitem} identified the exact local algebra behind
-responsibility gradients in distance-based LSE objectives. The decoder-free
-study \citep{oursland2026decoderfree} tested the unsupervised consequences of
-that local identity and revealed the optimizer signature that motivates the
-present paper.
+training-time EM correspondence as structural. The implicit-EM identity then
+identified the exact local algebra behind responsibility gradients in
+distance-based LSE objectives. The decoder-free study
+\citep{oursland2026decoderfree} tested the unsupervised consequences of that
+local identity and revealed the optimizer signature that motivates the present
+paper.
 
 The current contribution is a boundary result. It is not a general theory of
 deep-network optimization, Hessian spectra, or generalization. It concerns
